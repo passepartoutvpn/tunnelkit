@@ -386,11 +386,12 @@ extension TunnelKitProvider: GenericSocketDelegate {
         socket.shutdown()
     }
     
-    func socketShouldChangeProtocol(_ socket: GenericSocket) {
+    func socketShouldChangeProtocol(_ socket: GenericSocket) -> Bool {
         guard strategy.tryNextProtocol() else {
             disposeTunnel(error: ProviderError.exhaustedProtocols)
-            return
+            return false
         }
+        return true
     }
     
     func socketDidBecomeActive(_ socket: GenericSocket) {

@@ -410,9 +410,6 @@ extension TunnelKitProvider: GenericSocketDelegate {
             return
         }
         
-        // upgrade available?
-        let upgradedSocket = socket.upgraded()
-        
         var shutdownError: Error?
         if !failure {
             shutdownError = proxy.stopError
@@ -420,6 +417,12 @@ extension TunnelKitProvider: GenericSocketDelegate {
             shutdownError = proxy.stopError ?? ProviderError.linkError
             linkFailures += 1
             log.debug("Link failures so far: \(linkFailures) (max = \(maxLinkFailures))")
+        }
+        
+        // only try upgrade on network errors
+        var upgradedSocket: GenericSocket? = nil
+        if shutdownError as? SessionError == nil {
+            upgradedSocket = socket.upgraded()
         }
         
         // treat negotiation timeout as socket timeout, UDP is connection-less

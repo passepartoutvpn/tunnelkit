@@ -42,6 +42,11 @@ import __TunnelKitNative
 private let log = SwiftyBeaver.self
 
 private extension Error {
+    func isTunnelError() -> Bool {
+        let te = self as NSError
+        return te.domain == TunnelKitErrorDomain
+    }
+    
     func isDataPathOverflow() -> Bool {
         let te = self as NSError
         return te.domain == TunnelKitErrorDomain && te.code == TunnelKitErrorCode.dataPathOverflow.rawValue
@@ -1080,7 +1085,7 @@ public class SessionProxy {
 
             tunnel?.writePackets(decryptedPackets, completionHandler: nil)
         } catch let e {
-            guard !e.isDataPathOverflow() else {
+            guard !e.isTunnelError() else {
                 deferStop(.shutdown, e)
                 return
             }
@@ -1115,7 +1120,7 @@ public class SessionProxy {
 //                log.verbose("Data: \(encryptedPackets.count) packets successfully written to LINK")
             }
         } catch let e {
-            guard !e.isDataPathOverflow() else {
+            guard !e.isTunnelError() else {
                 deferStop(.shutdown, e)
                 return
             }

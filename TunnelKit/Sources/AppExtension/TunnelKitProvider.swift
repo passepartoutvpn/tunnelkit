@@ -420,18 +420,27 @@ extension TunnelKitProvider: GenericSocketDelegate {
             log.debug("Link failures so far: \(linkFailures) (max = \(maxLinkFailures))")
         }
         
+        // neg timeout?
+        let didTimeoutNegotiation = (proxy.stopError as? SessionError == .negotiationTimeout)
+        
         // only try upgrade on network errors
         var upgradedSocket: GenericSocket? = nil
         if shutdownError as? SessionError == nil {
             upgradedSocket = socket.upgraded()
         }
-        
+
+        // clean up
+        finishTunnelDisconnection(error: shutdownError)
+
         // treat negotiation timeout as socket timeout, UDP is connection-less
-        if proxy.stopError as? SessionError == SessionError.negotiationTimeout {
-            socketShouldChangeProtocol(socket)
+        if didTimeoutNegotiation {
+            guard socketShouldChangeProtocol(socket) else {
+                // disposeTunnel
+                return
+            }
         }
 
-        finishTunnelDisconnection(error: shutdownError)
+        // reconnect?
         if reasserting {
             guard (linkFailures < maxLinkFailures) else {
                 log.debug("Too many link failures (\(linkFailures)), tunnel will die now")
@@ -445,6 +454,8 @@ extension TunnelKitProvider: GenericSocketDelegate {
             }
             return
         }
+
+        // shut down
         disposeTunnel(error: shutdownError)
     }
     

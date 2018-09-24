@@ -3,7 +3,36 @@
 //  TunnelKit
 //
 //  Created by Davide De Rosa on 8/27/17.
-//  Copyright © 2018 London Trust Media. All rights reserved.
+//  Copyright (c) 2018 Davide De Rosa. All rights reserved.
+//
+//  https://github.com/keeshux
+//
+//  This file is part of TunnelKit.
+//
+//  TunnelKit is free software: you can redistribute it and/or modify
+//  it under the terms of the GNU General Public License as published by
+//  the Free Software Foundation, either version 3 of the License, or
+//  (at your option) any later version.
+//
+//  TunnelKit is distributed in the hope that it will be useful,
+//  but WITHOUT ANY WARRANTY; without even the implied warranty of
+//  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+//  GNU General Public License for more details.
+//
+//  You should have received a copy of the GNU General Public License
+//  along with TunnelKit.  If not, see <http://www.gnu.org/licenses/>.
+//
+//  This file incorporates work covered by the following copyright and
+//  permission notice:
+//
+//      Copyright (c) 2018-Present Private Internet Access
+//
+//      Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
+//
+//      The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
+//
+//      THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+//
 //
 
 import Foundation
@@ -12,16 +41,13 @@ import SwiftyBeaver
 
 private let log = SwiftyBeaver.self
 
-class NEUDPInterface: NSObject, GenericSocket, LinkInterface {
+class NEUDPSocket: NSObject, GenericSocket {
     private static var linkContext = 0
     
     private let impl: NWUDPSession
     
-    private let maxDatagrams: Int
-
-    init(impl: NWUDPSession, maxDatagrams: Int? = nil) {
+    init(impl: NWUDPSession) {
         self.impl = impl
-        self.maxDatagrams = maxDatagrams ?? 200
 
         isActive = false
         isShutdown = false
@@ -58,13 +84,13 @@ class NEUDPInterface: NSObject, GenericSocket, LinkInterface {
                 return
             }
         }
-        impl.addObserver(self, forKeyPath: #keyPath(NWUDPSession.state), options: [.initial, .new], context: &NEUDPInterface.linkContext)
-        impl.addObserver(self, forKeyPath: #keyPath(NWUDPSession.hasBetterPath), options: .new, context: &NEUDPInterface.linkContext)
+        impl.addObserver(self, forKeyPath: #keyPath(NWUDPSession.state), options: [.initial, .new], context: &NEUDPSocket.linkContext)
+        impl.addObserver(self, forKeyPath: #keyPath(NWUDPSession.hasBetterPath), options: .new, context: &NEUDPSocket.linkContext)
     }
     
     func unobserve() {
-        impl.removeObserver(self, forKeyPath: #keyPath(NWUDPSession.state), context: &NEUDPInterface.linkContext)
-        impl.removeObserver(self, forKeyPath: #keyPath(NWUDPSession.hasBetterPath), context: &NEUDPInterface.linkContext)
+        impl.removeObserver(self, forKeyPath: #keyPath(NWUDPSession.state), context: &NEUDPSocket.linkContext)
+        impl.removeObserver(self, forKeyPath: #keyPath(NWUDPSession.hasBetterPath), context: &NEUDPSocket.linkContext)
     }
     
     func shutdown() {
@@ -75,17 +101,17 @@ class NEUDPInterface: NSObject, GenericSocket, LinkInterface {
         guard impl.hasBetterPath else {
             return nil
         }
-        return NEUDPInterface(impl: NWUDPSession(upgradeFor: impl))
+        return NEUDPSocket(impl: NWUDPSession(upgradeFor: impl))
     }
     
-    func link() -> LinkInterface {
-        return self
+    func link(withMTU mtu: Int) -> LinkInterface {
+        return NEUDPLink(impl: impl, mtu: mtu)
     }
     
     // MARK: Connection KVO (any queue)
     
     override func observeValue(forKeyPath keyPath: String?, of object: Any?, change: [NSKeyValueChangeKey : Any]?, context: UnsafeMutableRawPointer?) {
-        guard (context == &NEUDPInterface.linkContext) else {
+        guard (context == &NEUDPSocket.linkContext) else {
             super.observeValue(forKeyPath: keyPath, of: object, change: change, context: context)
             return
         }
@@ -150,12 +176,28 @@ class NEUDPInterface: NSObject, GenericSocket, LinkInterface {
             break
         }
     }
+}
+
+class NEUDPLink: LinkInterface {
+    private let impl: NWUDPSession
+    
+    private let maxDatagrams: Int
+    
+    init(impl: NWUDPSession, mtu: Int, maxDatagrams: Int? = nil) {
+        self.impl = impl
+        self.mtu = mtu
+        self.maxDatagrams = maxDatagrams ?? 200
+    }
 
     // MARK: LinkInterface
     
     let isReliable: Bool = false
     
-    let mtu: Int = 1000
+    var remoteAddress: String? {
+        return (impl.resolvedEndpoint as? NWHostEndpoint)?.hostname
+    }
+
+    let mtu: Int
 
     var packetBufferSize: Int {
         return maxDatagrams
@@ -191,7 +233,7 @@ class NEUDPInterface: NSObject, GenericSocket, LinkInterface {
     }
 }
 
-extension NEUDPInterface {
+extension NEUDPSocket {
     override var description: String {
         guard let hostEndpoint = impl.endpoint as? NWHostEndpoint else {
             return impl.endpoint.description

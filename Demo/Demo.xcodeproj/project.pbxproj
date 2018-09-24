@@ -366,7 +366,7 @@
 			attributes = {
 				LastSwiftUpdateCheck = 0900;
 				LastUpgradeCheck = 0900;
-				ORGANIZATIONNAME = "London Trust Media";
+				ORGANIZATIONNAME = "Davide De Rosa";
 				TargetAttributes = {
 					0EB39FE51F7424F80023AFFC = {
 						CreatedOnToolsVersion = 9.0;

@@ -3,7 +3,36 @@
 //  TunnelKit
 //
 //  Created by Davide De Rosa on 2/3/17.
-//  Copyright © 2018 London Trust Media. All rights reserved.
+//  Copyright (c) 2018 Davide De Rosa. All rights reserved.
+//
+//  https://github.com/keeshux
+//
+//  This file is part of TunnelKit.
+//
+//  TunnelKit is free software: you can redistribute it and/or modify
+//  it under the terms of the GNU General Public License as published by
+//  the Free Software Foundation, either version 3 of the License, or
+//  (at your option) any later version.
+//
+//  TunnelKit is distributed in the hope that it will be useful,
+//  but WITHOUT ANY WARRANTY; without even the implied warranty of
+//  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+//  GNU General Public License for more details.
+//
+//  You should have received a copy of the GNU General Public License
+//  along with TunnelKit.  If not, see <http://www.gnu.org/licenses/>.
+//
+//  This file incorporates work covered by the following copyright and
+//  permission notice:
+//
+//      Copyright (c) 2018-Present Private Internet Access
+//
+//      Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
+//
+//      The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
+//
+//      THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+//
 //
 
 #import <openssl/ssl.h>
@@ -30,6 +59,8 @@ int TLSBoxVerifyPeer(int ok, X509_STORE_CTX *ctx) {
 @interface TLSBox ()
 
 @property (nonatomic, strong) NSString *caPath;
+@property (nonatomic, strong) NSString *clientCertificatePath;
+@property (nonatomic, strong) NSString *clientKeyPath;
 @property (nonatomic, assign) BOOL isConnected;
 
 @property (nonatomic, unsafe_unretained) SSL_CTX *ctx;
@@ -46,13 +77,15 @@ int TLSBoxVerifyPeer(int ok, X509_STORE_CTX *ctx) {
 
 - (instancetype)init
 {
-    return [self initWithCAPath:nil];
+    return [self initWithCAPath:nil clientCertificatePath:nil clientKeyPath:nil];
 }
 
-- (instancetype)initWithCAPath:(NSString *)caPath
+- (instancetype)initWithCAPath:(NSString *)caPath clientCertificatePath:(NSString *)clientCertificatePath clientKeyPath:(NSString *)clientKeyPath
 {
     if ((self = [super init])) {
         self.caPath = caPath;
+        self.clientCertificatePath = clientCertificatePath;
+        self.clientKeyPath = clientKeyPath;
         self.bufferCipherText = allocate_safely(TLSBoxMaxBufferLength);
     }
     return self;
@@ -77,13 +110,11 @@ int TLSBoxVerifyPeer(int ok, X509_STORE_CTX *ctx) {
 - (BOOL)startWithError:(NSError *__autoreleasing *)error
 {
     if (!TLSBoxIsOpenSSLLoaded) {
-//        OPENSSL_init_ssl(0, NULL);
-
         TLSBoxIsOpenSSLLoaded = YES;
     }
     
     self.ctx = SSL_CTX_new(TLS_client_method());
-    SSL_CTX_set_options(self.ctx, SSL_OP_NO_SSLv2|SSL_OP_NO_SSLv3|SSL_OP_NO_COMPRESSION);
+    SSL_CTX_set_options(self.ctx, SSL_OP_NO_SSLv2 | SSL_OP_NO_SSLv3 | SSL_OP_NO_COMPRESSION);
     if (self.caPath) {
         SSL_CTX_set_verify(self.ctx, SSL_VERIFY_PEER, TLSBoxVerifyPeer);
         if (!SSL_CTX_load_verify_locations(self.ctx, [self.caPath cStringUsingEncoding:NSASCIIStringEncoding], NULL)) {
@@ -97,7 +128,26 @@ int TLSBoxVerifyPeer(int ok, X509_STORE_CTX *ctx) {
     else {
         SSL_CTX_set_verify(self.ctx, SSL_VERIFY_NONE, NULL);
     }
-    SSL_CTX_set1_curves_list(self.ctx, "X25519:prime256v1:secp521r1:secp384r1:secp256k1");
+    
+    if (self.clientCertificatePath) {
+        if (!SSL_CTX_use_certificate_file(self.ctx, [self.clientCertificatePath cStringUsingEncoding:NSASCIIStringEncoding], SSL_FILETYPE_PEM)) {
+            ERR_print_errors_fp(stdout);
+            if (error) {
+                *error = TunnelKitErrorWithCode(TunnelKitErrorCodeTLSBoxClientCertificate);
+            }
+            return NO;
+        }
+
+        if (self.clientKeyPath) {
+            if (!SSL_CTX_use_PrivateKey_file(self.ctx, [self.clientKeyPath cStringUsingEncoding:NSASCIIStringEncoding], SSL_FILETYPE_PEM)) {
+                ERR_print_errors_fp(stdout);
+                if (error) {
+                    *error = TunnelKitErrorWithCode(TunnelKitErrorCodeTLSBoxClientKey);
+                }
+                return NO;
+            }
+        }
+    }
 
     self.ssl = SSL_new(self.ctx);
     

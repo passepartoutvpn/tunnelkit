@@ -14,14 +14,18 @@ xcodebuild_arguments:
 custom_categories:
     - name: Core
       children:
-        - EncryptionProxy
         - IOInterface
         - LinkInterface
         - TunnelInterface
+        - PacketStream
+        - BidirectionalState
         - SessionProxy
         - SessionProxyDelegate
+        - SessionReply
+        - IPv4Settings
+        - IPv6Settings
         - SessionError
     - name: AppExtension
       children:
-        - Certificate
+        - CryptoContainer
         - TunnelKitProvider

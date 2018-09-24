@@ -3,7 +3,36 @@
 //  TunnelKit
 //
 //  Created by Davide De Rosa on 4/15/18.
-//  Copyright © 2018 London Trust Media. All rights reserved.
+//  Copyright (c) 2018 Davide De Rosa. All rights reserved.
+//
+//  https://github.com/keeshux
+//
+//  This file is part of TunnelKit.
+//
+//  TunnelKit is free software: you can redistribute it and/or modify
+//  it under the terms of the GNU General Public License as published by
+//  the Free Software Foundation, either version 3 of the License, or
+//  (at your option) any later version.
+//
+//  TunnelKit is distributed in the hope that it will be useful,
+//  but WITHOUT ANY WARRANTY; without even the implied warranty of
+//  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+//  GNU General Public License for more details.
+//
+//  You should have received a copy of the GNU General Public License
+//  along with TunnelKit.  If not, see <http://www.gnu.org/licenses/>.
+//
+//  This file incorporates work covered by the following copyright and
+//  permission notice:
+//
+//      Copyright (c) 2018-Present Private Internet Access
+//
+//      Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
+//
+//      The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
+//
+//      THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+//
 //
 
 import Foundation
@@ -12,16 +41,13 @@ import SwiftyBeaver
 
 private let log = SwiftyBeaver.self
 
-class NETCPInterface: NSObject, GenericSocket, LinkInterface {
+class NETCPSocket: NSObject, GenericSocket {
     private static var linkContext = 0
     
     private let impl: NWTCPConnection
     
-    private let maxPacketSize: Int
-
-    init(impl: NWTCPConnection, maxPacketSize: Int? = nil) {
+    init(impl: NWTCPConnection) {
         self.impl = impl
-        self.maxPacketSize = maxPacketSize ?? (512 * 1024)
         isActive = false
         isShutdown = false
     }
@@ -53,18 +79,18 @@ class NETCPInterface: NSObject, GenericSocket, LinkInterface {
                 return
             }
             guard _self.isActive else {
-                _self.delegate?.socketShouldChangeProtocol(_self)
+                _ = _self.delegate?.socketShouldChangeProtocol(_self)
                 _self.delegate?.socketDidTimeout(_self)
                 return
             }
         }
-        impl.addObserver(self, forKeyPath: #keyPath(NWTCPConnection.state), options: [.initial, .new], context: &NETCPInterface.linkContext)
-        impl.addObserver(self, forKeyPath: #keyPath(NWTCPConnection.hasBetterPath), options: .new, context: &NETCPInterface.linkContext)
+        impl.addObserver(self, forKeyPath: #keyPath(NWTCPConnection.state), options: [.initial, .new], context: &NETCPSocket.linkContext)
+        impl.addObserver(self, forKeyPath: #keyPath(NWTCPConnection.hasBetterPath), options: .new, context: &NETCPSocket.linkContext)
     }
     
     func unobserve() {
-        impl.removeObserver(self, forKeyPath: #keyPath(NWTCPConnection.state), context: &NETCPInterface.linkContext)
-        impl.removeObserver(self, forKeyPath: #keyPath(NWTCPConnection.hasBetterPath), context: &NETCPInterface.linkContext)
+        impl.removeObserver(self, forKeyPath: #keyPath(NWTCPConnection.state), context: &NETCPSocket.linkContext)
+        impl.removeObserver(self, forKeyPath: #keyPath(NWTCPConnection.hasBetterPath), context: &NETCPSocket.linkContext)
     }
     
     func shutdown() {
@@ -76,17 +102,17 @@ class NETCPInterface: NSObject, GenericSocket, LinkInterface {
         guard impl.hasBetterPath else {
             return nil
         }
-        return NETCPInterface(impl: NWTCPConnection(upgradeFor: impl))
+        return NETCPSocket(impl: NWTCPConnection(upgradeFor: impl))
     }
     
-    func link() -> LinkInterface {
-        return self
+    func link(withMTU mtu: Int) -> LinkInterface {
+        return NETCPLink(impl: impl)
     }
     
     // MARK: Connection KVO (any queue)
     
     override func observeValue(forKeyPath keyPath: String?, of object: Any?, change: [NSKeyValueChangeKey : Any]?, context: UnsafeMutableRawPointer?) {
-        guard (context == &NETCPInterface.linkContext) else {
+        guard (context == &NETCPSocket.linkContext) else {
             super.observeValue(forKeyPath: keyPath, of: object, change: change, context: context)
             return
         }
@@ -148,12 +174,28 @@ class NETCPInterface: NSObject, GenericSocket, LinkInterface {
             break
         }
     }
+}
+
+class NETCPLink: LinkInterface {
+    private let impl: NWTCPConnection
+    
+    private let maxPacketSize: Int
+    
+    init(impl: NWTCPConnection, maxPacketSize: Int? = nil) {
+        self.impl = impl
+        self.mtu = .max
+        self.maxPacketSize = maxPacketSize ?? (512 * 1024)
+    }
 
     // MARK: LinkInterface
     
     let isReliable: Bool = true
 
-    let mtu: Int = .max
+    var remoteAddress: String? {
+        return (impl.remoteAddress as? NWHostEndpoint)?.hostname
+    }
+    
+    let mtu: Int
     
     var packetBufferSize: Int {
         return maxPacketSize
@@ -182,7 +224,7 @@ class NETCPInterface: NSObject, GenericSocket, LinkInterface {
 
                 var newBuffer = buffer
                 newBuffer.append(contentsOf: data)
-                let (until, packets) = CommonPacket.parsed(newBuffer)
+                let (until, packets) = PacketStream.packets(from: newBuffer)
                 newBuffer = newBuffer.subdata(in: until..<newBuffer.count)
                 self?.loopReadPackets(queue, newBuffer, handler)
 
@@ -192,21 +234,21 @@ class NETCPInterface: NSObject, GenericSocket, LinkInterface {
     }
 
     func writePacket(_ packet: Data, completionHandler: ((Error?) -> Void)?) {
-        let stream = CommonPacket.stream(packet)
+        let stream = PacketStream.stream(from: packet)
         impl.write(stream) { (error) in
             completionHandler?(error)
         }
     }
     
     func writePackets(_ packets: [Data], completionHandler: ((Error?) -> Void)?) {
-        let stream = CommonPacket.stream(packets)
+        let stream = PacketStream.stream(from: packets)
         impl.write(stream) { (error) in
             completionHandler?(error)
         }
     }
 }
 
-extension NETCPInterface {
+extension NETCPSocket {
     override var description: String {
         guard let hostEndpoint = impl.endpoint as? NWHostEndpoint else {
             return impl.endpoint.description

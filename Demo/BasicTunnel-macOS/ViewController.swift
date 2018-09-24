@@ -30,13 +30,14 @@ extension ViewController {
             password: password
         )
 
-        var builder = TunnelKitProvider.ConfigurationBuilder(appGroup: ViewController.appGroup)
+        var builder = TunnelKitProvider.ConfigurationBuilder()
 //        let socketType: TunnelKitProvider.SocketType = isTCP ? .tcp : .udp
         let socketType: TunnelKitProvider.SocketType = .udp
         builder.endpointProtocols = [TunnelKitProvider.EndpointProtocol(socketType, port)]
         builder.cipher = .aes128cbc
         builder.digest = .sha1
         builder.mtu = 1350
+        builder.compressionFraming = .compLZO
         builder.renegotiatesAfterSeconds = nil
         builder.shouldDebug = true
         builder.debugLogKey = "Log"
@@ -44,6 +45,7 @@ extension ViewController {
         let configuration = builder.build()
         return try! configuration.generatedTunnelProtocol(
             withBundleIdentifier: ViewController.bundleIdentifier,
+            appGroup: ViewController.appGroup,
             endpoint: endpoint
         )
     }
@@ -71,10 +73,7 @@ class ViewController: NSViewController {
         
         textServer.stringValue = "germany"
         textDomain.stringValue = "privateinternetaccess.com"
-//        textServer.text = "159.122.133.238"
-//        textDomain.text = ""
         textPort.stringValue = "1198"
-//        textPort.text = "8080"
         textUsername.stringValue = "myusername"
         textPassword.stringValue = "mypassword"
         

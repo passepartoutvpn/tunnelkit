@@ -13,17 +13,24 @@ Website: [davidederosa.com][me-website]
 The client is known to work with [OpenVPN®][openvpn] 2.3+ servers. Key renegotiation and replay protection are also included, but full-fledged configuration files (.ovpn) are not currently supported.
 
 - [x] Handshake and tunneling over UDP or TCP
-- [x] Client-initiated renegotiation
-- [x] Replay protection (hardcoded window)
-- [x] Data encryption
-    - AES-CBC (128 and 256 bit)
-    - AES-GCM (128 and 256 bit)
-- [x] HMAC digest
+- [x] Ciphers
+    - AES-CBC (128/192/256 bit)
+    - AES-GCM (128/192/256 bit, 2.4)
+- [x] HMAC digests
     - SHA-1
-    - SHA-256
-- [x] TLS CA validation
+    - SHA-2 (224/256/384/512 bit)
+- [x] NCP (Negotiable Crypto Parameters, 2.4)
+    - Server-side
+- [x] TLS handshake
+    - CA validation
+    - Client certificate
+- [x] Compression framing
+    - Disabled
+    - Compress (2.4)
+    - LZO (deprecated in 2.4)
+- [x] Replay protection (hardcoded window)
 
-Today the library does not support compression, yet requires legacy compression framing. You must set the `comp-lzo no` option server-side (deprecated in OpenVPN 2.4) in order to avoid a confusing loss of data packets. Compression behavior will be properly patched in future versions.
+The library therefore supports compression framing, just not compression. Remember to match server-side compression framing in order to avoid a confusing loss of data packets. E.g. if server has `comp-lzo no`, client must use `compressionFraming = .compLZO`.
 
 ## Installation
 
@@ -73,7 +80,7 @@ For the VPN to work properly, the `BasicTunnel` demo requires:
 
 both in the main app and the tunnel extension target.
 
-In order to test connection to your own server, modify the file `Demo/BasicTunnel-[iOS|macOS]/ViewController.swift` and make sure to set `builder.ca` to the PEM encoded certificate of your VPN server's CA (or `nil` if none).
+In order to test connection to your own server, modify the file `Demo/BasicTunnel-[iOS|macOS]/ViewController.swift` and make sure to set `builder.ca` to the PEM encoded certificate of your VPN server's CA (or `nil` to skip CA validation, however discouraged).
 
 Example:
 
@@ -112,11 +119,13 @@ Currently, the extension supports VPN over both [UDP][ne-udp] and [TCP][ne-tcp] 
 
 ## Contributing
 
-For more details please see [CONTRIBUTING](/CONTRIBUTING.md).
+By contributing to this project you are agreeing to the terms stated in the [Contributor License Agreement (CLA)][contrib-cla].
+
+For more details please see [CONTRIBUTING][contrib-readme].
 
 ## License
 
-This project is licensed under the [GPLv3 license][license-gpl3], which can be found [here](/LICENSE).
+This project is licensed under the [GPLv3 license][license-gpl3], which can be found [here][license-content]. I can provide a different license on request, e.g. if you want to use the library on the App Store. Feel free to contact me in such case.
 
 ## Credits
 
@@ -148,8 +157,12 @@ Bitcoin address: [16w2AWamiH2SS68NYSMDcrbh5MnZ1c5eju][me-btc]
 [ne-udp]: https://developer.apple.com/documentation/networkextension/nwudpsession
 [ne-tcp]: https://developer.apple.com/documentation/networkextension/nwtcpconnection
 
+[license-content]: /LICENSE
 [license-gpl3]: https://choosealicense.com/licenses/gpl-3.0/
 [license-mit]: https://choosealicense.com/licenses/mit/
+
+[contrib-cla]: /CLA.rst
+[contrib-readme]: /CONTRIBUTING.md
 
 [dep-piatunnel-repo]: https://github.com/pia-foss/tunnel-apple
 [dep-piatunnel-license]: https://github.com/pia-foss/tunnel-apple/blob/master/LICENSE

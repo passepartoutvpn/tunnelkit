@@ -3,7 +3,36 @@
 //  TunnelKit
 //
 //  Created by Davide De Rosa on 10/23/17.
-//  Copyright © 2018 London Trust Media. All rights reserved.
+//  Copyright (c) 2018 Davide De Rosa. All rights reserved.
+//
+//  https://github.com/keeshux
+//
+//  This file is part of TunnelKit.
+//
+//  TunnelKit is free software: you can redistribute it and/or modify
+//  it under the terms of the GNU General Public License as published by
+//  the Free Software Foundation, either version 3 of the License, or
+//  (at your option) any later version.
+//
+//  TunnelKit is distributed in the hope that it will be useful,
+//  but WITHOUT ANY WARRANTY; without even the implied warranty of
+//  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+//  GNU General Public License for more details.
+//
+//  You should have received a copy of the GNU General Public License
+//  along with TunnelKit.  If not, see <http://www.gnu.org/licenses/>.
+//
+//  This file incorporates work covered by the following copyright and
+//  permission notice:
+//
+//      Copyright (c) 2018-Present Private Internet Access
+//
+//      Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
+//
+//      The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
+//
+//      THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+//
 //
 
 import Foundation
@@ -11,41 +40,6 @@ import NetworkExtension
 import SwiftyBeaver
 
 private let log = SwiftyBeaver.self
-
-extension TunnelKitProvider {
-    
-    // MARK: Cryptography
-    
-    /// The available encryption algorithms.
-    public enum Cipher: String {
-
-        // WARNING: must match OpenSSL algorithm names
-
-        /// AES encryption with 128-bit key size and CBC.
-        case aes128cbc = "AES-128-CBC"
-        
-        /// AES encryption with 256-bit key size and CBC.
-        case aes256cbc = "AES-256-CBC"
-
-        /// AES encryption with 128-bit key size and GCM.
-        case aes128gcm = "AES-128-GCM"
-
-        /// AES encryption with 256-bit key size and GCM.
-        case aes256gcm = "AES-256-GCM"
-    }
-    
-    /// The available message digest algorithms.
-    public enum Digest: String {
-        
-        // WARNING: must match OpenSSL algorithm names
-        
-        /// SHA1 message digest.
-        case sha1 = "SHA1"
-        
-        /// SHA256 message digest.
-        case sha256 = "SHA256"
-    }
-}
 
 extension TunnelKitProvider {
 
@@ -76,6 +70,26 @@ extension TunnelKitProvider {
             self.port = port
         }
         
+        /// :nodoc:
+        public static func deserialized(_ string: String) throws -> EndpointProtocol {
+            let components = string.components(separatedBy: ":")
+            guard components.count == 2 else {
+                throw ProviderError.configuration(field: "endpointProtocol")
+            }
+            guard let socketType = SocketType(rawValue: components[0]) else {
+                throw ProviderError.configuration(field: "endpointProtocol.socketType")
+            }
+            guard let port = UInt16(components[1]) else {
+                throw ProviderError.configuration(field: "endpointProtocol.port")
+            }
+            return EndpointProtocol(socketType, port)
+        }
+        
+        /// :nodoc:
+        public func serialized() -> String {
+            return "\(socketType.rawValue):\(port)"
+        }
+
         // MARK: Equatable
         
         /// :nodoc:
@@ -87,7 +101,7 @@ extension TunnelKitProvider {
         
         /// :nodoc:
         public var description: String {
-            return "\(socketType.rawValue):\(port)"
+            return serialized()
         }
     }
 
@@ -133,13 +147,6 @@ extension TunnelKitProvider {
     /// The way to create a `TunnelKitProvider.Configuration` object for the tunnel profile.
     public struct ConfigurationBuilder {
         
-        // MARK: App group
-        
-        /// The name of a shared app group.
-        public let appGroup: String
-        
-        // MARK: Tunnel parameters
-        
         /// Prefers resolved addresses over DNS resolution. `resolvedAddresses` must be set and non-empty. Default is `false`.
         ///
         /// - Seealso: `fallbackServerAddresses`
@@ -152,17 +159,29 @@ extension TunnelKitProvider {
         public var endpointProtocols: [EndpointProtocol]
 
         /// The encryption algorithm.
-        public var cipher: Cipher
+        public var cipher: SessionProxy.Cipher
         
         /// The message digest algorithm.
-        public var digest: Digest
+        public var digest: SessionProxy.Digest
         
         /// The optional CA certificate to validate server against. Set to `nil` to disable CA validation (default).
-        public var ca: Certificate?
+        public var ca: CryptoContainer?
         
-        /// The MTU of the tunnel.
-        public var mtu: NSNumber
+        /// The optional client certificate to authenticate with. Set to `nil` to disable client authentication (default).
+        public var clientCertificate: CryptoContainer?
         
+        /// The optional key for `clientCertificate`. Set to `nil` if client authentication unused (default).
+        public var clientKey: CryptoContainer?
+        
+        /// The MTU of the link.
+        public var mtu: Int
+        
+        /// Sets compression framing, disabled by default.
+        public var compressionFraming: SessionProxy.CompressionFraming
+
+        /// Sends periodical keep-alive packets (ping) if set. Useful with stateful firewalls.
+        public var keepAliveSeconds: Int?
+
         /// The number of seconds after which a renegotiation is started. Set to `nil` to disable renegotiation (default).
         public var renegotiatesAfterSeconds: Int?
         
@@ -181,18 +200,19 @@ extension TunnelKitProvider {
         
         /**
          Default initializer.
-         
-         - Parameter appGroup: The name of the app group in which the tunnel extension lives in.
          */
-        public init(appGroup: String) {
-            self.appGroup = appGroup
+        public init() {
             prefersResolvedAddresses = false
             resolvedAddresses = nil
             endpointProtocols = [EndpointProtocol(.udp, 1194)]
             cipher = .aes128cbc
             digest = .sha1
             ca = nil
+            clientCertificate = nil
+            clientKey = nil
             mtu = 1500
+            compressionFraming = .disabled
+            keepAliveSeconds = nil
             renegotiatesAfterSeconds = nil
             shouldDebug = false
             debugLogKey = nil
@@ -202,49 +222,53 @@ extension TunnelKitProvider {
         fileprivate init(providerConfiguration: [String: Any]) throws {
             let S = Configuration.Keys.self
 
-            guard let appGroup = providerConfiguration[S.appGroup] as? String else {
-                throw ProviderError.configuration(field: "protocolConfiguration.providerConfiguration[\(S.appGroup)]")
-            }
-            guard let cipherAlgorithm = providerConfiguration[S.cipherAlgorithm] as? String, let cipher = Cipher(rawValue: cipherAlgorithm) else {
+            guard let cipherAlgorithm = providerConfiguration[S.cipherAlgorithm] as? String, let cipher = SessionProxy.Cipher(rawValue: cipherAlgorithm) else {
                 throw ProviderError.configuration(field: "protocolConfiguration.providerConfiguration[\(S.cipherAlgorithm)]")
             }
-            guard let digestAlgorithm = providerConfiguration[S.digestAlgorithm] as? String, let digest = Digest(rawValue: digestAlgorithm) else {
+            guard let digestAlgorithm = providerConfiguration[S.digestAlgorithm] as? String, let digest = SessionProxy.Digest(rawValue: digestAlgorithm) else {
                 throw ProviderError.configuration(field: "protocolConfiguration.providerConfiguration[\(S.digestAlgorithm)]")
             }
 
-            let ca: Certificate?
-            if let caPEM = providerConfiguration[S.ca] as? String {
-                ca = Certificate(pem: caPEM)
+            let ca: CryptoContainer?
+            let clientCertificate: CryptoContainer?
+            let clientKey: CryptoContainer?
+            if let pem = providerConfiguration[S.ca] as? String {
+                ca = CryptoContainer(pem: pem)
             } else {
                 ca = nil
             }
+            if let pem = providerConfiguration[S.clientCertificate] as? String {
+                guard let keyPEM = providerConfiguration[S.clientKey] as? String else {
+                    throw ProviderError.configuration(field: "protocolConfiguration.providerConfiguration[\(S.clientKey)]")
+                }
 
+                clientCertificate = CryptoContainer(pem: pem)
+                clientKey = CryptoContainer(pem: keyPEM)
+            } else {
+                clientCertificate = nil
+                clientKey = nil
+            }
+            
             prefersResolvedAddresses = providerConfiguration[S.prefersResolvedAddresses] as? Bool ?? false
             resolvedAddresses = providerConfiguration[S.resolvedAddresses] as? [String]
+            
             guard let endpointProtocolsStrings = providerConfiguration[S.endpointProtocols] as? [String], !endpointProtocolsStrings.isEmpty else {
                 throw ProviderError.configuration(field: "protocolConfiguration.providerConfiguration[\(S.endpointProtocols)] is nil or empty")
             }
-            endpointProtocols = try endpointProtocolsStrings.map {
-                let components = $0.components(separatedBy: ":")
-                guard components.count == 2 else {
-                    throw ProviderError.configuration(field: "protocolConfiguration.providerConfiguration[\(S.endpointProtocols)] entries must be in the form 'socketType:port'")
-                }
-                let socketTypeString = components[0]
-                let portString = components[1]
-                guard let socketType = SocketType(rawValue: socketTypeString) else {
-                    throw ProviderError.configuration(field: "protocolConfiguration.providerConfiguration[\(S.endpointProtocols)] unrecognized socketType '\(socketTypeString)'")
-                }
-                guard let port = UInt16(portString) else {
-                    throw ProviderError.configuration(field: "protocolConfiguration.providerConfiguration[\(S.endpointProtocols)] non-numeric port '\(portString)'")
-                }
-                return EndpointProtocol(socketType, port)
-            }
+            endpointProtocols = try endpointProtocolsStrings.map { try EndpointProtocol.deserialized($0) }
             
-            self.appGroup = appGroup
             self.cipher = cipher
             self.digest = digest
             self.ca = ca
-            mtu = providerConfiguration[S.mtu] as? NSNumber ?? 1500
+            self.clientCertificate = clientCertificate
+            self.clientKey = clientKey
+            mtu = providerConfiguration[S.mtu] as? Int ?? 1250
+            if let compressionFramingValue = providerConfiguration[S.compressionFraming] as? Int, let compressionFraming = SessionProxy.CompressionFraming(rawValue: compressionFramingValue) {
+                self.compressionFraming = compressionFraming
+            } else {
+                compressionFraming = .disabled
+            }
+            keepAliveSeconds = providerConfiguration[S.keepAlive] as? Int
             renegotiatesAfterSeconds = providerConfiguration[S.renegotiatesAfter] as? Int
 
             shouldDebug = providerConfiguration[S.debug] as? Bool ?? false
@@ -270,14 +294,17 @@ extension TunnelKitProvider {
          */
         public func build() -> Configuration {
             return Configuration(
-                appGroup: appGroup,
                 prefersResolvedAddresses: prefersResolvedAddresses,
                 resolvedAddresses: resolvedAddresses,
                 endpointProtocols: endpointProtocols,
                 cipher: cipher,
                 digest: digest,
                 ca: ca,
+                clientCertificate: clientCertificate,
+                clientKey: clientKey,
                 mtu: mtu,
+                compressionFraming: compressionFraming,
+                keepAliveSeconds: keepAliveSeconds,
                 renegotiatesAfterSeconds: renegotiatesAfterSeconds,
                 shouldDebug: shouldDebug,
                 debugLogKey: shouldDebug ? debugLogKey : nil,
@@ -287,7 +314,7 @@ extension TunnelKitProvider {
     }
     
     /// Offers a bridge between the abstract `TunnelKitProvider.ConfigurationBuilder` and a concrete `NETunnelProviderProtocol` profile.
-    public struct Configuration {
+    public struct Configuration: Codable {
         struct Keys {
             static let appGroup = "AppGroup"
             
@@ -303,7 +330,15 @@ extension TunnelKitProvider {
             
             static let ca = "CA"
             
+            static let clientCertificate = "ClientCertificate"
+            
+            static let clientKey = "ClientKey"
+            
             static let mtu = "MTU"
+            
+            static let compressionFraming = "CompressionFraming"
+            
+            static let keepAlive = "KeepAlive"
             
             static let renegotiatesAfter = "RenegotiatesAfter"
             
@@ -313,9 +348,6 @@ extension TunnelKitProvider {
             
             static let debugLogFormat = "DebugLogFormat"
         }
-        
-        /// - Seealso: `TunnelKitProvider.ConfigurationBuilder.appGroup`
-        public let appGroup: String
         
         /// - Seealso: `TunnelKitProvider.ConfigurationBuilder.prefersResolvedAddresses`
         public let prefersResolvedAddresses: Bool
@@ -327,17 +359,29 @@ extension TunnelKitProvider {
         public let endpointProtocols: [EndpointProtocol]
         
         /// - Seealso: `TunnelKitProvider.ConfigurationBuilder.cipher`
-        public let cipher: Cipher
+        public let cipher: SessionProxy.Cipher
         
         /// - Seealso: `TunnelKitProvider.ConfigurationBuilder.digest`
-        public let digest: Digest
+        public let digest: SessionProxy.Digest
         
         /// - Seealso: `TunnelKitProvider.ConfigurationBuilder.ca`
-        public let ca: Certificate?
+        public let ca: CryptoContainer?
+        
+        /// - Seealso: `TunnelKitProvider.ConfigurationBuilder.clientCertificate`
+        public let clientCertificate: CryptoContainer?
+        
+        /// - Seealso: `TunnelKitProvider.ConfigurationBuilder.clientKey`
+        public let clientKey: CryptoContainer?
         
         /// - Seealso: `TunnelKitProvider.ConfigurationBuilder.mtu`
-        public let mtu: NSNumber
+        public let mtu: Int
         
+        /// - Seealso: `TunnelKitProvider.ConfigurationBuilder.compressionFraming`
+        public let compressionFraming: SessionProxy.CompressionFraming
+        
+        /// - Seealso: `TunnelKitProvider.ConfigurationBuilder.keepAliveSeconds`
+        public let keepAliveSeconds: Int?
+
         /// - Seealso: `TunnelKitProvider.ConfigurationBuilder.renegotiatesAfterSeconds`
         public let renegotiatesAfterSeconds: Int?
         
@@ -352,18 +396,28 @@ extension TunnelKitProvider {
         
         // MARK: Shortcuts
 
-        var defaults: UserDefaults? {
-            return UserDefaults(suiteName: appGroup)
-        }
-        
-        var existingLog: [String]? {
+        func existingLog(in defaults: UserDefaults) -> [String]? {
             guard shouldDebug, let key = debugLogKey else {
                 return nil
             }
-            return defaults?.array(forKey: key) as? [String]
+            return defaults.array(forKey: key) as? [String]
         }
         
         // MARK: API
+        
+        /**
+         Parses the app group from a provider configuration map.
+         
+         - Parameter from: The map to parse.
+         - Returns: The parsed app group.
+         - Throws: `ProviderError.configuration` if `providerConfiguration` does not contain an app group.
+         */
+        public static func appGroup(from providerConfiguration: [String: Any]) throws -> String {
+            guard let appGroup = providerConfiguration[Keys.appGroup] as? String else {
+                throw ProviderError.configuration(field: "protocolConfiguration.providerConfiguration[\(Keys.appGroup)]")
+            }
+            return appGroup
+        }
         
         /**
          Parses a new `TunnelKitProvider.Configuration` object from a provider configuration map.
@@ -380,17 +434,16 @@ extension TunnelKitProvider {
         /**
          Returns a dictionary representation of this configuration for use with `NETunnelProviderProtocol.providerConfiguration`.
 
+         - Parameter appGroup: The name of the app group in which the tunnel extension lives in.
          - Returns: The dictionary representation of `self`.
          */
-        public func generatedProviderConfiguration() -> [String: Any] {
+        public func generatedProviderConfiguration(appGroup: String) -> [String: Any] {
             let S = Keys.self
             
             var dict: [String: Any] = [
                 S.appGroup: appGroup,
                 S.prefersResolvedAddresses: prefersResolvedAddresses,
-                S.endpointProtocols: endpointProtocols.map {
-                    "\($0.socketType.rawValue):\($0.port)"
-                },
+                S.endpointProtocols: endpointProtocols.map { $0.serialized() },
                 S.cipherAlgorithm: cipher.rawValue,
                 S.digestAlgorithm: digest.rawValue,
                 S.mtu: mtu,
@@ -399,8 +452,18 @@ extension TunnelKitProvider {
             if let ca = ca {
                 dict[S.ca] = ca.pem
             }
+            if let clientCertificate = clientCertificate {
+                dict[S.clientCertificate] = clientCertificate.pem
+            }
+            if let clientKey = clientKey {
+                dict[S.clientKey] = clientKey.pem
+            }
             if let resolvedAddresses = resolvedAddresses {
                 dict[S.resolvedAddresses] = resolvedAddresses
+            }
+            dict[S.compressionFraming] = compressionFraming.rawValue
+            if let keepAliveSeconds = keepAliveSeconds {
+                dict[S.keepAlive] = keepAliveSeconds
             }
             if let renegotiatesAfterSeconds = renegotiatesAfterSeconds {
                 dict[S.renegotiatesAfter] = renegotiatesAfterSeconds
@@ -418,11 +481,12 @@ extension TunnelKitProvider {
          Generates a `NETunnelProviderProtocol` from this configuration.
          
          - Parameter bundleIdentifier: The provider bundle identifier required to locate the tunnel extension.
+         - Parameter appGroup: The name of the app group in which the tunnel extension lives in.
          - Parameter endpoint: The `TunnelKitProvider.AuthenticatedEndpoint` the tunnel will connect to.
          - Returns: The generated `NETunnelProviderProtocol` object.
          - Throws: `ProviderError.configuration` if unable to store the `endpoint.password` to the `appGroup` keychain.
          */
-        public func generatedTunnelProtocol(withBundleIdentifier bundleIdentifier: String, endpoint: AuthenticatedEndpoint) throws -> NETunnelProviderProtocol {
+        public func generatedTunnelProtocol(withBundleIdentifier bundleIdentifier: String, appGroup: String, endpoint: AuthenticatedEndpoint) throws -> NETunnelProviderProtocol {
             let protocolConfiguration = NETunnelProviderProtocol()
             
             let keychain = Keychain(group: appGroup)
@@ -436,7 +500,7 @@ extension TunnelKitProvider {
             protocolConfiguration.serverAddress = endpoint.hostname
             protocolConfiguration.username = endpoint.username
             protocolConfiguration.passwordReference = try? keychain.passwordReference(for: endpoint.username)
-            protocolConfiguration.providerConfiguration = generatedProviderConfiguration()
+            protocolConfiguration.providerConfiguration = generatedProviderConfiguration(appGroup: appGroup)
             
             return protocolConfiguration
         }
@@ -446,22 +510,33 @@ extension TunnelKitProvider {
                 log.info("App version: \(appVersion)")
             }
             
-//            log.info("Address: \(endpoint.hostname):\(endpoint.port)")
-            log.info("Protocols: \(endpointProtocols)")
-            log.info("Cipher: \(cipher.rawValue)")
-            log.info("Digest: \(digest.rawValue)")
+//            log.info("\tAddress: \(endpoint.hostname):\(endpoint.port)")
+            log.info("\tProtocols: \(endpointProtocols)")
+            log.info("\tCipher: \(cipher)")
+            log.info("\tDigest: \(digest)")
             if let _ = ca {
-                log.info("CA verification: enabled")
+                log.info("\tCA verification: enabled")
             } else {
-                log.info("CA verification: disabled")
+                log.info("\tCA verification: disabled")
             }
-            log.info("MTU: \(mtu)")
+            if let _ = clientCertificate {
+                log.info("\tClient verification: enabled")
+            } else {
+                log.info("\tClient verification: disabled")
+            }
+            log.info("\tMTU: \(mtu)")
+            log.info("\tCompression framing: \(compressionFraming)")
+            if let keepAliveSeconds = keepAliveSeconds {
+                log.info("\tKeep-alive: \(keepAliveSeconds) seconds")
+            } else {
+                log.info("\tKeep-alive: default")
+            }
             if let renegotiatesAfterSeconds = renegotiatesAfterSeconds {
-                log.info("Renegotiation: \(renegotiatesAfterSeconds) seconds")
+                log.info("\tRenegotiation: \(renegotiatesAfterSeconds) seconds")
             } else {
-                log.info("Renegotiation: never")
+                log.info("\tRenegotiation: never")
             }
-            log.info("Debug: \(shouldDebug)")
+            log.info("\tDebug: \(shouldDebug)")
         }
     }
 }
@@ -476,15 +551,20 @@ extension TunnelKitProvider.Configuration: Equatable {
      - Returns: An editable `TunnelKitProvider.ConfigurationBuilder` initialized with this configuration.
      */
     public func builder() -> TunnelKitProvider.ConfigurationBuilder {
-        var builder = TunnelKitProvider.ConfigurationBuilder(appGroup: appGroup)
+        var builder = TunnelKitProvider.ConfigurationBuilder()
         builder.endpointProtocols = endpointProtocols
         builder.cipher = cipher
         builder.digest = digest
         builder.ca = ca
+        builder.clientCertificate = clientCertificate
+        builder.clientKey = clientKey
         builder.mtu = mtu
+        builder.compressionFraming = compressionFraming
+        builder.keepAliveSeconds = keepAliveSeconds
         builder.renegotiatesAfterSeconds = renegotiatesAfterSeconds
         builder.shouldDebug = shouldDebug
         builder.debugLogKey = debugLogKey
+        builder.debugLogFormat = debugLogFormat
         return builder
     }
 
@@ -495,8 +575,26 @@ extension TunnelKitProvider.Configuration: Equatable {
             (lhs.cipher == rhs.cipher) &&
             (lhs.digest == rhs.digest) &&
             (lhs.ca == rhs.ca) &&
+            (lhs.clientCertificate == rhs.clientCertificate) &&
+            (lhs.clientKey == rhs.clientKey) &&
             (lhs.mtu == rhs.mtu) &&
+            (lhs.compressionFraming == rhs.compressionFraming) &&
+            (lhs.keepAliveSeconds == rhs.keepAliveSeconds) &&
             (lhs.renegotiatesAfterSeconds == rhs.renegotiatesAfterSeconds)
         )
+    }
+}
+
+/// :nodoc:
+extension TunnelKitProvider.EndpointProtocol: Codable {
+    public init(from decoder: Decoder) throws {
+        let container = try decoder.singleValueContainer()
+        let proto = try TunnelKitProvider.EndpointProtocol.deserialized(container.decode(String.self))
+        self.init(proto.socketType, proto.port)
+    }
+    
+    public func encode(to encoder: Encoder) throws {
+        var container = encoder.singleValueContainer()
+        try container.encode(serialized())
     }
 }

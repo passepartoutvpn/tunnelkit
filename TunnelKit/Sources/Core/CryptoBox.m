@@ -3,7 +3,35 @@
 //  TunnelKit
 //
 //  Created by Davide De Rosa on 2/4/17.
-//  Copyright © 2018 London Trust Media. All rights reserved.
+//  Copyright (c) 2018 Davide De Rosa. All rights reserved.
+//
+//  https://github.com/keeshux
+//
+//  This file is part of TunnelKit.
+//
+//  TunnelKit is free software: you can redistribute it and/or modify
+//  it under the terms of the GNU General Public License as published by
+//  the Free Software Foundation, either version 3 of the License, or
+//  (at your option) any later version.
+//
+//  TunnelKit is distributed in the hope that it will be useful,
+//  but WITHOUT ANY WARRANTY; without even the implied warranty of
+//  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+//  GNU General Public License for more details.
+//
+//  You should have received a copy of the GNU General Public License
+//  along with TunnelKit.  If not, see <http://www.gnu.org/licenses/>.
+//
+//  This file incorporates work covered by the following copyright and
+//  permission notice:
+//
+//      Copyright (c) 2018-Present Private Internet Access
+//
+//      Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
+//
+//      The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
+//
+//      THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 //
 
 #import <openssl/evp.h>
@@ -22,6 +50,7 @@
 
 @property (nonatomic, strong) NSString *cipherAlgorithm;
 @property (nonatomic, strong) NSString *digestAlgorithm;
+@property (nonatomic, assign) NSInteger digestLength;
 
 @property (nonatomic, strong) id<Encrypter> encrypter;
 @property (nonatomic, strong) id<Decrypter> decrypter;
@@ -32,6 +61,11 @@
 
 + (void)initialize
 {
+}
+
++ (NSString *)version
+{
+    return [NSString stringWithCString:OpenSSL_version(OPENSSL_VERSION) encoding:NSASCIIStringEncoding];
 }
 
 + (BOOL)preparePRNGWithSeed:(const uint8_t *)seed length:(NSInteger)length
@@ -47,8 +81,7 @@
 
 - (instancetype)initWithCipherAlgorithm:(NSString *)cipherAlgorithm digestAlgorithm:(NSString *)digestAlgorithm
 {
-    NSParameterAssert(cipherAlgorithm);
-//    NSParameterAssert(digestAlgorithm);
+    NSParameterAssert(cipherAlgorithm || digestAlgorithm);
     
     if ((self = [super init])) {
         self.cipherAlgorithm = [cipherAlgorithm lowercaseString];
@@ -70,38 +103,44 @@
                        hmacDecKey:(ZeroingData *)hmacDecKey
                             error:(NSError *__autoreleasing *)error
 {
-    NSParameterAssert(cipherEncKey);
-    NSParameterAssert(cipherDecKey);
-    NSParameterAssert(hmacEncKey);
-    NSParameterAssert(hmacDecKey);
+    NSParameterAssert((cipherEncKey && cipherDecKey) || (hmacEncKey && hmacDecKey));
 
-    if ([self.cipherAlgorithm hasSuffix:@"-cbc"]) {
-        if (!self.digestAlgorithm) {
+    if (self.cipherAlgorithm) {
+        if ([self.cipherAlgorithm hasSuffix:@"-cbc"]) {
+            if (!self.digestAlgorithm) {
+                if (error) {
+                    *error = TunnelKitErrorWithCode(TunnelKitErrorCodeCryptoBoxAlgorithm);
+                }
+                return NO;
+            }
+            CryptoCBC *cbc = [[CryptoCBC alloc] initWithCipherName:self.cipherAlgorithm digestName:self.digestAlgorithm];
+            self.encrypter = cbc;
+            self.decrypter = cbc;
+        }
+        else if ([self.cipherAlgorithm hasSuffix:@"-gcm"]) {
+            CryptoAEAD *gcm = [[CryptoAEAD alloc] initWithCipherName:self.cipherAlgorithm];
+            self.encrypter = gcm;
+            self.decrypter = gcm;
+        }
+        // not supported
+        else {
             if (error) {
                 *error = TunnelKitErrorWithCode(TunnelKitErrorCodeCryptoBoxAlgorithm);
             }
             return NO;
         }
-        CryptoCBC *cbc = [[CryptoCBC alloc] initWithCipherName:self.cipherAlgorithm
-                                                    digestName:self.digestAlgorithm];
+    }
+    else {
+        CryptoCBC *cbc = [[CryptoCBC alloc] initWithCipherName:nil digestName:self.digestAlgorithm];
         self.encrypter = cbc;
         self.decrypter = cbc;
-    }
-    else if ([self.cipherAlgorithm hasSuffix:@"-gcm"]) {
-        CryptoAEAD *gcm = [[CryptoAEAD alloc] initWithCipherName:self.cipherAlgorithm];
-        self.encrypter = gcm;
-        self.decrypter = gcm;
-    }
-    // not supported
-    else {
-        if (error) {
-            *error = TunnelKitErrorWithCode(TunnelKitErrorCodeCryptoBoxAlgorithm);
-        }
-        return NO;
     }
     
     [self.encrypter configureEncryptionWithCipherKey:cipherEncKey hmacKey:hmacEncKey];
     [self.decrypter configureDecryptionWithCipherKey:cipherDecKey hmacKey:hmacDecKey];
+
+    NSAssert(self.encrypter.digestLength == self.decrypter.digestLength, @"Digest length mismatch in encrypter/decrypter");
+    self.digestLength = self.encrypter.digestLength;
 
     return YES;
 }

@@ -2,8 +2,36 @@
 //  CryptoAEAD.m
 //  TunnelKit
 //
-//  Created by Davide De Rosa on 06/07/2018.
-//  Copyright © 2018 London Trust Media. All rights reserved.
+//  Created by Davide De Rosa on 7/6/18.
+//  Copyright (c) 2018 Davide De Rosa. All rights reserved.
+//
+//  https://github.com/keeshux
+//
+//  This file is part of TunnelKit.
+//
+//  TunnelKit is free software: you can redistribute it and/or modify
+//  it under the terms of the GNU General Public License as published by
+//  the Free Software Foundation, either version 3 of the License, or
+//  (at your option) any later version.
+//
+//  TunnelKit is distributed in the hope that it will be useful,
+//  but WITHOUT ANY WARRANTY; without even the implied warranty of
+//  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+//  GNU General Public License for more details.
+//
+//  You should have received a copy of the GNU General Public License
+//  along with TunnelKit.  If not, see <http://www.gnu.org/licenses/>.
+//
+//  This file incorporates work covered by the following copyright and
+//  permission notice:
+//
+//      Copyright (c) 2018-Present Private Internet Access
+//
+//      Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
+//
+//      The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
+//
+//      THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 //
 
 #import <openssl/evp.h>
@@ -22,7 +50,6 @@ const NSInteger CryptoAEADTagLength     = 16;
 @property (nonatomic, unsafe_unretained) const EVP_CIPHER *cipher;
 @property (nonatomic, assign) int cipherKeyLength;
 @property (nonatomic, assign) int cipherIVLength; // 12 (AD packetId + HMAC key)
-@property (nonatomic, assign) int overheadLength;
 @property (nonatomic, assign) int extraPacketIdOffset;
 
 @property (nonatomic, unsafe_unretained) EVP_CIPHER_CTX *cipherCtxEnc;
@@ -45,7 +72,6 @@ const NSInteger CryptoAEADTagLength     = 16;
         
         self.cipherKeyLength = EVP_CIPHER_key_length(self.cipher);
         self.cipherIVLength = EVP_CIPHER_iv_length(self.cipher);
-        self.overheadLength = CryptoAEADTagLength;
         self.extraLength = PacketIdLength;
         self.extraPacketIdOffset = 0;
         
@@ -69,11 +95,22 @@ const NSInteger CryptoAEADTagLength     = 16;
     self.cipher = NULL;
 }
 
+- (int)digestLength
+{
+    return 0;
+}
+
+- (NSInteger)encryptionCapacityWithLength:(NSInteger)length
+{
+    return safe_crypto_capacity(length, CryptoAEADTagLength);
+}
+
 #pragma mark Encrypter
 
 - (void)configureEncryptionWithCipherKey:(ZeroingData *)cipherKey hmacKey:(ZeroingData *)hmacKey
 {
     NSParameterAssert(cipherKey.count >= self.cipherKeyLength);
+    NSParameterAssert(hmacKey);
     
     EVP_CIPHER_CTX_reset(self.cipherCtxEnc);
     EVP_CipherInit(self.cipherCtxEnc, self.cipher, cipherKey.bytes, NULL, 1);
@@ -81,25 +118,7 @@ const NSInteger CryptoAEADTagLength     = 16;
     [self prepareIV:self.cipherIVEnc withHMACKey:hmacKey];
 }
 
-- (NSData *)encryptData:(NSData *)data offset:(NSInteger)offset extra:(nonnull const uint8_t *)extra error:(NSError *__autoreleasing *)error
-{
-    NSParameterAssert(data);
-    NSParameterAssert(extra);
-
-    const uint8_t *bytes = data.bytes + offset;
-    const int length = (int)(data.length - offset);
-    const int maxOutputSize = (int)safe_crypto_capacity(data.length, self.overheadLength);
-
-    NSMutableData *dest = [[NSMutableData alloc] initWithLength:maxOutputSize];
-    NSInteger encryptedLength = INT_MAX;
-    if (![self encryptBytes:bytes length:length dest:dest.mutableBytes destLength:&encryptedLength extra:extra error:error]) {
-        return nil;
-    }
-    dest.length = encryptedLength;
-    return dest;
-}
-
-- (BOOL)encryptBytes:(const uint8_t *)bytes length:(NSInteger)length dest:(uint8_t *)dest destLength:(NSInteger *)destLength extra:(nonnull const uint8_t *)extra error:(NSError *__autoreleasing *)error
+- (BOOL)encryptBytes:(const uint8_t *)bytes length:(NSInteger)length dest:(uint8_t *)dest destLength:(NSInteger *)destLength extra:(const uint8_t *)extra error:(NSError *__autoreleasing *)error
 {
     NSParameterAssert(extra);
 
@@ -137,32 +156,15 @@ const NSInteger CryptoAEADTagLength     = 16;
 - (void)configureDecryptionWithCipherKey:(ZeroingData *)cipherKey hmacKey:(ZeroingData *)hmacKey
 {
     NSParameterAssert(cipherKey.count >= self.cipherKeyLength);
-    
+    NSParameterAssert(hmacKey);
+
     EVP_CIPHER_CTX_reset(self.cipherCtxDec);
     EVP_CipherInit(self.cipherCtxDec, self.cipher, cipherKey.bytes, NULL, 0);
     
     [self prepareIV:self.cipherIVDec withHMACKey:hmacKey];
 }
 
-- (NSData *)decryptData:(NSData *)data offset:(NSInteger)offset extra:(nonnull const uint8_t *)extra error:(NSError *__autoreleasing *)error
-{
-    NSParameterAssert(data);
-    NSParameterAssert(extra);
-
-    const uint8_t *bytes = data.bytes + offset;
-    const int length = (int)(data.length - offset);
-    const int maxOutputSize = (int)safe_crypto_capacity(data.length, self.overheadLength);
-
-    NSMutableData *dest = [[NSMutableData alloc] initWithLength:maxOutputSize];
-    NSInteger decryptedLength;
-    if (![self decryptBytes:bytes length:length dest:dest.mutableBytes destLength:&decryptedLength extra:extra error:error]) {
-        return nil;
-    }
-    dest.length = decryptedLength;
-    return dest;
-}
-
-- (BOOL)decryptBytes:(const uint8_t *)bytes length:(NSInteger)length dest:(uint8_t *)dest destLength:(NSInteger *)destLength extra:(nonnull const uint8_t *)extra error:(NSError *__autoreleasing *)error
+- (BOOL)decryptBytes:(const uint8_t *)bytes length:(NSInteger)length dest:(uint8_t *)dest destLength:(NSInteger *)destLength extra:(const uint8_t *)extra error:(NSError *__autoreleasing *)error
 {
     NSParameterAssert(extra);
 
@@ -188,6 +190,12 @@ const NSInteger CryptoAEADTagLength     = 16;
 //    NSLog(@">>> DEC dest: %@", [NSData dataWithBytes:dest length:*destLength]);
 
     TUNNEL_CRYPTO_RETURN_STATUS(code)
+}
+
+- (BOOL)verifyBytes:(const uint8_t *)bytes length:(NSInteger)length extra:(const uint8_t *)extra error:(NSError *__autoreleasing *)error
+{
+    [NSException raise:NSInvalidArgumentException format:@"Verification not supported"];
+    return NO;
 }
 
 - (id<DataPathDecrypter>)dataPathDecrypter
@@ -227,93 +235,100 @@ const NSInteger CryptoAEADTagLength     = 16;
     return self;
 }
 
-- (int)overheadLength
-{
-    return self.crypto.overheadLength;
-}
+#pragma mark DataPathChannel
 
 - (void)setPeerId:(uint32_t)peerId
 {
-    _peerId = peerId & 0xffffff;
+    peerId &= 0xffffff;
     
-    if (_peerId == PacketPeerIdDisabled) {
-        self.headerLength = 1;
+    if (peerId == PacketPeerIdDisabled) {
+        self.headerLength = PacketOpcodeLength;
         self.crypto.extraLength = PacketIdLength;
         self.crypto.extraPacketIdOffset = 0;
         self.setDataHeader = ^(uint8_t *to, uint8_t key) {
-            PacketHeaderSet(to, PacketCodeDataV1, key);
+            PacketHeaderSet(to, PacketCodeDataV1, key, nil);
         };
+        self.checkPeerId = NULL;
     }
     else {
-        self.headerLength = 4;
+        self.headerLength = PacketOpcodeLength + PacketPeerIdLength;
         self.crypto.extraLength = self.headerLength + PacketIdLength;
         self.crypto.extraPacketIdOffset = self.headerLength;
         self.setDataHeader = ^(uint8_t *to, uint8_t key) {
             PacketHeaderSetDataV2(to, key, peerId);
         };
         self.checkPeerId = ^BOOL(const uint8_t *ptr) {
-            return (PacketHeaderGetDataV2PeerId(ptr) == self.peerId);
+            return (PacketHeaderGetDataV2PeerId(ptr) == peerId);
         };
     }
 }
 
-#pragma mark DataPathEncrypter
-
-- (void)assembleDataPacketWithPacketId:(uint32_t)packetId compression:(uint8_t)compression payload:(NSData *)payload into:(uint8_t *)dest length:(NSInteger *)length
+- (NSInteger)encryptionCapacityWithLength:(NSInteger)length
 {
-    uint8_t *ptr = dest;
-    *ptr = compression;
-    ptr += sizeof(uint8_t);
-    memcpy(ptr, payload.bytes, payload.length);
-    *length = (int)(ptr - dest + payload.length);
+    return [self.crypto encryptionCapacityWithLength:length];
 }
 
-- (NSData *)encryptedDataPacketWithKey:(uint8_t)key packetId:(uint32_t)packetId payload:(const uint8_t *)payload payloadLength:(NSInteger)payloadLength error:(NSError *__autoreleasing *)error
+#pragma mark DataPathEncrypter
+
+- (void)assembleDataPacketWithBlock:(DataPathAssembleBlock)block packetId:(uint32_t)packetId payload:(NSData *)payload into:(uint8_t *)packetBytes length:(NSInteger *)packetLength
 {
-    const int capacity = self.headerLength + PacketIdLength + (int)safe_crypto_capacity(payloadLength, self.crypto.overheadLength);
+    *packetLength = payload.length;
+    if (!block) {
+        memcpy(packetBytes, payload.bytes, payload.length);
+        return;
+    }
+
+    NSInteger packetLengthOffset;
+    block(packetBytes, &packetLengthOffset, payload);
+    *packetLength += packetLengthOffset;
+}
+
+- (NSData *)encryptedDataPacketWithKey:(uint8_t)key packetId:(uint32_t)packetId packetBytes:(const uint8_t *)packetBytes packetLength:(NSInteger)packetLength error:(NSError *__autoreleasing *)error
+{
+    const int capacity = self.headerLength + PacketIdLength + (int)[self.crypto encryptionCapacityWithLength:packetLength];
     NSMutableData *encryptedPacket = [[NSMutableData alloc] initWithLength:capacity];
     uint8_t *ptr = encryptedPacket.mutableBytes;
-    NSInteger encryptedPayloadLength = INT_MAX;
+    NSInteger encryptedPacketLength = INT_MAX;
 
     self.setDataHeader(ptr, key);
     *(uint32_t *)(ptr + self.headerLength) = htonl(packetId);
 
     const uint8_t *extra = ptr; // AD = header + peer id + packet id
-    if (self.peerId == PacketPeerIdDisabled) {
+    if (!self.checkPeerId) {
         extra += self.headerLength; // AD = packet id only
     }
 
-    const BOOL success = [self.crypto encryptBytes:payload
-                                            length:payloadLength
+    const BOOL success = [self.crypto encryptBytes:packetBytes
+                                            length:packetLength
                                               dest:(ptr + self.headerLength + PacketIdLength) // skip header and packet id
-                                        destLength:&encryptedPayloadLength
+                                        destLength:&encryptedPacketLength
                                              extra:extra
                                              error:error];
     
-    NSAssert(encryptedPayloadLength <= capacity, @"Did not allocate enough bytes for payload");
+    NSAssert(encryptedPacketLength <= capacity, @"Did not allocate enough bytes for payload");
     
     if (!success) {
         return nil;
     }
     
-    encryptedPacket.length = self.headerLength + PacketIdLength + encryptedPayloadLength;
+    encryptedPacket.length = self.headerLength + PacketIdLength + encryptedPacketLength;
     return encryptedPacket;
 }
 
 #pragma mark DataPathDecrypter
 
-- (BOOL)decryptDataPacket:(NSData *)packet into:(uint8_t *)dest length:(NSInteger *)length packetId:(uint32_t *)packetId error:(NSError *__autoreleasing *)error
+- (BOOL)decryptDataPacket:(NSData *)packet into:(uint8_t *)packetBytes length:(NSInteger *)packetLength packetId:(uint32_t *)packetId error:(NSError *__autoreleasing *)error
 {
     const uint8_t *extra = packet.bytes; // AD = header + peer id + packet id
-    if (self.peerId == PacketPeerIdDisabled) {
+    if (!self.checkPeerId) {
         extra += self.headerLength; // AD = packet id only
     }
 
     // skip header + packet id
     const BOOL success = [self.crypto decryptBytes:(packet.bytes + self.headerLength + PacketIdLength)
                                             length:(int)(packet.length - (self.headerLength + PacketIdLength))
-                                              dest:dest
-                                        destLength:length
+                                              dest:packetBytes
+                                        destLength:packetLength
                                              extra:extra
                                              error:error];
     if (!success) {
@@ -329,13 +344,19 @@ const NSInteger CryptoAEADTagLength     = 16;
     return YES;
 }
 
-- (const uint8_t *)parsePayloadWithDataPacket:(const uint8_t *)packet packetLength:(NSInteger)packetLength length:(NSInteger *)length compression:(uint8_t *)compression
+- (const uint8_t *)parsePayloadWithBlock:(DataPathParseBlock)block length:(NSInteger *)length packetBytes:(uint8_t *)packetBytes packetLength:(NSInteger)packetLength
 {
-    const uint8_t *ptr = packet;
-    *compression = *ptr;
-    ptr += sizeof(uint8_t); // compression byte
-    *length = packetLength - (int)(ptr - packet);
-    return ptr;
+    uint8_t *payload = packetBytes;
+    *length = packetLength - (int)(payload - packetBytes);
+    if (!block) {
+        return payload;
+    }
+    
+    NSInteger payloadOffset;
+    NSInteger payloadHeaderLength;
+    block(payload, &payloadOffset, &payloadHeaderLength, packetBytes, packetLength);
+    *length -= payloadHeaderLength;
+    return payload + payloadOffset;
 }
 
 @end

@@ -30,12 +30,13 @@ extension ViewController {
             password: password
         )
         
-        var builder = TunnelKitProvider.ConfigurationBuilder(appGroup: ViewController.appGroup)
+        var builder = TunnelKitProvider.ConfigurationBuilder()
         let socketType: TunnelKitProvider.SocketType = switchTCP.isOn ? .tcp : .udp
         builder.endpointProtocols = [TunnelKitProvider.EndpointProtocol(socketType, port)]
         builder.cipher = .aes128cbc
         builder.digest = .sha1
         builder.mtu = 1350
+        builder.compressionFraming = .compLZO
         builder.renegotiatesAfterSeconds = nil
         builder.shouldDebug = true
         builder.debugLogKey = "Log"
@@ -43,6 +44,7 @@ extension ViewController {
         let configuration = builder.build()
         return try! configuration.generatedTunnelProtocol(
             withBundleIdentifier: ViewController.bundleIdentifier,
+            appGroup: ViewController.appGroup,
             endpoint: endpoint
         )
     }
@@ -76,8 +78,6 @@ class ViewController: UIViewController, URLSessionDataDelegate {
         
         textServer.text = "germany"
         textDomain.text = "privateinternetaccess.com"
-//        textServer.text = "159.122.133.238"
-//        textDomain.text = ""
         textPort.text = "1198"
         switchTCP.isOn = false
         textUsername.text = "myusername"
@@ -121,9 +121,9 @@ class ViewController: UIViewController, URLSessionDataDelegate {
     
     @IBAction func tcpClicked(_ sender: Any) {
         if switchTCP.isOn {
-            textPort.text = "443"
+            textPort.text = "502"
         } else {
-            textPort.text = "8080"
+            textPort.text = "1198"
         }
     }
     

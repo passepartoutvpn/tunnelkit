@@ -30,6 +30,6 @@
 		<string>$(PRODUCT_MODULE_NAME).PacketTunnelProvider</string>
 	</dict>
 	<key>NSHumanReadableCopyright</key>
-	<string>Copyright © 2018 London Trust Media. All rights reserved.</string>
+	<string>Copyright (c) 2018 Davide De Rosa. All rights reserved.</string>
 </dict>
 </plist>

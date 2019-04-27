@@ -538,9 +538,13 @@ extension TunnelKitProvider: SessionProxyDelegate {
 
             // route all traffic to VPN?
             if routingPolicies?.contains(.IPv4) ?? false {
-                let defaultRoute = NEIPv4Route.default()
-                defaultRoute.gatewayAddress = ipv4.defaultGateway
-                routes.append(defaultRoute)
+//                let defaultRoute = NEIPv4Route.default()
+//                defaultRoute.gatewayAddress = ipv4.defaultGateway
+//                routes.append(defaultRoute)
+                for network in ["0.0.0.0", "128.0.0.0"] {
+                    let route = NEIPv4Route(destinationAddress: network, subnetMask: "128.0.0.0")
+                    routes.append(route)
+                }
             }
             
             for r in ipv4.routes {
@@ -560,9 +564,13 @@ extension TunnelKitProvider: SessionProxyDelegate {
 
             // route all traffic to VPN?
             if routingPolicies?.contains(.IPv6) ?? false {
-                let defaultRoute = NEIPv6Route.default()
-                defaultRoute.gatewayAddress = ipv6.defaultGateway
-                routes.append(defaultRoute)
+//                let defaultRoute = NEIPv6Route.default()
+//                defaultRoute.gatewayAddress = ipv6.defaultGateway
+//                routes.append(defaultRoute)
+                for network in ["2000::", "3000::"] {
+                    let route = NEIPv6Route(destinationAddress: network, networkPrefixLength: 4)
+                    routes.append(route)
+                }
             }
 
             for r in ipv6.routes {

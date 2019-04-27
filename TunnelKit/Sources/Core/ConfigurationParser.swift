@@ -123,23 +123,21 @@ public class ConfigurationParser {
     }
     
     private enum RedirectGateway: String {
-        case local
-
-        case autolocal
-        
-        case def1
-        
-        case bypassDHCP = "bypass-dhcp"
-        
-        case bypassDNS = "bypass-dns"
-        
-        case blockLocal = "block-local"
-
-        case ipv4
+        case def1 // default
 
         case noIPv4 = "!ipv4"
         
         case ipv6
+
+        case local
+        
+        case autolocal
+        
+        case blockLocal = "block-local"
+
+        case bypassDHCP = "bypass-dhcp"
+        
+        case bypassDNS = "bypass-dns"
     }
     
     /// Result of the parser.
@@ -541,17 +539,13 @@ public class ConfigurationParser {
             Regex.redirectGateway.enumerateArguments(in: line) {
 
                 // redirect IPv4 by default
-                optRedirectGateway = [.ipv4]
+                optRedirectGateway = [.def1]
 
                 for arg in $0 {
                     guard let opt = RedirectGateway(rawValue: arg) else {
                         continue
                     }
-                    if opt == .noIPv4 {
-                        optRedirectGateway?.remove(.ipv4)
-                    } else {
-                        optRedirectGateway?.insert(opt)
-                    }
+                    optRedirectGateway?.insert(opt)
                 }
             }
 
@@ -720,9 +714,25 @@ public class ConfigurationParser {
         sessionBuilder.httpsProxy = optHTTPSProxy
         sessionBuilder.proxyBypassDomains = optProxyBypass
 
-        // FIXME: only redirects all traffic until --redirect-gateway is properly interpreted
-        if let _ = optRedirectGateway {
-            sessionBuilder.routingPolicies = [.IPv4, .IPv6]
+        if let flags = optRedirectGateway {
+            var policies: Set<SessionProxy.RoutingPolicy> = []
+            for opt in flags {
+                switch opt {
+                case .def1:
+                    policies.insert(.IPv4)
+                    
+                case .ipv6:
+                    policies.insert(.IPv6)
+
+                default:
+                    // TODO: handle [auto]local and block-*
+                    continue
+                }
+            }
+            if flags.contains(.noIPv4) {
+                policies.remove(.IPv4)
+            }
+            sessionBuilder.routingPolicies = [SessionProxy.RoutingPolicy](policies)
         }
 
         //

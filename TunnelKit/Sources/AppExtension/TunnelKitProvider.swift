@@ -477,7 +477,11 @@ extension TunnelKitProvider: SessionProxyDelegate {
         log.info("\tIPv4: \(reply.options.ipv4?.description ?? "not configured")")
         log.info("\tIPv6: \(reply.options.ipv6?.description ?? "not configured")")
         // FIXME: refine logging of other routing policies
-        log.info("\tDefault gateway: \(reply.options.routingPolicies?.maskedDescription ?? "not configured")")
+        if let routingPolicies = reply.options.routingPolicies {
+            log.info("\tDefault gateway: \(routingPolicies.map { $0.rawValue })")
+        } else {
+            log.info("\tDefault gateway: not configured")
+        }
         if let dnsServers = reply.options.dnsServers, !dnsServers.isEmpty {
             log.info("\tDNS: \(dnsServers.map { $0.maskedDescription })")
         } else {

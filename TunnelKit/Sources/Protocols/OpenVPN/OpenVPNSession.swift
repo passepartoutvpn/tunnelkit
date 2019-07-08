@@ -146,6 +146,8 @@ public class OpenVPNSession: Session {
     
     private var connectedDate: Date?
 
+    private var bufferSpaceDate: Date?
+    
     private var lastPing: BidirectionalState<Date>
     
     private var isStopping: Bool
@@ -196,6 +198,7 @@ public class OpenVPNSession: Session {
         keys = [:]
         oldKeys = []
         negotiationKeyIdx = 0
+        bufferSpaceDate = nil
         lastPing = BidirectionalState(withResetValue: Date.distantPast)
         isStopping = false
         
@@ -334,7 +337,8 @@ public class OpenVPNSession: Session {
         if !(tunnel?.isPersistent ?? false) {
             tunnel = nil
         }
-        
+        bufferSpaceDate = nil
+
         isStopping = false
         stopError = nil
     }
@@ -1098,6 +1102,13 @@ public class OpenVPNSession: Session {
     
     // Ruby: send_data_pkt
     private func sendDataPackets(_ packets: [Data]) {
+        if let bufferSpaceDate = bufferSpaceDate {
+            guard Date() > bufferSpaceDate else {
+                log.warning("Data: Waiting for buffer space...")
+                return
+            }
+            self.bufferSpaceDate = nil
+        }
         guard let key = currentKey else {
             return
         }
@@ -1117,7 +1128,9 @@ public class OpenVPNSession: Session {
                     
                     // try mitigating "No buffer space available"
                     if let posixError = error as? POSIXError, posixError.code == POSIXErrorCode.ENOBUFS {
-                        log.warning("Data: Packets dropped, no buffer space available")
+                        let delay = CoreConfiguration.bufferSpaceYieldDelay
+                        self?.bufferSpaceDate = Date() + delay
+                        log.warning("Data: Packets dropped, no buffer space available, hold on for \(delay) seconds")
                         return
                     }
                     
@@ -1175,7 +1188,7 @@ public class OpenVPNSession: Session {
     // MARK: Stop
     
     private func shouldHandlePackets() -> Bool {
-        return (!isStopping && !keys.isEmpty)
+        return !isStopping && !keys.isEmpty
     }
     
     private func deferStop(_ method: StopMethod, _ error: Error?) {

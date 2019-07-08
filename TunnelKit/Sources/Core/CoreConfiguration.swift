@@ -58,6 +58,8 @@ class CoreConfiguration {
     static var masksPrivateData = true
     
     static let logsSensitiveData = false
+    
+    static let bufferSpaceYieldDelay = 2.0
 }
 
 extension CustomStringConvertible {

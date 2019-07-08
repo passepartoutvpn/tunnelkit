@@ -148,6 +148,8 @@ public class OpenVPNSession: Session {
 
     private var bufferSpaceDate: Date?
     
+    private var bufferSpaceErrorsCount: Int
+    
     private var lastPing: BidirectionalState<Date>
     
     private var isStopping: Bool
@@ -199,6 +201,7 @@ public class OpenVPNSession: Session {
         oldKeys = []
         negotiationKeyIdx = 0
         bufferSpaceDate = nil
+        bufferSpaceErrorsCount = 0
         lastPing = BidirectionalState(withResetValue: Date.distantPast)
         isStopping = false
         
@@ -338,6 +341,7 @@ public class OpenVPNSession: Session {
             tunnel = nil
         }
         bufferSpaceDate = nil
+        bufferSpaceErrorsCount = 0
 
         isStopping = false
         stopError = nil
@@ -1129,7 +1133,20 @@ public class OpenVPNSession: Session {
                     // try mitigating "No buffer space available"
                     if let posixError = error as? POSIXError, posixError.code == POSIXErrorCode.ENOBUFS {
                         let delay = CoreConfiguration.bufferSpaceYieldDelay
+                        let errorsCount = (self?.bufferSpaceErrorsCount ?? 0) + 1
+
                         self?.bufferSpaceDate = Date() + delay
+                        self?.bufferSpaceErrorsCount = errorsCount
+                        
+                        guard errorsCount < CoreConfiguration.bufferSpaceMaxErrorsCount else {
+                            self?.bufferSpaceDate = nil
+                            self?.bufferSpaceErrorsCount = 0
+
+                            log.error("Data: Too many buffer space errors, disconnecting...")
+                            self?.deferStop(.shutdown, OpenVPNError.failedLinkWrite)
+                            return
+                        }
+
                         log.warning("Data: Packets dropped, no buffer space available, hold on for \(delay) seconds")
                         return
                     }

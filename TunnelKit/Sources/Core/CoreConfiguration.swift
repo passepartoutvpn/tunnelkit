@@ -60,6 +60,8 @@ class CoreConfiguration {
     static let logsSensitiveData = false
     
     static let bufferSpaceYieldDelay = 2.0
+    
+    static let bufferSpaceMaxErrorsCount = 5
 }
 
 extension CustomStringConvertible {

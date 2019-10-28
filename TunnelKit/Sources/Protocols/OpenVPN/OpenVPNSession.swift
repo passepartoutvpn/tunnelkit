@@ -59,6 +59,11 @@ public protocol OpenVPNSessionDelegate: class {
      - Seealso: `OpenVPNSession.reconnect(...)`
      */
     func sessionDidStop(_: OpenVPNSession, shouldReconnect: Bool)
+    
+    /**
+     Called after a session failed to start.
+     */
+    func sessionFailed(_: OpenVPNSession, error: Error)
 }
 
 /// Provides methods to set up and maintain an OpenVPN session.
@@ -1275,13 +1280,15 @@ public class OpenVPNSession: Session {
     }
     
     private func doShutdown(error: Error?) {
+        stopError = error
+        
         if let error = error {
             log.error("Trigger shutdown (error: \(error))")
+            delegate?.sessionFailed(self, error: error)
         } else {
             log.info("Trigger shutdown on request")
+            delegate?.sessionDidStop(self, shouldReconnect: false)
         }
-        stopError = error
-        delegate?.sessionDidStop(self, shouldReconnect: false)
     }
     
     private func doReconnect(error: Error?) {

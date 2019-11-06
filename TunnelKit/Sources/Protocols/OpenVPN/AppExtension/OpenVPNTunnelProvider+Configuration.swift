@@ -175,6 +175,10 @@ extension OpenVPNTunnelProvider {
             
             static let usesPIAPatches = "UsesPIAPatches"
             
+            static let ipv4 = "IPv4"
+            
+            static let ipv6 = "IPv6"
+            
             static let dnsServers = "DNSServers"
             
             static let searchDomains = "SearchDomains"
@@ -516,6 +520,20 @@ private extension OpenVPN.Configuration {
         if let usesPIAPatches = providerConfiguration[S.usesPIAPatches] as? Bool {
             builder.usesPIAPatches = usesPIAPatches
         }
+        if let ipv4Data = providerConfiguration[S.ipv4] as? Data {
+            do {
+                builder.ipv4 = try IPv4Settings.deserialized(ipv4Data)
+            } catch {
+                throw E.parameter(name: "protocolConfiguration.providerConfiguration[\(S.ipv4)]")
+            }
+        }
+        if let ipv6Data = providerConfiguration[S.ipv6] as? Data {
+            do {
+                builder.ipv6 = try IPv6Settings.deserialized(ipv6Data)
+            } catch {
+                throw E.parameter(name: "protocolConfiguration.providerConfiguration[\(S.ipv6)]")
+            }
+        }
         if let dnsServers = providerConfiguration[S.dnsServers] as? [String] {
             builder.dnsServers = dnsServers
         }
@@ -595,6 +613,12 @@ private extension OpenVPN.Configuration {
         }
         if let usesPIAPatches = usesPIAPatches {
             dict[S.usesPIAPatches] = usesPIAPatches
+        }
+        if let ipv4Data = ipv4?.serialized() {
+            dict[S.ipv4] = ipv4Data
+        }
+        if let ipv6Data = ipv6?.serialized() {
+            dict[S.ipv6] = ipv6Data
         }
         if let dnsServers = dnsServers {
             dict[S.dnsServers] = dnsServers

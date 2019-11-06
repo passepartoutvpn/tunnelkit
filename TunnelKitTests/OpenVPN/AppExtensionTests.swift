@@ -65,6 +65,18 @@ class AppExtensionTests: XCTestCase {
         sessionBuilder.digest = .sha256
         sessionBuilder.hostname = hostname
         sessionBuilder.endpointProtocols = []
+        sessionBuilder.ipv4 = IPv4Settings(
+            address: "1.2.3.4",
+            addressMask: "255.255.255.0",
+            defaultGateway: "1.2.3.1",
+            routes: [IPv4Settings.Route("4.3.2.1", "255.255.255.255", "1.2.3.1")]
+        )
+        sessionBuilder.ipv6 = IPv6Settings(
+            address: "0001:0002:0003:0004::5",
+            addressPrefixLength: 64,
+            defaultGateway: "0001:0002:0003:0004::1",
+            routes: [IPv6Settings.Route("0001:0002:0003:0004::6", 64, "0001:0002:0003:0004::1")]
+        )
         builder = OpenVPNTunnelProvider.ConfigurationBuilder(sessionConfiguration: sessionBuilder.build())
         XCTAssertNotNil(builder)
 
@@ -90,6 +102,28 @@ class AppExtensionTests: XCTestCase {
         XCTAssertEqual(proto?.providerConfiguration?[K.mtu] as? Int, cfg.mtu)
         XCTAssertEqual(proto?.providerConfiguration?[K.renegotiatesAfter] as? TimeInterval, cfg.sessionConfiguration.renegotiatesAfter)
         XCTAssertEqual(proto?.providerConfiguration?[K.debug] as? Bool, cfg.shouldDebug)
+        
+        let ipv4 = try? IPv4Settings.deserialized(proto?.providerConfiguration?[K.ipv4] as? Data ?? Data())
+        XCTAssertNotNil(ipv4)
+        XCTAssertEqual(ipv4?.serialized(), cfg.sessionConfiguration.ipv4?.serialized())
+        XCTAssertEqual(ipv4?.address, "1.2.3.4")
+        XCTAssertEqual(ipv4?.addressMask, "255.255.255.0")
+        XCTAssertEqual(ipv4?.defaultGateway, "1.2.3.1")
+        XCTAssertEqual(ipv4?.routes.count, 1)
+        XCTAssertEqual(ipv4?.routes[0].destination, "4.3.2.1")
+        XCTAssertEqual(ipv4?.routes[0].gateway, "1.2.3.1")
+        XCTAssertEqual(ipv4?.routes[0].mask, "255.255.255.255")
+        
+        let ipv6 = try? IPv6Settings.deserialized(proto?.providerConfiguration?[K.ipv6] as? Data ?? Data())
+        XCTAssertNotNil(ipv6)
+        XCTAssertEqual(ipv6?.serialized(), cfg.sessionConfiguration.ipv6?.serialized())
+        XCTAssertEqual(ipv6?.address, "0001:0002:0003:0004::5")
+        XCTAssertEqual(ipv6?.addressPrefixLength, 64)
+        XCTAssertEqual(ipv6?.defaultGateway, "0001:0002:0003:0004::1")
+        XCTAssertEqual(ipv6?.routes.count, 1)
+        XCTAssertEqual(ipv6?.routes[0].destination, "0001:0002:0003:0004::6")
+        XCTAssertEqual(ipv6?.routes[0].prefixLength, 64)
+        XCTAssertEqual(ipv6?.routes[0].gateway, "0001:0002:0003:0004::1")
     }
     
     func testDNSResolver() {

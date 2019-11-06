@@ -65,6 +65,16 @@ public struct IPv4Settings: Codable, CustomStringConvertible {
     
     /// The additional routes.
     public let routes: [Route]
+
+    /// :nodoc:
+    public static func deserialized(_ data: Data) throws -> IPv4Settings {
+        return try JSONDecoder().decode(IPv4Settings.self, from: data)
+    }
+    
+    /// :nodoc:
+    public func serialized() -> Data? {
+        return try? JSONEncoder().encode(self)
+    }
     
     // MARK: CustomStringConvertible
     

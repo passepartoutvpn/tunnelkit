@@ -86,7 +86,7 @@ extension OpenVPN {
             
             static let ifconfig6 = NSRegularExpression("^ifconfig-ipv6 +[\\da-fA-F:]+/\\d+ [\\da-fA-F:]+")
             
-            static let route = NSRegularExpression("^route +[\\d\\.]+( +[\\d\\.]+){0,2}")
+            static let route = NSRegularExpression("^route +[\\d\\.]+( +[\\d\\.]+)( +[\\d\\.]+| vpn_gateway| net_gateway)")
             
             static let route6 = NSRegularExpression("^route-ipv6 +[\\da-fA-F:]+/\\d+( +[\\da-fA-F:]+){0,2}")
             
@@ -491,10 +491,7 @@ extension OpenVPN {
                     
                     let address = routeEntryArguments[0]
                     let mask = (routeEntryArguments.count > 1) ? routeEntryArguments[1] : "255.255.255.255"
-                    var gateway = (routeEntryArguments.count > 2) ? routeEntryArguments[2] : nil // defaultGateway4
-                    if gateway == "vpn_gateway" {
-                        gateway = nil
-                    }
+                    let gateway = (routeEntryArguments.count > 2) ? routeEntryArguments[2] : "vpn_gateway"
                     optRoutes4.append((address, mask, gateway))
                 }
                 Regex.route6.enumerateArguments(in: line) {

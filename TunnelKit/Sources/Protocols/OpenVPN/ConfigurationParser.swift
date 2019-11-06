@@ -222,7 +222,7 @@ extension OpenVPN {
             var optIfconfig4Arguments: [String]?
             var optIfconfig6Arguments: [String]?
             var optGateway4Arguments: [String]?
-            var optRoutes4: [(String, String, String?)] = [] // address, netmask, gateway
+            var optRoutes4: [(String, String, String)] = [] // address, netmask, gateway
             var optRoutes6: [(String, UInt8, String?)] = [] // destination, prefix, gateway
             var optDNSServers: [String]?
             var optSearchDomains: [String]?
@@ -703,12 +703,22 @@ extension OpenVPN {
                     addressMask4 = "255.255.255.255"
                     defaultGateway4 = ifconfig4Arguments[1]
                 }
-                let routes4 = optRoutes4.map { IPv4Settings.Route($0.0, $0.1, $0.2 ?? defaultGateway4) }
+                let routes4 = optRoutes4.map { IPv4Settings.Route($0.0, $0.1, $0.2) }
 
                 sessionBuilder.ipv4 = IPv4Settings(
                     address: address4,
                     addressMask: addressMask4,
                     defaultGateway: defaultGateway4,
+                    routes: routes4
+                )
+            } else if !optRoutes4.isEmpty {
+                // Still want to include routes when ifconfig is not specified 
+                let routes4 = optRoutes4.map { IPv4Settings.Route($0.0, $0.1, $0.2) }
+
+                sessionBuilder.ipv4 = IPv4Settings(
+                    address: "",
+                    addressMask: "",
+                    defaultGateway: "",
                     routes: routes4
                 )
             }

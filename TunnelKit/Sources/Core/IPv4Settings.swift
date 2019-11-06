@@ -66,6 +66,11 @@ public struct IPv4Settings: Codable, CustomStringConvertible {
     /// The additional routes.
     public let routes: [Route]
 
+    /// Returns true if this instance contains settings.
+    public var hasSettings: Bool {
+        return !address.isEmpty
+    }
+
     /// :nodoc:
     public static func deserialized(_ data: Data) throws -> IPv4Settings {
         return try JSONDecoder().decode(IPv4Settings.self, from: data)

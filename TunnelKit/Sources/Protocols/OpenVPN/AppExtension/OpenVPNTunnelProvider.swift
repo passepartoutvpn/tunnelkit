@@ -561,14 +561,38 @@ extension OpenVPNTunnelProvider: OpenVPNSessionDelegate {
         socket?.shutdown()
     }
     
+    private func applicableIPv4Settings(localOptions: OpenVPN.Configuration, options: OpenVPN.Configuration) -> IPv4Settings? {
+        if options.ipv4?.hasSettings ?? false {
+            return options.ipv4;
+        }
+
+        if localOptions.ipv4?.hasSettings ?? false {
+            return localOptions.ipv4;
+        }
+
+        return nil
+    }
+
+    private func applicableIPv6Settings(localOptions: OpenVPN.Configuration, options: OpenVPN.Configuration) -> IPv6Settings? {
+        if options.ipv6?.hasSettings ?? false {
+            return options.ipv6;
+        }
+
+        if localOptions.ipv6?.hasSettings ?? false {
+            return localOptions.ipv6;
+        }
+
+        return nil
+    }
+
     private func bringNetworkUp(remoteAddress: String, localOptions: OpenVPN.Configuration, options: OpenVPN.Configuration, completionHandler: @escaping (Error?) -> Void) {
         let routingPolicies = localOptions.routingPolicies ?? options.routingPolicies
         let isIPv4Gateway = routingPolicies?.contains(.IPv4) ?? false
         let isIPv6Gateway = routingPolicies?.contains(.IPv6) ?? false
         let isGateway = isIPv4Gateway || isIPv6Gateway
-
+        
         var ipv4Settings: NEIPv4Settings?
-        if let ipv4 = (options.ipv4 ?? localOptions.ipv4) {
+        if let ipv4 = applicableIPv4Settings(localOptions: localOptions, options: options) {
             var includedRoutes: [NEIPv4Route] = []
             var excludedRoutes: [NEIPv4Route] = []
 
@@ -607,7 +631,7 @@ extension OpenVPNTunnelProvider: OpenVPNSessionDelegate {
         }
 
         var ipv6Settings: NEIPv6Settings?
-        if let ipv6 = (options.ipv6 ?? localOptions.ipv6) {
+        if let ipv6 = applicableIPv6Settings(localOptions: localOptions, options: options) {
             var routes: [NEIPv6Route] = []
 
             // route all traffic to VPN?

@@ -83,6 +83,7 @@ static NSString *RoutingTableEntryName(struct sockaddr *sa, struct sockaddr *mas
     network = networkComps.firstObject;
     if (networkComps.count == 2) {
         prefix = [networkComps.lastObject integerValue];
+        NSAssert(prefix >= 0 && prefix <= 32, @"IPv4 prefix must lie in [0..32]");
     } else {
         prefix = 32;
     }
@@ -113,6 +114,7 @@ static NSString *RoutingTableEntryName(struct sockaddr *sa, struct sockaddr *mas
     network = networkComps.firstObject;
     if (networkComps.count == 2) {
         prefix = [networkComps.lastObject integerValue];
+        NSAssert(prefix >= 0 && prefix <= 128, @"IPv6 prefix must lie in [0..128]");
     } else {
         prefix = 128;
     }

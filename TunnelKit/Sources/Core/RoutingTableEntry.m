@@ -30,6 +30,9 @@
 
 #import "RoutingTableEntry.h"
 
+#define ASSERT_PRINTF(r)        NSCAssert(r >= 0, @"*printf() failed")
+#define ASSERT_GETNAMEINFO(r)   NSCAssert(r == 0, @"getnameinfo() failed")
+
 // adapted from: https://github.com/jianpx/ios-cabin
 
 #define ROUNDUP(a) ((a) > 0 ? (1 + (((a) - 1) | (sizeof(uint32_t) - 1))) : sizeof(uint32_t))
@@ -376,7 +379,7 @@ char *routename(uint32_t in)
     
 #define C(x)    ((x) & 0xff)
     in = ntohl(in);
-    snprintf(line, sizeof(line), "%u.%u.%u.%u", C(in >> 24), C(in >> 16), C(in >> 8), C(in));
+    ASSERT_PRINTF(snprintf(line, sizeof(line), "%u.%u.%u.%u", C(in >> 24), C(in >> 16), C(in >> 8), C(in)));
 
     return (line);
 }
@@ -391,7 +394,7 @@ char *routename6(struct sockaddr_in6 *sa6)
     sa6_local.sin6_addr = sa6->sin6_addr;
     sa6_local.sin6_scope_id = sa6->sin6_scope_id;
     
-    getnameinfo((struct sockaddr *)&sa6_local, sa6_local.sin6_len, line, sizeof(line), NULL, 0, flag);
+    ASSERT_GETNAMEINFO(getnameinfo((struct sockaddr *)&sa6_local, sa6_local.sin6_len, line, sizeof(line), NULL, 0, flag));
     
     return line;
 }
@@ -426,27 +429,24 @@ char *netname(uint32_t in, uint32_t mask)
         switch (dmask) {
             case IN_CLASSA_NET:
                 if ((i & IN_CLASSA_HOST) == 0) {
-                    snprintf(line, sizeof(line), "%u", C(i >> 24));
+                    ASSERT_PRINTF(snprintf(line, sizeof(line), "%u", C(i >> 24)));
                     break;
                 }
                 /* FALLTHROUGH */
             case IN_CLASSB_NET:
                 if ((i & IN_CLASSB_HOST) == 0) {
-                    snprintf(line, sizeof(line), "%u.%u",
-                             C(i >> 24), C(i >> 16));
+                    ASSERT_PRINTF(snprintf(line, sizeof(line), "%u.%u", C(i >> 24), C(i >> 16)));
                     break;
                 }
                 /* FALLTHROUGH */
             case IN_CLASSC_NET:
                 if ((i & IN_CLASSC_HOST) == 0) {
-                    snprintf(line, sizeof(line), "%u.%u.%u",
-                             C(i >> 24), C(i >> 16), C(i >> 8));
+                    ASSERT_PRINTF(snprintf(line, sizeof(line), "%u.%u.%u", C(i >> 24), C(i >> 16), C(i >> 8)));
                     break;
                 }
                 /* FALLTHROUGH */
             default:
-                snprintf(line, sizeof(line), "%u.%u.%u.%u",
-                         C(i >> 24), C(i >> 16), C(i >> 8), C(i));
+                ASSERT_PRINTF(snprintf(line, sizeof(line), "%u.%u.%u.%u", C(i >> 24), C(i >> 16), C(i >> 8), C(i)));
                 break;
         }
     }
@@ -508,7 +508,7 @@ char *netname6(struct sockaddr_in6 *sa6, struct sockaddr *sam)
         return("default");
     }
     
-    getnameinfo((struct sockaddr *)sa6, sa6->sin6_len, line, sizeof(line), NULL, 0, flag);
+    ASSERT_GETNAMEINFO(getnameinfo((struct sockaddr *)sa6, sa6->sin6_len, line, sizeof(line), NULL, 0, flag));
     
     if (masklen > 0) {
         sprintf(line, "%s/%u", line, masklen);
@@ -553,9 +553,9 @@ void domask(char *dst, uint32_t addr, uint32_t mask)
         }
     }
     if (i == -1) {
-        snprintf(dst, sizeof(dst), "&0x%x", mask);
+        ASSERT_PRINTF(snprintf(dst, sizeof(dst), "&0x%x", mask));
     } else {
-        snprintf(dst, sizeof(dst), "/%d", 32-i);
+        ASSERT_PRINTF(snprintf(dst, sizeof(dst), "/%d", 32-i));
     }
 }
 

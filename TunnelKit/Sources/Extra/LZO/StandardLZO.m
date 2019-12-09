@@ -63,7 +63,8 @@ static HEAP_ALLOC(wrkmem, LZO1X_1_MEM_COMPRESS);
 
 - (NSData *)compressedDataWithData:(NSData *)data error:(NSError * _Nullable __autoreleasing * _Nullable)error
 {
-    NSMutableData *dst = [[NSMutableData alloc] initWithLength:data.length];
+    const NSInteger dstBufferLength = data.length + data.length / 16 + 64 + 3;
+    NSMutableData *dst = [[NSMutableData alloc] initWithLength:dstBufferLength];
     lzo_uint dstLength;
     const int status = lzo1x_1_compress(data.bytes, data.length, dst.mutableBytes, &dstLength, wrkmem);
     if (status != LZO_E_OK) {
@@ -86,8 +87,8 @@ static HEAP_ALLOC(wrkmem, LZO1X_1_MEM_COMPRESS);
 
 - (NSData *)decompressedDataWithBytes:(const uint8_t *)bytes length:(NSInteger)length error:(NSError * _Nullable __autoreleasing * _Nullable)error
 {
-    lzo_uint dstLength;
-    const int status = lzo1x_decompress(bytes, length, self.decompressedBuffer.mutableBytes, &dstLength, NULL);
+    lzo_uint dstLength = LZO1X_1_15_MEM_COMPRESS;
+    const int status = lzo1x_decompress_safe(bytes, length, self.decompressedBuffer.mutableBytes, &dstLength, NULL);
     if (status != LZO_E_OK) {
         if (error) {
             *error = TunnelKitErrorWithCode(TunnelKitErrorCodeLZO);

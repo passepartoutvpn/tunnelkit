@@ -309,7 +309,7 @@ static char *netname6(struct sockaddr_in6 *sa6, struct sockaddr *sam);
 static char *routename(uint32_t in);
 static char *routename6(struct sockaddr_in6 *sa6);
 static uint32_t forgemask(uint32_t a);
-static void domask(char *dst, uint32_t addr, uint32_t mask);
+static void domask(char *dst, size_t dstsize, uint32_t addr, uint32_t mask);
 static void trimdomain(char *cp);
 
 static inline uint32_t RoutingTableEntryAddress4(NSString *string)
@@ -462,7 +462,7 @@ char *netname(uint32_t in, uint32_t mask)
                 break;
         }
     }
-    domask(line+strlen(line), i, omask);
+    domask(line + strlen(line), sizeof(line) - strlen(line), i, omask);
     return (line);
 }
 
@@ -545,7 +545,7 @@ uint32_t forgemask(uint32_t a)
     return (m);
 }
 
-void domask(char *dst, uint32_t addr, uint32_t mask)
+void domask(char *dst, size_t dstsize, uint32_t addr, uint32_t mask)
 {
     int b, i;
     
@@ -568,9 +568,9 @@ void domask(char *dst, uint32_t addr, uint32_t mask)
         }
     }
     if (i == -1) {
-        ASSERT_PRINTF(snprintf(dst, sizeof(dst), "&0x%x", mask));
+        ASSERT_PRINTF(snprintf(dst, dstsize, "&0x%x", mask));
     } else {
-        ASSERT_PRINTF(snprintf(dst, sizeof(dst), "/%d", 32-i));
+        ASSERT_PRINTF(snprintf(dst, dstsize, "/%d", 32-i));
     }
 }
 

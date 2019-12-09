@@ -469,6 +469,7 @@ char *netname(uint32_t in, uint32_t mask)
 
 char *netname6(struct sockaddr_in6 *sa6, struct sockaddr *sam)
 {
+    char host[MAXHOSTNAMELEN];
     static char line[MAXHOSTNAMELEN + 10];
     u_char *lim;
     int masklen, illegal = 0, flag = NI_NUMERICHOST;
@@ -520,10 +521,12 @@ char *netname6(struct sockaddr_in6 *sa6, struct sockaddr *sam)
         return("default");
     }
     
-    ASSERT_GETNAMEINFO(getnameinfo((struct sockaddr *)sa6, sa6->sin6_len, line, sizeof(line), NULL, 0, flag));
+    ASSERT_GETNAMEINFO(getnameinfo((struct sockaddr *)sa6, sa6->sin6_len, host, sizeof(host), NULL, 0, flag));
     
     if (masklen > 0) {
-        sprintf(line, "%s/%u", line, masklen);
+        sprintf(line, "%s/%u", host, masklen);
+    } else {
+        sprintf(line, "%s", host);
     }
     
     return line;

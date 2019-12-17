@@ -199,7 +199,7 @@ extension OpenVPN {
             }
             
             // drop queued out packets if ack-ed
-            for (i, packet) in queue.outbound.enumerated() {
+            for (i, packet) in queue.outbound.enumerated().reversed() {
                 if packetIds.contains(packet.packetId) {
                     queue.outbound.remove(at: i)
                 }

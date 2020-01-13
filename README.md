@@ -1,11 +1,11 @@
 # TunnelKit
 
 ![iOS 11+](https://img.shields.io/badge/ios-11+-green.svg)
-[![OpenSSL 1.1.0j](https://img.shields.io/badge/openssl-1.1.0j-d69c68.svg)](https://www.openssl.org/news/openssl-1.1.0-notes.html)
+[![OpenSSL 1.1.1d](https://img.shields.io/badge/openssl-1.1.1d-d69c68.svg)](https://www.openssl.org/news/openssl-1.1.1-notes.html)
 [![License GPLv3](https://img.shields.io/badge/license-GPLv3-lightgray.svg)](LICENSE)
 [![Travis-CI](https://api.travis-ci.org/passepartoutvpn/tunnelkit.svg?branch=master)](https://travis-ci.org/passepartoutvpn/tunnelkit)
 
-This library provides a simplified Swift/Obj-C implementation of the OpenVPN® protocol for the Apple platforms. The crypto layer is built on top of [OpenSSL][dep-openssl] 1.1.0j, which in turn enables support for a certain range of encryption and digest algorithms.
+This library provides a simplified Swift/Obj-C implementation of the OpenVPN® protocol for the Apple platforms. The crypto layer is built on top of [OpenSSL 1.1.1][dep-openssl], which in turn enables support for a certain range of encryption and digest algorithms.
 
 <a href="https://www.patreon.com/keeshux"><img src="https://c5.patreon.com/external/logo/become_a_patron_button@2x.png" width="160"></a>
 
@@ -50,6 +50,7 @@ Unsupported:
 - External file references (inline `<block>` only)
 - Static key encryption (non-TLS)
 - `<connection>` blocks
+- `vpn_gateway` and `net_gateway` literals in routes
 
 Ignored:
 
@@ -57,6 +58,7 @@ Ignored:
     - `--*-mtu` and variants
     - `--mssfix`
 - Multiple `--remote` with different `host` values (first wins)
+- Static client-side routes
 
 Many other flags are ignored too but it's normally not an issue.
 
@@ -193,8 +195,8 @@ For more details please see [CONTRIBUTING][contrib-readme].
 
 - [lzo][dep-lzo-website] - © 1996 - 2017 Markus F.X.J. Oberhumer
 - [PIATunnel][dep-piatunnel-repo] - © 2018-Present Private Internet Access
-- [SwiftyBeaver][dep-swiftybeaver-repo] - © 2015 Sebastian Kreutzberger
 - [SURFnet][surfnet]
+- [SwiftyBeaver][dep-swiftybeaver-repo] - © 2015 Sebastian Kreutzberger
 
 This product includes software developed by the OpenSSL Project for use in the OpenSSL Toolkit. ([https://www.openssl.org/][dep-openssl])
 

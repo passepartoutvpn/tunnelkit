@@ -3,7 +3,7 @@
 //  TunnelKit
 //
 //  Created by Davide De Rosa on 8/23/18.
-//  Copyright (c) 2019 Davide De Rosa. All rights reserved.
+//  Copyright (c) 2020 Davide De Rosa. All rights reserved.
 //
 //  https://github.com/passepartoutvpn
 //
@@ -245,7 +245,19 @@ extension OpenVPN {
         public var dnsServers: [String]?
         
         /// The search domain.
-        public var searchDomain: String?
+        @available(*, deprecated, message: "Use searchDomains instead")
+        public var searchDomain: String? {
+            didSet {
+                guard let searchDomain = searchDomain else {
+                    searchDomains = nil
+                    return
+                }
+                searchDomains = [searchDomain]
+            }
+        }
+
+        /// The search domains. The first one is interpreted as the main domain name.
+        public var searchDomains: [String]?
 
         /// The Proxy Auto-Configuration (PAC) url.
         public var proxyAutoConfigurationURL: URL?
@@ -295,7 +307,7 @@ extension OpenVPN {
                 ipv4: ipv4,
                 ipv6: ipv6,
                 dnsServers: dnsServers,
-                searchDomain: searchDomain,
+                searchDomains: searchDomains,
                 httpProxy: httpProxy,
                 httpsProxy: httpsProxy,
                 proxyAutoConfigurationURL: proxyAutoConfigurationURL,
@@ -391,9 +403,9 @@ extension OpenVPN {
         /// - Seealso: `ConfigurationBuilder.dnsServers`
         public let dnsServers: [String]?
         
-        /// - Seealso: `ConfigurationBuilder.searchDomain`
-        public let searchDomain: String?
-        
+        /// - Seealso: `ConfigurationBuilder.searchDomains`
+        public let searchDomains: [String]?
+
         /// - Seealso: `ConfigurationBuilder.httpProxy`
         public let httpProxy: Proxy?
 
@@ -461,7 +473,7 @@ extension OpenVPN.Configuration {
         builder.ipv4 = ipv4
         builder.ipv6 = ipv6
         builder.dnsServers = dnsServers
-        builder.searchDomain = searchDomain
+        builder.searchDomains = searchDomains
         builder.httpProxy = httpProxy
         builder.httpsProxy = httpsProxy
         builder.proxyAutoConfigurationURL = proxyAutoConfigurationURL

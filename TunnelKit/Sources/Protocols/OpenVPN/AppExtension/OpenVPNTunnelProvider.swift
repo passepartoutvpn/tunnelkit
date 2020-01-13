@@ -3,7 +3,7 @@
 //  TunnelKit
 //
 //  Created by Davide De Rosa on 2/1/17.
-//  Copyright (c) 2019 Davide De Rosa. All rights reserved.
+//  Copyright (c) 2020 Davide De Rosa. All rights reserved.
 //
 //  https://github.com/passepartoutvpn
 //
@@ -57,6 +57,9 @@ open class OpenVPNTunnelProvider: NEPacketTunnelProvider {
     /// The maximum number of lines in the log.
     public var maxLogLines = 1000
     
+    /// The log level when `OpenVPNTunnelProvider.Configuration.shouldDebug` is enabled.
+    public var debugLogLevel: SwiftyBeaver.Level = .debug
+    
     /// The number of milliseconds after which a DNS resolution fails.
     public var dnsTimeout = 3000
     
@@ -89,7 +92,7 @@ open class OpenVPNTunnelProvider: NEPacketTunnelProvider {
 
     private let observer = InterfaceObserver()
     
-    private let tunnelQueue = DispatchQueue(label: OpenVPNTunnelProvider.description())
+    private let tunnelQueue = DispatchQueue(label: OpenVPNTunnelProvider.description(), qos: .utility)
     
     private let prngSeedLength = 64
     
@@ -126,6 +129,12 @@ open class OpenVPNTunnelProvider: NEPacketTunnelProvider {
     private var isCountingData = false
     
     // MARK: NEPacketTunnelProvider (XPC queue)
+    
+    open override var reasserting: Bool {
+        didSet {
+            log.debug("Reasserting flag \(reasserting ? "set" : "cleared")")
+        }
+    }
     
     /// :nodoc:
     open override func startTunnel(options: [String : NSObject]? = nil, completionHandler: @escaping (Error?) -> Void) {
@@ -287,6 +296,17 @@ open class OpenVPNTunnelProvider: NEPacketTunnelProvider {
             break
         }
         completionHandler?(response)
+    }
+
+    // MARK: Wake/Sleep (debugging placeholders)
+
+    open override func wake() {
+        log.verbose("Wake signal received")
+    }
+    
+    open override func sleep(completionHandler: @escaping () -> Void) {
+        log.verbose("Sleep signal received")
+        completionHandler()
     }
     
     // MARK: Connection (tunnel queue)
@@ -461,9 +481,11 @@ extension OpenVPNTunnelProvider: GenericSocketDelegate {
         if reasserting {
             log.debug("Disconnection is recoverable, tunnel will reconnect in \(reconnectionDelay) milliseconds...")
             tunnelQueue.schedule(after: .milliseconds(reconnectionDelay)) {
+                log.debug("Tunnel is about to reconnect...")
 
                 // give up if reasserting cleared in the meantime
                 guard self.reasserting else {
+                    log.warning("Reasserting flag was cleared in the meantime")
                     return
                 }
 
@@ -506,10 +528,10 @@ extension OpenVPNTunnelProvider: OpenVPNSessionDelegate {
         } else {
             log.info("\tDNS: not configured")
         }
-        if let searchDomain = options.searchDomain, !searchDomain.isEmpty {
-            log.info("\tDomain: \(searchDomain.maskedDescription)")
+        if let searchDomains = options.searchDomains, !searchDomains.isEmpty {
+            log.info("\tSearch domains: \(searchDomains.maskedDescription)")
         } else {
-            log.info("\tDomain: not configured")
+            log.info("\tSearch domains: not configured")
         }
 
         if options.httpProxy != nil || options.httpsProxy != nil || options.proxyAutoConfigurationURL != nil {
@@ -529,6 +551,9 @@ extension OpenVPNTunnelProvider: OpenVPNSessionDelegate {
         }
 
         bringNetworkUp(remoteAddress: remoteAddress, localOptions: session.configuration, options: options) { (error) in
+
+            // FIXME: XPC queue
+            
             self.reasserting = false
             
             if let error = error {
@@ -652,9 +677,10 @@ extension OpenVPNTunnelProvider: OpenVPNSessionDelegate {
         if !isGateway {
             dnsSettings.matchDomains = [""]
         }
-        if let searchDomain = cfg.sessionConfiguration.searchDomain ?? options.searchDomain {
-            dnsSettings.domainName = searchDomain
-            dnsSettings.searchDomains = [searchDomain]
+        if let searchDomains = cfg.sessionConfiguration.searchDomains ?? options.searchDomains {
+            log.info("DNS: Using search domains \(searchDomains.maskedDescription)")
+            dnsSettings.domainName = searchDomains.first
+            dnsSettings.searchDomains = searchDomains
             if !isGateway {
                 dnsSettings.matchDomains = dnsSettings.searchDomains
             }
@@ -760,7 +786,7 @@ extension OpenVPNTunnelProvider {
     // MARK: Logging
     
     private func configureLogging(debug: Bool, customFormat: String? = nil) {
-        let logLevel: SwiftyBeaver.Level = (debug ? .debug : .info)
+        let logLevel: SwiftyBeaver.Level = (debug ? debugLogLevel : .info)
         let logFormat = customFormat ?? "$Dyyyy-MM-dd HH:mm:ss.SSS$d $L $N.$F:$l - $M"
         
         if debug {

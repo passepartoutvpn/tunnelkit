@@ -3,7 +3,7 @@
 //  TunnelKit
 //
 //  Created by Davide De Rosa on 10/23/17.
-//  Copyright (c) 2019 Davide De Rosa. All rights reserved.
+//  Copyright (c) 2020 Davide De Rosa. All rights reserved.
 //
 //  https://github.com/passepartoutvpn
 //
@@ -177,7 +177,7 @@ extension OpenVPNTunnelProvider {
             
             static let dnsServers = "DNSServers"
             
-            static let searchDomain = "SearchDomain"
+            static let searchDomains = "SearchDomains"
             
             static let httpProxy = "HTTPProxy"
             
@@ -519,8 +519,8 @@ private extension OpenVPN.Configuration {
         if let dnsServers = providerConfiguration[S.dnsServers] as? [String] {
             builder.dnsServers = dnsServers
         }
-        if let searchDomain = providerConfiguration[S.searchDomain] as? String {
-            builder.searchDomain = searchDomain
+        if let searchDomains = providerConfiguration[S.searchDomains] as? [String] {
+            builder.searchDomains = searchDomains
         }
         if let proxyString = providerConfiguration[S.httpProxy] as? String {
             guard let proxy = Proxy(rawValue: proxyString) else {
@@ -599,8 +599,8 @@ private extension OpenVPN.Configuration {
         if let dnsServers = dnsServers {
             dict[S.dnsServers] = dnsServers
         }
-        if let searchDomain = searchDomain {
-            dict[S.searchDomain] = searchDomain
+        if let searchDomains = searchDomains {
+            dict[S.searchDomains] = searchDomains
         }
         if let httpProxy = httpProxy {
             dict[S.httpProxy] = httpProxy.rawValue
@@ -680,8 +680,8 @@ private extension OpenVPN.Configuration {
         } else {
             log.info("\tDNS: not configured")
         }
-        if let searchDomain = searchDomain, !searchDomain.isEmpty {
-            log.info("\tSearch domain: \(searchDomain.maskedDescription)")
+        if let searchDomains = searchDomains, !searchDomains.isEmpty {
+            log.info("\tSearch domains: \(searchDomains.maskedDescription)")
         }
         if let httpProxy = httpProxy {
             log.info("\tHTTP proxy: \(httpProxy.maskedDescription)")

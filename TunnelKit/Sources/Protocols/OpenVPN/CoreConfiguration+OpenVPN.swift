@@ -3,7 +3,7 @@
 //  TunnelKit
 //
 //  Created by Davide De Rosa on 5/19/19.
-//  Copyright (c) 2019 Davide De Rosa. All rights reserved.
+//  Copyright (c) 2020 Davide De Rosa. All rights reserved.
 //
 //  https://github.com/passepartoutvpn
 //
@@ -52,6 +52,8 @@ extension CoreConfiguration {
         static let tickInterval = 0.2
         
         static let pushRequestInterval = 2.0
+        
+        static let pingTimeoutCheckInterval = 10.0
         
         static let pingTimeout = 120.0
         

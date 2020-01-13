@@ -7,10 +7,34 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+### Fixed
+
+- Index out of range during negotiation (Grivus). [#143](https://github.com/passepartoutvpn/tunnelkit/pull/143)
+
+## 2.2.1 (2019-12-14)
+
+### Fixed
+
+- Keep-alive pings coalescing over time.
+- Ping timeout not checked for if keep-alive is disabled.
+
+## 2.2.0 (2019-12-11)
+
+### Changed
+
+- Require explicit `--ca` and `--cipher` in .ovpn configuration file.
+
+## 2.1.0 (2019-11-03)
+
 ### Added
 
 - Allow keep-alive timeout to be configured by the server or client (Robert Patchett). [#122](https://github.com/passepartoutvpn/tunnelkit/pull/122)
 - Support for proxy autoconfiguration URL (ThinkChaos). [#125](https://github.com/passepartoutvpn/tunnelkit/pull/125)
+- Support multiple DNS search domains. [#127](https://github.com/passepartoutvpn/tunnelkit/issues/127)
+
+### Changed
+
+- Upgrade OpenSSL to 1.1.1d. [#123](https://github.com/passepartoutvpn/tunnelkit/issues/123)
 
 ### Fixed
 

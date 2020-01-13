@@ -3,7 +3,7 @@
 //  TunnelKit
 //
 //  Created by Davide De Rosa on 9/5/18.
-//  Copyright (c) 2019 Davide De Rosa. All rights reserved.
+//  Copyright (c) 2020 Davide De Rosa. All rights reserved.
 //
 //  https://github.com/passepartoutvpn
 //
@@ -174,20 +174,21 @@ extension OpenVPN {
          */
         public static func parsed(fromURL url: URL, passphrase: String? = nil, returnsStripped: Bool = false) throws -> Result {
             let lines = try String(contentsOf: url).trimmedLines()
-            return try parsed(fromLines: lines, passphrase: passphrase, originalURL: url, returnsStripped: returnsStripped)
+            return try parsed(fromLines: lines, isClient: true, passphrase: passphrase, originalURL: url, returnsStripped: returnsStripped)
         }
 
         /**
          Parses a configuration from an array of lines.
          
          - Parameter lines: The array of lines holding the configuration.
+         - Parameter isClient: Enables additional checks for client configurations.
          - Parameter passphrase: The optional passphrase for encrypted data.
          - Parameter originalURL: The optional original URL of the configuration file.
          - Parameter returnsStripped: When `true`, stores the stripped file into `Result.strippedLines`. Defaults to `false`.
          - Returns: The `Result` outcome of the parsing.
          - Throws: `ConfigurationError` if the configuration file is wrong or incomplete.
          */
-        public static func parsed(fromLines lines: [String], passphrase: String? = nil, originalURL: URL? = nil, returnsStripped: Bool = false) throws -> Result {
+        public static func parsed(fromLines lines: [String], isClient: Bool = false, passphrase: String? = nil, originalURL: URL? = nil, returnsStripped: Bool = false) throws -> Result {
             var optStrippedLines: [String]? = returnsStripped ? [] : nil
             var optWarning: ConfigurationError?
             var unsupportedError: ConfigurationError?
@@ -225,7 +226,7 @@ extension OpenVPN {
             var optRoutes4: [(String, String, String?)] = [] // address, netmask, gateway
             var optRoutes6: [(String, UInt8, String?)] = [] // destination, prefix, gateway
             var optDNSServers: [String]?
-            var optSearchDomain: String?
+            var optSearchDomains: [String]?
             var optHTTPProxy: Proxy?
             var optHTTPSProxy: Proxy?
             var optProxyAutoConfigurationURL: URL?
@@ -531,7 +532,10 @@ extension OpenVPN {
                     guard $0.count == 2 else {
                         return
                     }
-                    optSearchDomain = $0[1]
+                    if optSearchDomains == nil {
+                        optSearchDomains = []
+                    }
+                    optSearchDomains?.append($0[1])
                 }
                 Regex.proxy.enumerateArguments(in: line) {
                     if $0.count == 2 {
@@ -581,6 +585,15 @@ extension OpenVPN {
                 
                 if let error = unsupportedError {
                     throw error
+                }
+            }
+            
+            if isClient {
+                guard let _ = optCA else {
+                    throw ConfigurationError.missingConfiguration(option: "ca")
+                }
+                guard let _ = optCipher else {
+                    throw ConfigurationError.missingConfiguration(option: "cipher")
                 }
             }
             
@@ -738,7 +751,7 @@ extension OpenVPN {
             }
             
             sessionBuilder.dnsServers = optDNSServers
-            sessionBuilder.searchDomain = optSearchDomain
+            sessionBuilder.searchDomains = optSearchDomains
             sessionBuilder.httpProxy = optHTTPProxy
             sessionBuilder.httpsProxy = optHTTPSProxy
             sessionBuilder.proxyAutoConfigurationURL = optProxyAutoConfigurationURL

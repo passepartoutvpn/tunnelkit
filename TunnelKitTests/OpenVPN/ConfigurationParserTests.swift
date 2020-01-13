@@ -3,7 +3,7 @@
 //  TunnelKitTests
 //
 //  Created by Davide De Rosa on 11/10/18.
-//  Copyright (c) 2019 Davide De Rosa. All rights reserved.
+//  Copyright (c) 2020 Davide De Rosa. All rights reserved.
 //
 //  https://github.com/passepartoutvpn
 //
@@ -53,7 +53,8 @@ class ConfigurationParserTests: XCTestCase {
         let lines = [
             "dhcp-option DNS 8.8.8.8",
             "dhcp-option DNS6 ffff::1",
-            "dhcp-option DOMAIN example.com",
+            "dhcp-option DOMAIN one.com",
+            "dhcp-option DOMAIN two.net",
             "dhcp-option PROXY_HTTP 1.2.3.4 8081",
             "dhcp-option PROXY_HTTPS 7.8.9.10 8082",
             "dhcp-option PROXY_AUTO_CONFIG_URL https://pac/",
@@ -63,7 +64,7 @@ class ConfigurationParserTests: XCTestCase {
         
         let parsed = try! OpenVPN.ConfigurationParser.parsed(fromLines: lines).configuration
         XCTAssertEqual(parsed.dnsServers, ["8.8.8.8", "ffff::1"])
-        XCTAssertEqual(parsed.searchDomain, "example.com")
+        XCTAssertEqual(parsed.searchDomains, ["one.com", "two.net"])
         XCTAssertEqual(parsed.httpProxy?.address, "1.2.3.4")
         XCTAssertEqual(parsed.httpProxy?.port, 8081)
         XCTAssertEqual(parsed.httpsProxy?.address, "7.8.9.10")

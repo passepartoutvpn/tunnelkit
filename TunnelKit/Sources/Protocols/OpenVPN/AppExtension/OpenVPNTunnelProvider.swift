@@ -769,7 +769,8 @@ extension OpenVPNTunnelProvider: OpenVPNSessionDelegate {
         newSettings.ipv6Settings = ipv6Settings
         newSettings.dnsSettings = dnsSettings
         newSettings.proxySettings = proxySettings
-        
+        newSettings.mtu = NSNumber(value: cfg.mtu)
+
         setTunnelNetworkSettings(newSettings, completionHandler: completionHandler)
     }
 }

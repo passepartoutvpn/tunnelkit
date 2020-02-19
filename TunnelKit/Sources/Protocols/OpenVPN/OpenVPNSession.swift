@@ -787,7 +787,9 @@ public class OpenVPNSession: Session {
                 caPath: caURL.path,
                 clientCertificatePath: (configuration.clientCertificate != nil) ? clientCertificateURL.path : nil,
                 clientKeyPath: (configuration.clientKey != nil) ? clientKeyURL.path : nil,
-                checksEKU: configuration.checksEKU ?? false
+                checksEKU: configuration.checksEKU ?? false,
+                checksSANHost: configuration.checksSANHost ?? false,
+                hostname: configuration.sanHost
             )
             if let tlsSecurityLevel = configuration.tlsSecurityLevel {
                 tls.securityLevel = tlsSecurityLevel

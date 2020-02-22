@@ -212,7 +212,7 @@ extension OpenVPN {
         
         /// The server hostname (picked from first remote).
         public var hostname: String?
-        public var hosts: [(String, UInt16, SocketType)]?
+        public var hosts: [(String, UInt16?, SocketType?)]?
         /// The list of server endpoints.
         public var endpointProtocols: [EndpointProtocol]?
         

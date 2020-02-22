@@ -298,6 +298,7 @@ extension OpenVPN {
                 keepAliveTimeout: keepAliveTimeout,
                 renegotiatesAfter: renegotiatesAfter,
                 hostname: hostname,
+                hosts: hosts,
                 endpointProtocols: endpointProtocols,
                 checksEKU: checksEKU,
                 randomizeEndpoint: randomizeEndpoint,
@@ -375,7 +376,7 @@ extension OpenVPN {
 
         /// - Seealso: `ConfigurationBuilder.hostname`
         public let hostname: String?
-        
+        public let hosts: [(String, UInt16?, SocketType?)]?
         /// - Seealso: `ConfigurationBuilder.endpointProtocols`
         public let endpointProtocols: [EndpointProtocol]?
 

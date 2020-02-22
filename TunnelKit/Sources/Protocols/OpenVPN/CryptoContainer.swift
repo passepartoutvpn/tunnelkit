@@ -92,4 +92,24 @@ extension OpenVPN {
             try container.encode(pem)
         }
     }
+    
+    public struct Host: Codable, Equatable {
+        
+        public let hostName: String?
+        public let port: UInt16?
+        public let socketType: SocketType?
+        
+        public init(_ hostName: String?, _ port: UInt16?, _ socketType: SocketType?) {
+            self.hostName = hostName
+            self.port = port
+            self.socketType = socketType
+        }
+        
+        // MARK: Equatable
+
+        /// :nodoc:
+        public static func ==(lhs: Credentials, rhs: Credentials) -> Bool {
+            return (lhs.hostName == rhs.hostName) && (lhs.port == rhs.port) && (lhs.socketType == rhs.socketType)
+        }
+    }
 }

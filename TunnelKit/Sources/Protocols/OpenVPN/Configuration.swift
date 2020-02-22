@@ -212,7 +212,7 @@ extension OpenVPN {
         
         /// The server hostname (picked from first remote).
         public var hostname: String?
-        public var hosts: [(String, UInt16?, SocketType?)]?
+        public var hosts: [Host]?
         /// The list of server endpoints.
         public var endpointProtocols: [EndpointProtocol]?
         
@@ -376,7 +376,7 @@ extension OpenVPN {
 
         /// - Seealso: `ConfigurationBuilder.hostname`
         public let hostname: String?
-        public let hosts: [(String, UInt16?, SocketType?)]?
+        public let hosts: [Host]?
         /// - Seealso: `ConfigurationBuilder.endpointProtocols`
         public let endpointProtocols: [EndpointProtocol]?
 
@@ -465,6 +465,7 @@ extension OpenVPN.Configuration {
         builder.keepAliveTimeout = keepAliveTimeout
         builder.renegotiatesAfter = renegotiatesAfter
         builder.hostname = hostname
+        builder.hosts = hosts
         builder.endpointProtocols = endpointProtocols
         builder.checksEKU = checksEKU
         builder.randomizeEndpoint = randomizeEndpoint

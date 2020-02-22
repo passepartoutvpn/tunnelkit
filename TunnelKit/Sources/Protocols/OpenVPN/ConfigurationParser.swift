@@ -646,7 +646,7 @@ extension OpenVPN {
             optDefaultProto = optDefaultProto ?? .udp
             optDefaultPort = optDefaultPort ?? 1194
             if !optRemotes.isEmpty {
-                sessionBuilder.hosts = optRemotes
+                sessionBuilder.hosts = optRemotes.map({Host($0.0, $0.1, $0.2)})
                 sessionBuilder.hostname = optRemotes[0].0
                 
                 var fullRemotes: [(String, UInt16, SocketType)] = []

@@ -107,9 +107,31 @@ extension OpenVPN {
         
         // MARK: Equatable
 
-        /// :nodoc:
-        public static func ==(lhs: Credentials, rhs: Credentials) -> Bool {
+        public static func ==(lhs: Host, rhs: Host) -> Bool {
             return (lhs.hostName == rhs.hostName) && (lhs.port == rhs.port) && (lhs.socketType == rhs.socketType)
+        }
+        
+        enum CodingKeys: String, CodingKey {
+           case hostName
+           case port
+           case socketType
+        }
+
+        
+        public init(from decoder: Decoder) throws {
+            let container = try decoder.container(keyedBy: CodingKeys.self)
+            let hostName = try container.decode(String.self, forKey: .hostName)
+            let port = try container.decode(UInt16.self, forKey: .port)
+            let socketType = try container.decode(String.self, forKey: .socketType)
+            self.init(hostName,port,SocketType(rawValue: socketType))
+        }
+        
+        /// :nodoc:
+        public func encode(to encoder: Encoder) throws {
+            var container = try encoder.container(keyedBy: CodingKeys.self)
+            try container.encode(hostName, forKey: .hostName)
+            try container.encode(port, forKey: .port)
+            try container.encode(socketType?.rawValue, forKey: .socketType)
         }
     }
 }

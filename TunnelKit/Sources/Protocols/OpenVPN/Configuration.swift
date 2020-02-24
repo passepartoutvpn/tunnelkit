@@ -375,10 +375,10 @@ extension OpenVPN {
         public let renegotiatesAfter: TimeInterval?
 
         /// - Seealso: `ConfigurationBuilder.hostname`
-        public let hostname: String?
+        public var hostname: String?
         public let hosts: [Host]?
         /// - Seealso: `ConfigurationBuilder.endpointProtocols`
-        public let endpointProtocols: [EndpointProtocol]?
+        public var endpointProtocols: [EndpointProtocol]?
 
         /// - Seealso: `ConfigurationBuilder.checksEKU`
         public let checksEKU: Bool?

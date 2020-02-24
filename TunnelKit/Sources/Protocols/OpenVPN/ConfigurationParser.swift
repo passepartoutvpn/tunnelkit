@@ -151,7 +151,7 @@ extension OpenVPN {
             public let url: URL?
 
             /// The overall parsed `Configuration`.
-            public let configuration: Configuration
+            public var configuration: Configuration
 
             /// The lines of the configuration file stripped of any sensitive data. Lines that
             /// the parser does not recognize are discarded in the first place.

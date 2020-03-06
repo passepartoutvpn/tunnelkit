@@ -842,7 +842,7 @@ extension OpenVPNTunnelProvider {
             case .tlsCertificateAuthority, .tlsClientCertificate, .tlsClientKey:
                 return .tlsInitialization
                 
-            case .tlsServerCertificate, .tlsServerEKU:
+            case .tlsServerCertificate, .tlsServerEKU, .tlsServerHost:
                 return .tlsServerVerification
                 
             case .tlsHandshake:

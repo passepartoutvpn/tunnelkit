@@ -209,7 +209,6 @@ extension OpenVPN {
             var optKeepAliveTimeoutSeconds: TimeInterval?
             var optRenegotiateAfterSeconds: TimeInterval?
             //
-            var optHostname: String?
             var optDefaultProto: SocketType?
             var optDefaultPort: UInt16?
             var optRemotes: [(String, UInt16?, SocketType?)] = [] // address, port, socket

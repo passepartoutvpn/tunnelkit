@@ -10,6 +10,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 - Index out of range during negotiation (Grivus). [#143](https://github.com/passepartoutvpn/tunnelkit/pull/143)
+- Handle server shutdown/restart (remote `--explicit-exit-notify`). [#131](https://github.com/passepartoutvpn/tunnelkit/issues/131)
+- Pointer warnings from Xcode 11.4 upgrade.
 
 ## 2.2.1 (2019-12-14)
 

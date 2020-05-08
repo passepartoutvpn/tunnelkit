@@ -55,15 +55,11 @@ public protocol OpenVPNSessionDelegate: class {
     /**
      Called after stopping a session.
      
+     - Parameter error: An optional `Error` being the reason of the stop.
      - Parameter shouldReconnect: When `true`, the session can/should be restarted. Usually because the stop reason was recoverable.
      - Seealso: `OpenVPNSession.reconnect(...)`
      */
-    func sessionDidStop(_: OpenVPNSession, shouldReconnect: Bool)
-    
-    /**
-     Called after a session failed to start.
-     */
-    func sessionFailed(_: OpenVPNSession, error: Error)
+    func sessionDidStop(_: OpenVPNSession, withError error: Error?, shouldReconnect: Bool)
 }
 
 /// Provides methods to set up and maintain an OpenVPN session.
@@ -1280,15 +1276,13 @@ public class OpenVPNSession: Session {
     }
     
     private func doShutdown(error: Error?) {
-        stopError = error
-        
         if let error = error {
             log.error("Trigger shutdown (error: \(error))")
-            delegate?.sessionFailed(self, error: error)
         } else {
             log.info("Trigger shutdown on request")
-            delegate?.sessionDidStop(self, shouldReconnect: false)
         }
+        stopError = error
+        delegate?.sessionDidStop(self, withError: error, shouldReconnect: false)
     }
     
     private func doReconnect(error: Error?) {
@@ -1298,6 +1292,6 @@ public class OpenVPNSession: Session {
             log.info("Trigger reconnection on request")
         }
         stopError = error
-        delegate?.sessionDidStop(self, shouldReconnect: true)
+        delegate?.sessionDidStop(self, withError: error, shouldReconnect: true)
     }
 }

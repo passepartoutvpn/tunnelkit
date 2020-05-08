@@ -576,21 +576,14 @@ extension OpenVPNTunnelProvider: OpenVPNSessionDelegate {
     }
     
     /// :nodoc:
-    public func sessionDidStop(_: OpenVPNSession, shouldReconnect: Bool) {
-        log.info("Session did stop")
+    public func sessionDidStop(_: OpenVPNSession, withError error: Error?, shouldReconnect: Bool) {
+        if let error = error {
+            log.error("Session did stop with error: \(error)")
+            cancelTunnelWithError(error)
+        } else {
+            log.info("Session did stop")
+        }
 
-        stopSession(shouldReconnect: shouldReconnect)
-    }
-    
-    /// :nodoc:
-    public func sessionFailed(_: OpenVPNSession, error: Error) {
-        log.info("Session failed")
-        
-        cancelTunnelWithError(error)
-        stopSession(shouldReconnect: false)
-    }
-    
-    private func stopSession(shouldReconnect: Bool) {
         isCountingData = false
         refreshDataCount()
 

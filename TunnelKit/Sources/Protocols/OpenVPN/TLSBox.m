@@ -456,7 +456,7 @@ const NSInteger TLSBoxDefaultSecurityLevel = -1;
             continue;
         }
         
-        if(utf8 && len1 && len2 && (len1 == len2) && strcmp(utf8, self.hostname.UTF8String) == 0) {
+        if(utf8 && len1 && len2 && (len1 == len2) && strcmp((const char *)utf8, self.hostname.UTF8String) == 0) {
             isValid = YES;
             break;
         }

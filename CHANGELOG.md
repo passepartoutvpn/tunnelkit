@@ -11,6 +11,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Support for SAN hostname in certificates (jaroslavas). [#168](https://github.com/passepartoutvpn/tunnelkit/pull/168)
 
+### Fixed
+
+- IPv6 traffic broken on Mojave. [#146](https://github.com/passepartoutvpn/tunnelkit/issues/146), [#169](https://github.com/passepartoutvpn/tunnelkit/pull/169)
+
 ## 2.2.3 (2019-04-21)
 
 ### Changed

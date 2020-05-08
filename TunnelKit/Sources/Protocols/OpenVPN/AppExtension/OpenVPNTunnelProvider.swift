@@ -128,6 +128,8 @@ open class OpenVPNTunnelProvider: NEPacketTunnelProvider {
     
     private var isCountingData = false
     
+    private var shouldReconnect = false
+
     // MARK: NEPacketTunnelProvider (XPC queue)
     
     open override var reasserting: Bool {
@@ -341,7 +343,7 @@ open class OpenVPNTunnelProvider: NEPacketTunnelProvider {
     }
     
     private func finishTunnelDisconnection(error: Error?) {
-        if let session = session, !(reasserting && session.canRebindLink()) {
+        if let session = session, !(shouldReconnect && session.canRebindLink()) {
             session.cleanup()
         }
         
@@ -419,7 +421,7 @@ extension OpenVPNTunnelProvider: GenericSocketDelegate {
     /// :nodoc:
     public func socketDidTimeout(_ socket: GenericSocket) {
         log.debug("Socket timed out waiting for activity, cancelling...")
-        reasserting = true
+        shouldReconnect = true
         socket.shutdown()
 
         // fallback: TCP connection timeout suggests falling back
@@ -438,7 +440,7 @@ extension OpenVPNTunnelProvider: GenericSocketDelegate {
         }
         if session.canRebindLink() {
             session.rebindLink(producer.link(withMTU: cfg.mtu))
-            reasserting = false
+            shouldReconnect = false
         } else {
             session.setLink(producer.link(withMTU: cfg.mtu))
         }
@@ -478,17 +480,18 @@ extension OpenVPNTunnelProvider: GenericSocketDelegate {
         }
 
         // reconnect?
-        if reasserting {
+        if shouldReconnect {
             log.debug("Disconnection is recoverable, tunnel will reconnect in \(reconnectionDelay) milliseconds...")
             tunnelQueue.schedule(after: .milliseconds(reconnectionDelay)) {
-                log.debug("Tunnel is about to reconnect...")
 
-                // give up if reasserting cleared in the meantime
-                guard self.reasserting else {
-                    log.warning("Reasserting flag was cleared in the meantime")
+                // give up if shouldReconnect cleared in the meantime
+                guard self.shouldReconnect else {
+                    log.warning("Reconnection flag was cleared in the meantime")
                     return
                 }
 
+                log.debug("Tunnel is about to reconnect...")
+                self.reasserting = true
                 self.connectTunnel(upgradedSocket: upgradedSocket)
             }
             return
@@ -579,7 +582,6 @@ extension OpenVPNTunnelProvider: OpenVPNSessionDelegate {
     public func sessionDidStop(_: OpenVPNSession, withError error: Error?, shouldReconnect: Bool) {
         if let error = error {
             log.error("Session did stop with error: \(error)")
-            cancelTunnelWithError(error)
         } else {
             log.info("Session did stop")
         }
@@ -587,7 +589,7 @@ extension OpenVPNTunnelProvider: OpenVPNSessionDelegate {
         isCountingData = false
         refreshDataCount()
 
-        reasserting = shouldReconnect
+        self.shouldReconnect = shouldReconnect
         socket?.shutdown()
     }
     

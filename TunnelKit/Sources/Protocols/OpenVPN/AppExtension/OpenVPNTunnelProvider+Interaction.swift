@@ -3,7 +3,7 @@
 //  TunnelKit
 //
 //  Created by Davide De Rosa on 9/24/17.
-//  Copyright (c) 2019 Davide De Rosa. All rights reserved.
+//  Copyright (c) 2020 Davide De Rosa. All rights reserved.
 //
 //  https://github.com/passepartoutvpn
 //
@@ -141,6 +141,9 @@ extension OpenVPNTunnelProvider {
         
         /// Default gateway could not be attained.
         case gatewayUnattainable
+        
+        /// Remove server has shut down.
+        case serverShutdown
         
         /// The server replied in an unexpected way.
         case unexpectedReply

@@ -3,7 +3,7 @@
 //  TunnelKit
 //
 //  Created by Davide De Rosa on 2/3/17.
-//  Copyright (c) 2019 Davide De Rosa. All rights reserved.
+//  Copyright (c) 2020 Davide De Rosa. All rights reserved.
 //
 //  https://github.com/passepartoutvpn
 //
@@ -61,7 +61,9 @@ extern const NSInteger TLSBoxDefaultSecurityLevel;
 - (instancetype)initWithCAPath:(NSString *)caPath
          clientCertificatePath:(nullable NSString *)clientCertificatePath
                  clientKeyPath:(nullable NSString *)clientKeyPath
-                     checksEKU:(BOOL)checksEKU;
+                     checksEKU:(BOOL)checksEKU
+                 checksSANHost:(BOOL)checksSANHost
+                      hostname:(nullable NSString *)hostname;
 
 - (BOOL)startWithError:(NSError **)error;
 

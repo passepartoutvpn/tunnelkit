@@ -3,7 +3,7 @@
 //  TunnelKit
 //
 //  Created by Davide De Rosa on 10/10/17.
-//  Copyright (c) 2019 Davide De Rosa. All rights reserved.
+//  Copyright (c) 2020 Davide De Rosa. All rights reserved.
 //
 //  https://github.com/passepartoutvpn
 //
@@ -50,6 +50,7 @@ typedef NS_ENUM(NSInteger, TunnelKitErrorCode) {
     TunnelKitErrorCodeTLSClientKey              = 205,
     TunnelKitErrorCodeTLSServerCertificate      = 206,
     TunnelKitErrorCodeTLSServerEKU              = 207,
+    TunnelKitErrorCodeTLSServerHost             = 208,
     TunnelKitErrorCodeDataPathOverflow          = 301,
     TunnelKitErrorCodeDataPathPeerIdMismatch    = 302,
     TunnelKitErrorCodeDataPathCompression       = 303,

@@ -5,7 +5,53 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## Unreleased
+## 2.2.5 (2020-05-12)
+
+### Changed
+
+- Improve IP Header parsing (roop). [#171](https://github.com/passepartoutvpn/tunnelkit/pull/171)
+
+## 2.2.4 (2020-05-10)
+
+### Added
+
+- Support for SAN hostname in certificates (jaroslavas). [#168](https://github.com/passepartoutvpn/tunnelkit/pull/168)
+
+### Fixed
+
+- IPv6 traffic broken on Mojave. [#146](https://github.com/passepartoutvpn/tunnelkit/issues/146), [#169](https://github.com/passepartoutvpn/tunnelkit/pull/169)
+- Restore tunnel MTU setting (ueshiba). [#148](https://github.com/passepartoutvpn/tunnelkit/pull/148)
+- Transient connected state upon connection failure (rob-patchett). [#128](https://github.com/passepartoutvpn/tunnelkit/pull/128)
+
+## 2.2.3 (2020-04-21)
+
+### Changed
+
+- Upgrade OpenSSL to 1.1.1g. [#166](https://github.com/passepartoutvpn/tunnelkit/issues/166)
+
+## 2.2.2 (2020-04-20)
+
+### Changed
+
+- Upgrade OpenSSL to 1.1.1f. [#165](https://github.com/passepartoutvpn/tunnelkit/issues/165)
+
+### Fixed
+
+- Index out of range during negotiation (Grivus). [#143](https://github.com/passepartoutvpn/tunnelkit/pull/143)
+- Handle server shutdown/restart (remote `--explicit-exit-notify`). [#131](https://github.com/passepartoutvpn/tunnelkit/issues/131)
+- Abrupt disconnection upon unknown packet key id (johankool). [#161](https://github.com/passepartoutvpn/tunnelkit/pull/161)
+- Handle explicit IPv4/IPv6 protocols (`4` or `6` suffix in `--proto`). [#153](https://github.com/passepartoutvpn/tunnelkit/issues/153)
+- Mitigate IP traffic breaking on Mojave. [#146](https://github.com/passepartoutvpn/tunnelkit/issues/146)
+- Pointer warnings from Xcode 11.4 upgrade.
+
+## 2.2.1 (2019-12-14)
+
+### Fixed
+
+- Keep-alive pings coalescing over time.
+- Ping timeout not checked for if keep-alive is disabled.
+
+## 2.2.0 (2019-12-11)
 
 ### Changed
 

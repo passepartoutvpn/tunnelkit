@@ -3,7 +3,7 @@
 //  TunnelKit
 //
 //  Created by Davide De Rosa on 11/10/18.
-//  Copyright (c) 2019 Davide De Rosa. All rights reserved.
+//  Copyright (c) 2020 Davide De Rosa. All rights reserved.
 //
 //  https://github.com/passepartoutvpn
 //
@@ -33,4 +33,16 @@ public enum SocketType: String {
     
     /// TCP socket type.
     case tcp = "TCP"
+
+    /// UDP socket type (IPv4).
+    case udp4 = "UDP4"
+    
+    /// TCP socket type (IPv4).
+    case tcp4 = "TCP4"
+
+    /// UDP socket type (IPv6).
+    case udp6 = "UDP6"
+    
+    /// TCP socket type (IPv6).
+    case tcp6 = "TCP6"
 }

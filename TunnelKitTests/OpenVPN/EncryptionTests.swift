@@ -3,7 +3,7 @@
 //  TunnelKitTests
 //
 //  Created by Davide De Rosa on 7/7/18.
-//  Copyright (c) 2019 Davide De Rosa. All rights reserved.
+//  Copyright (c) 2020 Davide De Rosa. All rights reserved.
 //
 //  https://github.com/passepartoutvpn
 //
@@ -81,7 +81,11 @@ class EncryptionTests: XCTestCase {
         
         let packetId: [UInt8] = [0x56, 0x34, 0x12, 0x00]
         let ad: [UInt8] = [0x00, 0x12, 0x34, 0x56]
-        var flags = CryptoFlags(iv: packetId, ivLength: packetId.count, ad: ad, adLength: ad.count)
+        var flags = packetId.withUnsafeBufferPointer { (iv) in
+            return ad.withUnsafeBufferPointer { (ad) in
+                return CryptoFlags(iv: iv.baseAddress, ivLength: packetId.count, ad: ad.baseAddress, adLength: ad.count)
+            }
+        }
         let plain = Data(hex: "00112233445566778899")
         let encrypted = try! client.encrypter().encryptData(plain, flags: &flags)
         let decrypted = try! server.decrypter().decryptData(encrypted, flags: &flags)
@@ -93,7 +97,9 @@ class EncryptionTests: XCTestCase {
 
         let original = Data(hex: "0000000000")
         let ad: [UInt8] = [UInt8](Data(hex: "38afa8f1162096081e000000015ba35373"))
-        var flags = CryptoFlags(iv: nil, ivLength: 0, ad: ad, adLength: ad.count)
+        var flags = ad.withUnsafeBufferPointer {
+            CryptoFlags(iv: nil, ivLength: 0, ad: $0.baseAddress, adLength: ad.count)
+        }
 
 //        let expEncrypted = Data(hex: "319bb8e7f8f7930cc4625079dd32a6ef9540c2fc001c53f909f712037ae9818af840b88714")
         let encrypted = try! client.encrypter().encryptData(original, flags: &flags)

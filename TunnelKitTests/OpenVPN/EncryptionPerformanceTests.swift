@@ -3,7 +3,7 @@
 //  TunnelKitTests
 //
 //  Created by Davide De Rosa on 7/7/18.
-//  Copyright (c) 2019 Davide De Rosa. All rights reserved.
+//  Copyright (c) 2020 Davide De Rosa. All rights reserved.
 //
 //  https://github.com/passepartoutvpn
 //
@@ -81,7 +81,9 @@ class EncryptionPerformanceTests: XCTestCase {
     func testGCMEncryption() {
         let suite = TestUtils.generateDataSuite(1000, 100000)
         let ad: [UInt8] = [0x11, 0x22, 0x33, 0x44]
-        var flags = CryptoFlags(iv: nil, ivLength: 0, ad: ad, adLength: ad.count)
+        var flags = ad.withUnsafeBufferPointer {
+            return CryptoFlags(iv: nil, ivLength: 0, ad: $0.baseAddress, adLength: ad.count)
+        }
         measure {
             for data in suite {
                 let _ = try! self.gcmEncrypter.encryptData(data, flags: &flags)

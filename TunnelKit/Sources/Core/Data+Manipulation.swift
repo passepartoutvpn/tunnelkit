@@ -3,7 +3,7 @@
 //  TunnelKit
 //
 //  Created by Davide De Rosa on 2/3/17.
-//  Copyright (c) 2019 Davide De Rosa. All rights reserved.
+//  Copyright (c) 2020 Davide De Rosa. All rights reserved.
 //
 //  https://github.com/passepartoutvpn
 //
@@ -85,19 +85,25 @@ extension Data {
 extension Data {
     mutating func append(_ value: UInt16) {
         var localValue = value
-        let buffer = UnsafeBufferPointer(start: &localValue, count: 1)
+        let buffer = withUnsafePointer(to: &localValue) {
+            return UnsafeBufferPointer(start: $0, count: 1)
+        }
         append(buffer)
     }
     
     mutating func append(_ value: UInt32) {
         var localValue = value
-        let buffer = UnsafeBufferPointer(start: &localValue, count: 1)
+        let buffer = withUnsafePointer(to: &localValue) {
+            return UnsafeBufferPointer(start: $0, count: 1)
+        }
         append(buffer)
     }
     
     mutating func append(_ value: UInt64) {
         var localValue = value
-        let buffer = UnsafeBufferPointer(start: &localValue, count: 1)
+        let buffer = withUnsafePointer(to: &localValue) {
+            return UnsafeBufferPointer(start: $0, count: 1)
+        }
         append(buffer)
     }
     

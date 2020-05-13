@@ -3,7 +3,7 @@
 //  TunnelKit
 //
 //  Created by Davide De Rosa on 8/23/18.
-//  Copyright (c) 2019 Davide De Rosa. All rights reserved.
+//  Copyright (c) 2020 Davide De Rosa. All rights reserved.
 //
 //  https://github.com/passepartoutvpn
 //
@@ -77,4 +77,7 @@ public enum OpenVPNError: String, Error {
 
     /// Missing routing information.
     case noRouting
+
+    /// Remote server shut down (--explicit-exit-notify).
+    case serverShutdown
 }

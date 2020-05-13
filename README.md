@@ -1,13 +1,11 @@
 # TunnelKit
 
 ![iOS 11+](https://img.shields.io/badge/ios-11+-green.svg)
-[![OpenSSL 1.1.1d](https://img.shields.io/badge/openssl-1.1.1d-d69c68.svg)](https://www.openssl.org/news/openssl-1.1.1-notes.html)
+[![OpenSSL 1.1.1g](https://img.shields.io/badge/openssl-1.1.1g-d69c68.svg)](https://www.openssl.org/news/openssl-1.1.1-notes.html)
 [![License GPLv3](https://img.shields.io/badge/license-GPLv3-lightgray.svg)](LICENSE)
 [![Travis-CI](https://api.travis-ci.org/passepartoutvpn/tunnelkit.svg?branch=master)](https://travis-ci.org/passepartoutvpn/tunnelkit)
 
 This library provides a simplified Swift/Obj-C implementation of the OpenVPN® protocol for the Apple platforms. The crypto layer is built on top of [OpenSSL 1.1.1][dep-openssl], which in turn enables support for a certain range of encryption and digest algorithms.
-
-<a href="https://www.patreon.com/keeshux"><img src="https://c5.patreon.com/external/logo/become_a_patron_button@2x.png" width="160"></a>
 
 ## Getting started
 
@@ -171,6 +169,8 @@ Due to the restrictive license (GPLv2), LZO support is provided as an optional s
 
 ## License
 
+Copyright (c) 2020 Davide De Rosa. All rights reserved.
+
 ### Part I
 
 This project is licensed under the [GPLv3][license-content].
@@ -193,14 +193,14 @@ For more details please see [CONTRIBUTING][contrib-readme].
 
 ## Credits
 
-- [lzo][dep-lzo-website] - © 1996 - 2017 Markus F.X.J. Oberhumer
-- [PIATunnel][dep-piatunnel-repo] - © 2018-Present Private Internet Access
+- [lzo][dep-lzo-website] - Copyright (c) 1996-2017 Markus F.X.J. Oberhumer
+- [PIATunnel][dep-piatunnel-repo] - Copyright (c) 2018-Present Private Internet Access
 - [SURFnet][surfnet]
-- [SwiftyBeaver][dep-swiftybeaver-repo] - © 2015 Sebastian Kreutzberger
+- [SwiftyBeaver][dep-swiftybeaver-repo] - Copyright (c) 2015 Sebastian Kreutzberger
 
 This product includes software developed by the OpenSSL Project for use in the OpenSSL Toolkit. ([https://www.openssl.org/][dep-openssl])
 
-© 2002-2018 OpenVPN Inc. - OpenVPN is a registered trademark of OpenVPN Inc.
+Copyright (c) 2002-2018 OpenVPN Inc. - OpenVPN is a registered trademark of OpenVPN Inc.
 
 ## Contacts
 
@@ -234,4 +234,3 @@ Website: [passepartoutvpn.app][about-website]
 
 [about-twitter]: https://twitter.com/keeshux
 [about-website]: https://passepartoutvpn.app
-[about-patreon]: https://www.patreon.com/keeshux

@@ -3,7 +3,7 @@
 //  TunnelKit
 //
 //  Created by Davide De Rosa on 10/23/17.
-//  Copyright (c) 2019 Davide De Rosa. All rights reserved.
+//  Copyright (c) 2020 Davide De Rosa. All rights reserved.
 //
 //  https://github.com/passepartoutvpn
 //
@@ -66,7 +66,7 @@ extension OpenVPNTunnelProvider {
         /// - Seealso: `fallbackServerAddresses`
         public var prefersResolvedAddresses: Bool
         
-        /// Resolved addresses in case DNS fails or `prefersResolvedAddresses` is `true`.
+        /// Resolved addresses in case DNS fails or `prefersResolvedAddresses` is `true` (IPv4 only).
         public var resolvedAddresses: [String]?
         
         /// The MTU of the link.
@@ -170,7 +170,11 @@ extension OpenVPNTunnelProvider {
             static let renegotiatesAfter = "RenegotiatesAfter"
             
             static let checksEKU = "ChecksEKU"
-
+            
+            static let checksSANHost = "checksSANHost"
+            
+            static let sanHost = "sanHost"
+            
             static let randomizeEndpoint = "RandomizeEndpoint"
             
             static let usesPIAPatches = "UsesPIAPatches"
@@ -510,6 +514,12 @@ private extension OpenVPN.Configuration {
         if let checksEKU = providerConfiguration[S.checksEKU] as? Bool {
             builder.checksEKU = checksEKU
         }
+        if let checksSANHost = providerConfiguration[S.checksSANHost] as? Bool {
+            builder.checksSANHost = checksSANHost
+        }
+        if let sanHost = providerConfiguration[S.sanHost] as? String {
+            builder.sanHost = sanHost
+        }
         if let randomizeEndpoint = providerConfiguration[S.randomizeEndpoint] as? Bool {
             builder.randomizeEndpoint = randomizeEndpoint
         }
@@ -590,6 +600,12 @@ private extension OpenVPN.Configuration {
         if let checksEKU = checksEKU {
             dict[S.checksEKU] = checksEKU
         }
+        if let checksSANHost = checksSANHost {
+            dict[S.checksSANHost] = checksSANHost
+        }
+        if let sanHost = sanHost {
+            dict[S.sanHost] = sanHost
+        }
         if let randomizeEndpoint = randomizeEndpoint {
             dict[S.randomizeEndpoint] = randomizeEndpoint
         }
@@ -666,6 +682,11 @@ private extension OpenVPN.Configuration {
             log.info("\tServer EKU verification: enabled")
         } else {
             log.info("\tServer EKU verification: disabled")
+        }
+        if checksSANHost ?? false {
+            log.info("\tHost SAN verification: enabled (\(sanHost ?? "-"))")
+        } else {
+            log.info("\tHost SAN verification: disabled")
         }
         if randomizeEndpoint ?? false {
             log.info("\tRandomize endpoint: true")

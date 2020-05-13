@@ -3,7 +3,7 @@
 //  TunnelKit
 //
 //  Created by Davide De Rosa on 8/27/17.
-//  Copyright (c) 2019 Davide De Rosa. All rights reserved.
+//  Copyright (c) 2020 Davide De Rosa. All rights reserved.
 //
 //  https://github.com/passepartoutvpn
 //
@@ -36,17 +36,17 @@
 
 import Foundation
 import NetworkExtension
+import SwiftyBeaver
+
+private let log = SwiftyBeaver.self
 
 /// `TunnelInterface` implementation via NetworkExtension.
 public class NETunnelInterface: TunnelInterface {
     private weak var impl: NEPacketTunnelFlow?
     
-    private let protocolNumber: NSNumber
-
     /// :nodoc:
-    public init(impl: NEPacketTunnelFlow, isIPv6: Bool) {
+    public init(impl: NEPacketTunnelFlow) {
         self.impl = impl
-        protocolNumber = (isIPv6 ? AF_INET6 : AF_INET) as NSNumber
     }
     
     // MARK: TunnelInterface
@@ -76,13 +76,16 @@ public class NETunnelInterface: TunnelInterface {
     
     /// :nodoc:
     public func writePacket(_ packet: Data, completionHandler: ((Error?) -> Void)?) {
+        let protocolNumber = IPHeader.protocolNumber(inPacket: packet)
         impl?.writePackets([packet], withProtocols: [protocolNumber])
         completionHandler?(nil)
     }
     
     /// :nodoc:
     public func writePackets(_ packets: [Data], completionHandler: ((Error?) -> Void)?) {
-        let protocols = [NSNumber](repeating: protocolNumber, count: packets.count)
+        let protocols = packets.map {
+            IPHeader.protocolNumber(inPacket: $0)
+        }
         impl?.writePackets(packets, withProtocols: protocols)
         completionHandler?(nil)
     }

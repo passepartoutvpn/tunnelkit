@@ -524,9 +524,9 @@ char *netname6(struct sockaddr_in6 *sa6, struct sockaddr *sam)
     ASSERT_GETNAMEINFO(getnameinfo((struct sockaddr *)sa6, sa6->sin6_len, host, sizeof(host), NULL, 0, flag));
     
     if (masklen > 0) {
-        sprintf(line, "%s/%u", host, masklen);
+        ASSERT_PRINTF(sprintf(line, "%s/%u", host, masklen));
     } else {
-        sprintf(line, "%s", host);
+        ASSERT_PRINTF(sprintf(line, "%s", host));
     }
     
     return line;

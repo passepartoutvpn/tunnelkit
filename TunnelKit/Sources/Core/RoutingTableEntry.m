@@ -236,6 +236,9 @@ static NSString *RoutingTableEntryName(struct sockaddr *sa, struct sockaddr *mas
     else {
         const uint32_t networkAddress = RoutingTableEntryAddress4(self.network);
         const uint32_t destinationAddress = RoutingTableEntryAddress4(destination);
+        if ((networkAddress == UINT32_MAX) || (destinationAddress == UINT32_MAX)) {
+            return NO;
+        }
         const uint32_t networkMask = ~((1 << (32 - self.prefix)) - 1);
         
 //        NSLog(@"network:     %x = %@", networkAddress, self.network);
@@ -286,6 +289,9 @@ static NSString *RoutingTableEntryName(struct sockaddr *sa, struct sockaddr *mas
 
         struct in_addr saddr1, saddr2;
         const uint32_t address = RoutingTableEntryAddress4(self.network);
+        if (address == UINT32_MAX) {
+            return nil;
+        }
         saddr1.s_addr = htonl(address);
         saddr2.s_addr = htonl(address | (1 << (32 - halfPrefix)));
 

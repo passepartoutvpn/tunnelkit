@@ -205,6 +205,9 @@ static NSString *RoutingTableEntryName(struct sockaddr *sa, struct sockaddr *mas
     if (self.isIPv6) {
         NSData *networkAddress = RoutingTableEntryAddress6(self.network);
         NSData *destinationAddress = RoutingTableEntryAddress6(destination);
+        if (!networkAddress || !destinationAddress) {
+            return NO;
+        }
         
 //        NSLog(@"network:     %@ = %@", networkAddress, self.network);
 //        NSLog(@"destination: %@ = %@", destinationAddress, destination);
@@ -256,6 +259,9 @@ static NSString *RoutingTableEntryName(struct sockaddr *sa, struct sockaddr *mas
         struct in6_addr saddr1, saddr2;
         char addr[INET6_ADDRSTRLEN];
         NSData *addressData = RoutingTableEntryAddress6(self.network);
+        if (!addressData) {
+            return nil;
+        }
         memcpy(&saddr1, addressData.bytes, addressData.length);
         NSMutableData *addressData2 = [addressData mutableCopy];
         

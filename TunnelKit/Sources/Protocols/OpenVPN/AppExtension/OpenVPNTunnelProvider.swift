@@ -718,7 +718,13 @@ extension OpenVPNTunnelProvider: OpenVPNSessionDelegate {
 
         // fall back
         if dnsSettings == nil {
-            dnsServers = cfg.sessionConfiguration.dnsServers ?? options.dnsServers ?? []
+            dnsServers = []
+            if let servers = cfg.sessionConfiguration.dnsServers,
+               !servers.isEmpty {
+                dnsServers = servers
+            } else if let servers = options.dnsServers {
+                dnsServers = servers
+            }
             if !dnsServers.isEmpty {
                 log.info("DNS: Using servers \(dnsServers.maskedDescription)")
                 dnsSettings = NEDNSSettings(servers: dnsServers)

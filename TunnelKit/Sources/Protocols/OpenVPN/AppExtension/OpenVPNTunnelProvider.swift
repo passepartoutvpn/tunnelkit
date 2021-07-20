@@ -133,6 +133,10 @@ open class OpenVPNTunnelProvider: NEPacketTunnelProvider {
     
     private var shouldReconnect = false
 
+    // Bookkeeping and path monitor for wait and reconnect
+    private var shouldReconnectWhenNetworkBecomesAvailable = false
+    private var reconnectionPathMonitor: AnyObject?
+
     // MARK: NEPacketTunnelProvider (XPC queue)
     
     /// :nodoc:
@@ -427,6 +431,51 @@ open class OpenVPNTunnelProvider: NEPacketTunnelProvider {
         }
         defaults?.dataCountArray = [dataCount.0, dataCount.1]
     }
+
+    deinit {
+        if #available(iOS 12, macOS 10.14, *) {
+            tearDownReconnectionPathMonitor()
+        }
+    }
+}
+
+@available(iOS 12, macOS 10.14, *)
+extension OpenVPNTunnelProvider {
+
+    // MARK: Wait and reconnect
+
+    // If reconnecting based on path monitor is enabled, a NWPathMonitor is used
+    // to trigger reconnection to recover from a link failure or network change.
+    public func setReconnectBasedOnPathMonitor(enabled: Bool) {
+        if enabled {
+            setUpReconnectionPathMonitor()
+        } else {
+            tearDownReconnectionPathMonitor()
+        }
+    }
+
+    // Setup reconnectionPathMonitor to reconnect (if asked to) when network comes up next
+    public func setUpReconnectionPathMonitor() {
+        let pathMonitor = NWPathMonitor()
+        pathMonitor.pathUpdateHandler = { [weak self] path in
+            guard let self = self else { return }
+            log.debug("reconnectionPathMonitor path status = \(path.status), interfaces = \(path.availableInterfaces)")
+            if path.status == .satisfied && self.shouldReconnectWhenNetworkBecomesAvailable {
+                self.shouldReconnectWhenNetworkBecomesAvailable = false
+                self.connectTunnel()
+            }
+        }
+        pathMonitor.start(queue: DispatchQueue.main)
+        reconnectionPathMonitor = pathMonitor
+    }
+
+    // Tear down and deref reconnectionPathMonitor
+    private func tearDownReconnectionPathMonitor() {
+        if let pathMonitor = reconnectionPathMonitor as? NWPathMonitor {
+            pathMonitor.cancel()
+        }
+        reconnectionPathMonitor = nil
+    }
 }
 
 extension OpenVPNTunnelProvider: GenericSocketDelegate {
@@ -496,6 +545,20 @@ extension OpenVPNTunnelProvider: GenericSocketDelegate {
 
         // reconnect?
         if shouldReconnect {
+
+            if #available(iOS 12, macOS 10.14, *) {
+                if shutdownError as? ProviderError == .networkChanged,
+                    let pathMonitor = self.reconnectionPathMonitor as? NWPathMonitor,
+                    pathMonitor.currentPath.status == .unsatisfied {
+                    // If the network path is in the process of changing, and we don't currently
+                    // have a path yet, wait till a path becomes available and then reconnect.
+                    log.debug("Tunnel will reconnect shortly, after a network interface becomes available")
+                    self.shouldReconnectWhenNetworkBecomesAvailable = true
+                    self.reasserting = true
+                    return
+                }
+            }
+
             log.debug("Disconnection is recoverable, tunnel will reconnect in \(reconnectionDelay) milliseconds...")
             tunnelQueue.schedule(after: .milliseconds(reconnectionDelay)) {
 
@@ -509,6 +572,14 @@ extension OpenVPNTunnelProvider: GenericSocketDelegate {
                 self.reasserting = true
                 self.connectTunnel(upgradedSocket: upgradedSocket)
             }
+            return
+        }
+
+        // reconnect later
+        if self.reconnectionPathMonitor != nil && (shutdownError as? OpenVPNError == .failedLinkWrite) {
+            log.debug("Disconnection can't be recovered at present, tunnel will reconnect when network becomes available")
+            self.shouldReconnectWhenNetworkBecomesAvailable = true
+            self.reasserting = true
             return
         }
 

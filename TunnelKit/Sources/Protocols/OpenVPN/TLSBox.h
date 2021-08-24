@@ -58,12 +58,12 @@ extern const NSInteger TLSBoxDefaultSecurityLevel;
 + (nullable NSString *)decryptedPrivateKeyFromPath:(NSString *)path passphrase:(NSString *)passphrase error:(NSError **)error;
 + (nullable NSString *)decryptedPrivateKeyFromPEM:(NSString *)pem passphrase:(NSString *)passphrase error:(NSError **)error;
 
-- (instancetype)initWithCAPath:(NSString *)caPath
-         clientCertificatePath:(nullable NSString *)clientCertificatePath
-                 clientKeyPath:(nullable NSString *)clientKeyPath
-                     checksEKU:(BOOL)checksEKU
-                 checksSANHost:(BOOL)checksSANHost
-                      hostname:(nullable NSString *)hostname;
+- (instancetype)initWithCA:(nonnull NSString *)caPEM
+         clientCertificate:(nullable NSString *)clientCertificatePEM
+                 clientKey:(nullable NSString *)clientKeyPEM
+                 checksEKU:(BOOL)checksEKU
+             checksSANHost:(BOOL)checksSANHost
+                  hostname:(nullable NSString *)hostname;
 
 - (BOOL)startWithError:(NSError **)error;
 

@@ -765,6 +765,11 @@ public class OpenVPNSession: Session {
             return
         }
         
+        guard let ca = configuration.ca else {
+            log.error("Configuration doesn't have a CA")
+            return
+        }
+        
         // start new TLS handshake
         if ((packet.code == .hardResetServerV2) && (negotiationKey.state == .hardReset)) ||
             ((packet.code == .softResetV1) && (negotiationKey.state == .softReset)) {
@@ -788,9 +793,9 @@ public class OpenVPNSession: Session {
             log.debug("Start TLS handshake")
 
             let tls = TLSBox(
-                caPath: caURL.path,
-                clientCertificatePath: (configuration.clientCertificate != nil) ? clientCertificateURL.path : nil,
-                clientKeyPath: (configuration.clientKey != nil) ? clientKeyURL.path : nil,
+                ca: ca.pem,
+                clientCertificate: configuration.clientCertificate?.pem,
+                clientKey: configuration.clientKey?.pem,
                 checksEKU: configuration.checksEKU ?? false,
                 checksSANHost: configuration.checksSANHost ?? false,
                 hostname: configuration.sanHost

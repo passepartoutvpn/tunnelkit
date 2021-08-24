@@ -65,9 +65,9 @@ const NSInteger TLSBoxDefaultSecurityLevel = -1;
 
 @interface TLSBox ()
 
-@property (nonatomic, strong) NSString *caPath;
-@property (nonatomic, strong) NSString *clientCertificatePath;
-@property (nonatomic, strong) NSString *clientKeyPath;
+@property (nonatomic, strong) NSString *caPEM;
+@property (nonatomic, strong) NSString *clientCertificatePEM;
+@property (nonatomic, strong) NSString *clientKeyPEM;
 @property (nonatomic, assign) BOOL checksEKU;
 @property (nonatomic, assign) BOOL checksSANHost;
 @property (nonatomic, strong) NSString *hostname;
@@ -82,6 +82,10 @@ const NSInteger TLSBoxDefaultSecurityLevel = -1;
 @property (nonatomic, unsafe_unretained) uint8_t *bufferCipherText;
 
 @end
+
+static BIO *create_BIO_from_PEM(NSString *pem) {
+    return BIO_new_mem_buf([pem cStringUsingEncoding:NSASCIIStringEncoding], (int)[pem length]);
+}
 
 @implementation TLSBox
 
@@ -172,17 +176,17 @@ const NSInteger TLSBoxDefaultSecurityLevel = -1;
     return nil;
 }
 
-- (instancetype)initWithCAPath:(NSString *)caPath
-         clientCertificatePath:(NSString *)clientCertificatePath
-                 clientKeyPath:(NSString *)clientKeyPath
-                     checksEKU:(BOOL)checksEKU
-                 checksSANHost:(BOOL)checksSANHost
-                      hostname:(nullable NSString *)hostname
+- (instancetype)initWithCA:(nonnull NSString *)caPEM
+         clientCertificate:(nullable NSString *)clientCertificatePEM
+                 clientKey:(nullable NSString *)clientKeyPEM
+                 checksEKU:(BOOL)checksEKU
+             checksSANHost:(BOOL)checksSANHost
+                  hostname:(nullable NSString *)hostname
 {
     if ((self = [super init])) {
-        self.caPath = caPath;
-        self.clientCertificatePath = clientCertificatePath;
-        self.clientKeyPath = clientKeyPath;
+        self.caPEM = caPEM;
+        self.clientCertificatePEM = clientCertificatePEM;
+        self.clientKeyPEM = clientKeyPEM;
         self.checksEKU = checksEKU;
         self.checksSANHost = checksSANHost;
         self.bufferCipherText = allocate_safely(TLSBoxMaxBufferLength);
@@ -216,31 +220,47 @@ const NSInteger TLSBoxDefaultSecurityLevel = -1;
     if (self.securityLevel != TLSBoxDefaultSecurityLevel) {
         SSL_CTX_set_security_level(self.ctx, (int)self.securityLevel);
     }
-    if (!SSL_CTX_load_verify_locations(self.ctx, [self.caPath cStringUsingEncoding:NSASCIIStringEncoding], NULL)) {
-        ERR_print_errors_fp(stdout);
-        if (error) {
-            *error = TunnelKitErrorWithCode(TunnelKitErrorCodeTLSCertificateAuthority);
+
+    if (self.caPEM) {
+        BIO *bio = create_BIO_from_PEM(self.caPEM);
+        X509 *ca = PEM_read_bio_X509(bio, NULL, NULL, NULL);
+        BIO_free(bio);
+        X509_STORE *trustedStore = SSL_CTX_get_cert_store(self.ctx);
+        if (!X509_STORE_add_cert(trustedStore, ca)) {
+            ERR_print_errors_fp(stdout);
+            if (error) {
+                *error = TunnelKitErrorWithCode(TunnelKitErrorCodeTLSCertificateAuthority);
+            }
+            return NO;
         }
-        return NO;
     }
-    
-    if (self.clientCertificatePath) {
-        if (!SSL_CTX_use_certificate_file(self.ctx, [self.clientCertificatePath cStringUsingEncoding:NSASCIIStringEncoding], SSL_FILETYPE_PEM)) {
+
+    if (self.clientCertificatePEM) {
+        BIO *bio = create_BIO_from_PEM(self.clientCertificatePEM);
+        X509 *cert = PEM_read_bio_X509(bio, NULL, NULL, NULL);
+        BIO_free(bio);
+        if (!SSL_CTX_use_certificate(self.ctx, cert)) {
             ERR_print_errors_fp(stdout);
             if (error) {
                 *error = TunnelKitErrorWithCode(TunnelKitErrorCodeTLSClientCertificate);
             }
             return NO;
         }
+        X509_free(cert);
 
-        if (self.clientKeyPath) {
-            if (!SSL_CTX_use_PrivateKey_file(self.ctx, [self.clientKeyPath cStringUsingEncoding:NSASCIIStringEncoding], SSL_FILETYPE_PEM)) {
+        if (self.clientKeyPEM) {
+            BIO *bio = create_BIO_from_PEM(self.clientKeyPEM);
+            EVP_PKEY *pkey = PEM_read_bio_PrivateKey(bio, NULL, NULL, NULL);
+            BIO_free(bio);
+            if (!SSL_CTX_use_PrivateKey(self.ctx, pkey)) {
                 ERR_print_errors_fp(stdout);
                 if (error) {
                     *error = TunnelKitErrorWithCode(TunnelKitErrorCodeTLSClientKey);
                 }
                 return NO;
+
             }
+            EVP_PKEY_free(pkey);
         }
     }
 

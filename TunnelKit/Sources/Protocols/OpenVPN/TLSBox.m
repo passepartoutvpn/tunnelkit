@@ -116,6 +116,31 @@ static BIO *create_BIO_from_PEM(NSString *pem) {
     return hex;
 }
 
++ (NSString *)md5ForCertificatePEM:(NSString *)pem error:(NSError * _Nullable __autoreleasing * _Nullable)error
+{
+    const EVP_MD *alg = EVP_get_digestbyname("MD5");
+    uint8_t md[16];
+    unsigned int len;
+
+    BIO *bio = create_BIO_from_PEM(pem);
+    X509 *cert = PEM_read_bio_X509(bio, NULL, NULL, NULL);
+
+    if (!cert) {
+        BIO_free(bio);
+        return NULL;
+    }
+    X509_digest(cert, alg, md, &len);
+    X509_free(cert);
+    BIO_free(bio);
+    NSCAssert2(len == sizeof(md), @"Unexpected MD5 size (%d != %lu)", len, sizeof(md));
+
+    NSMutableString *hex = [[NSMutableString alloc] initWithCapacity:2 * sizeof(md)];
+    for (int i = 0; i < sizeof(md); ++i) {
+        [hex appendFormat:@"%02x", md[i]];
+    }
+    return hex;
+}
+
 + (NSString *)decryptedPrivateKeyFromPath:(NSString *)path passphrase:(NSString *)passphrase error:(NSError * _Nullable __autoreleasing *)error
 {
     BIO *bio;

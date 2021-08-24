@@ -622,9 +622,13 @@ public class OpenVPNSession: Session {
     
     private func hardResetPayload() -> Data? {
         guard !(configuration.usesPIAPatches ?? false) else {
+            guard let ca = configuration.ca else {
+                log.error("Configuration doesn't have a CA")
+                return nil
+            }
             let caMD5: String
             do {
-                caMD5 = try TLSBox.md5(forCertificatePath: caURL.path)
+                caMD5 = try TLSBox.md5(forCertificatePEM: ca.pem)
             } catch {
                 log.error("CA MD5 could not be computed, skipping custom HARD_RESET")
                 return nil

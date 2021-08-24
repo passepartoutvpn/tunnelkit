@@ -117,6 +117,11 @@ class EncryptionTests: XCTestCase {
         let exp = "e2fccccaba712ccc68449b1c56427ac1"
         print(md5)
         XCTAssertEqual(md5, exp)
+        
+        let pem = try! String(contentsOfFile: path, encoding: .ascii)
+        let md5FromPEM = try! TLSBox.md5(forCertificatePEM: pem)
+        print(md5FromPEM)
+        XCTAssertEqual(md5FromPEM, exp)
     }
     
     func testPrivateKeyDecryption() {

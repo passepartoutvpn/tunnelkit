@@ -70,14 +70,6 @@ public class OpenVPNSession: Session {
         case reconnect
     }
     
-    private struct Caches {
-        static let ca = "ca.pem"
-
-        static let clientCertificate = "cert.pem"
-
-        static let clientKey = "key.pem"
-    }
-    
     // MARK: Configuration
     
     /// The session base configuration.
@@ -172,22 +164,6 @@ public class OpenVPNSession: Session {
     
     private var authenticator: OpenVPN.Authenticator?
     
-    // MARK: Caching
-    
-    private let cachesURL: URL
-    
-    private var caURL: URL {
-        return cachesURL.appendingPathComponent(Caches.ca)
-    }
-    
-    private var clientCertificateURL: URL {
-        return cachesURL.appendingPathComponent(Caches.clientCertificate)
-    }
-    
-    private var clientKeyURL: URL {
-        return cachesURL.appendingPathComponent(Caches.clientKey)
-    }
-    
     // MARK: Init
 
     /**
@@ -196,14 +172,13 @@ public class OpenVPNSession: Session {
      - Parameter queue: The `DispatchQueue` where to run the session loop.
      - Parameter configuration: The `Configuration` to use for this session.
      */
-    public init(queue: DispatchQueue, configuration: OpenVPN.Configuration, cachesURL: URL) throws {
+    public init(queue: DispatchQueue, configuration: OpenVPN.Configuration) throws {
         guard let ca = configuration.ca else {
             throw ConfigurationError.missingConfiguration(option: "ca")
         }
         
         self.queue = queue
         self.configuration = configuration
-        self.cachesURL = cachesURL
 
         withLocalOptions = true
         keys = [:]
@@ -224,26 +199,11 @@ public class OpenVPNSession: Session {
         } else {
             controlChannel = OpenVPN.ControlChannel()
         }
-        
-        // cache PEMs locally (mandatory for OpenSSL)
-        let fm = FileManager.default
-        try ca.pem.write(to: caURL, atomically: true, encoding: .ascii)
-        if let container = configuration.clientCertificate {
-            try container.pem.write(to: clientCertificateURL, atomically: true, encoding: .ascii)
-        } else {
-            try? fm.removeItem(at: clientCertificateURL)
-        }
-        if let container = configuration.clientKey {
-            try container.pem.write(to: clientKeyURL, atomically: true, encoding: .ascii)
-        } else {
-            try? fm.removeItem(at: clientKeyURL)
-        }
     }
     
     /// :nodoc:
     deinit {
         cleanup()
-        cleanupCache()
     }
     
     // MARK: Session
@@ -352,13 +312,6 @@ public class OpenVPNSession: Session {
         
         isStopping = false
         stopError = nil
-    }
-
-    func cleanupCache() {
-        let fm = FileManager.default
-        for url in [caURL, clientCertificateURL, clientKeyURL] {
-            try? fm.removeItem(at: url)
-        }
     }
 
     // MARK: Loop
@@ -1261,7 +1214,6 @@ public class OpenVPNSession: Session {
             switch method {
             case .shutdown:
                 self?.doShutdown(error: error)
-                self?.cleanupCache()
                 
             case .reconnect:
                 self?.doReconnect(error: error)

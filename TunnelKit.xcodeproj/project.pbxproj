@@ -190,6 +190,14 @@
 		0E94E8EB25BACEBD0040BC30 /* DNSProtocol.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0E94E8E925BACEBD0040BC30 /* DNSProtocol.swift */; };
 		0EA82A282190B220007960EB /* TunnelKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 0E3251C51F95770D00C108D9 /* TunnelKit.framework */; };
 		0EA82A3E2190B2BC007960EB /* pia-2048.pem in Resources */ = {isa = PBXBuildFile; fileRef = 0E749F612178911C00BB2701 /* pia-2048.pem */; };
+		0EA9F28926D69FAE00E806E1 /* NetworkExtensionVPNConfiguration.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0EA9F28826D69FAE00E806E1 /* NetworkExtensionVPNConfiguration.swift */; };
+		0EA9F28A26D69FAE00E806E1 /* NetworkExtensionVPNConfiguration.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0EA9F28826D69FAE00E806E1 /* NetworkExtensionVPNConfiguration.swift */; };
+		0EA9F28C26D6A1EE00E806E1 /* NetworkExtensionVPNProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0EA9F28B26D6A1EE00E806E1 /* NetworkExtensionVPNProvider.swift */; };
+		0EA9F28D26D6A1EE00E806E1 /* NetworkExtensionVPNProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0EA9F28B26D6A1EE00E806E1 /* NetworkExtensionVPNProvider.swift */; };
+		0EA9F28F26D6AC6D00E806E1 /* VPNProviderIPC.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0EA9F28E26D6AC6D00E806E1 /* VPNProviderIPC.swift */; };
+		0EA9F29026D6AC6D00E806E1 /* VPNProviderIPC.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0EA9F28E26D6AC6D00E806E1 /* VPNProviderIPC.swift */; };
+		0EA9F29526D6CA7E00E806E1 /* NetworkExtensionLocator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0EA9F29426D6CA7E00E806E1 /* NetworkExtensionLocator.swift */; };
+		0EA9F29626D6CA7E00E806E1 /* NetworkExtensionLocator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0EA9F29426D6CA7E00E806E1 /* NetworkExtensionLocator.swift */; };
 		0EAC57372494277A00D0FCE0 /* OpenVPNProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0EAC57312494277A00D0FCE0 /* OpenVPNProvider.swift */; };
 		0EAC57382494277A00D0FCE0 /* OpenVPNProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0EAC57312494277A00D0FCE0 /* OpenVPNProvider.swift */; };
 		0EAC57392494277A00D0FCE0 /* MockVPNProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0EAC57322494277A00D0FCE0 /* MockVPNProvider.swift */; };
@@ -571,6 +579,10 @@
 		0E85A25B202CCA3D0059E9F9 /* Host.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = Host.entitlements; sourceTree = "<group>"; };
 		0E94E8E925BACEBD0040BC30 /* DNSProtocol.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DNSProtocol.swift; sourceTree = "<group>"; };
 		0EA82A232190B220007960EB /* TunnelKitTests-macOS.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "TunnelKitTests-macOS.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
+		0EA9F28826D69FAE00E806E1 /* NetworkExtensionVPNConfiguration.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NetworkExtensionVPNConfiguration.swift; sourceTree = "<group>"; };
+		0EA9F28B26D6A1EE00E806E1 /* NetworkExtensionVPNProvider.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = NetworkExtensionVPNProvider.swift; sourceTree = "<group>"; };
+		0EA9F28E26D6AC6D00E806E1 /* VPNProviderIPC.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VPNProviderIPC.swift; sourceTree = "<group>"; };
+		0EA9F29426D6CA7E00E806E1 /* NetworkExtensionLocator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NetworkExtensionLocator.swift; sourceTree = "<group>"; };
 		0EAC57312494277A00D0FCE0 /* OpenVPNProvider.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = OpenVPNProvider.swift; sourceTree = "<group>"; };
 		0EAC57322494277A00D0FCE0 /* MockVPNProvider.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = MockVPNProvider.swift; sourceTree = "<group>"; };
 		0EAC57332494277A00D0FCE0 /* VPNStatus.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = VPNStatus.swift; sourceTree = "<group>"; };
@@ -1033,9 +1045,13 @@
 			isa = PBXGroup;
 			children = (
 				0EAC57322494277A00D0FCE0 /* MockVPNProvider.swift */,
+				0EA9F29426D6CA7E00E806E1 /* NetworkExtensionLocator.swift */,
+				0EA9F28826D69FAE00E806E1 /* NetworkExtensionVPNConfiguration.swift */,
+				0EA9F28B26D6A1EE00E806E1 /* NetworkExtensionVPNProvider.swift */,
 				0EAC57362494277A00D0FCE0 /* VPN.swift */,
 				0EAC57342494277A00D0FCE0 /* VPNConfiguration.swift */,
 				0EAC57352494277A00D0FCE0 /* VPNProvider.swift */,
+				0EA9F28E26D6AC6D00E806E1 /* VPNProviderIPC.swift */,
 				0EAC57332494277A00D0FCE0 /* VPNStatus.swift */,
 			);
 			path = Manager;
@@ -1614,7 +1630,7 @@
 			inputPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-ios-TunnelKitDemo-iOS/Pods-ios-TunnelKitDemo-iOS-frameworks.sh",
 				"${BUILT_PRODUCTS_DIR}/SwiftyBeaver-iOS/SwiftyBeaver.framework",
-				"${PODS_XCFRAMEWORKS_BUILD_DIR}/openssl/openssl.framework/openssl",
+				"${PODS_XCFRAMEWORKS_BUILD_DIR}/OpenSSL-Apple/openssl.framework/openssl",
 			);
 			name = "[CP] Embed Pods Frameworks";
 			outputPaths = (
@@ -1656,7 +1672,7 @@
 			inputPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-ios-TunnelKitTests-iOS/Pods-ios-TunnelKitTests-iOS-frameworks.sh",
 				"${BUILT_PRODUCTS_DIR}/SwiftyBeaver-iOS/SwiftyBeaver.framework",
-				"${PODS_XCFRAMEWORKS_BUILD_DIR}/openssl/openssl.framework/openssl",
+				"${PODS_XCFRAMEWORKS_BUILD_DIR}/OpenSSL-Apple/openssl.framework/openssl",
 			);
 			name = "[CP] Embed Pods Frameworks";
 			outputPaths = (
@@ -1720,7 +1736,7 @@
 			inputPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-ios-TunnelKitHost/Pods-ios-TunnelKitHost-frameworks.sh",
 				"${BUILT_PRODUCTS_DIR}/SwiftyBeaver-iOS/SwiftyBeaver.framework",
-				"${PODS_XCFRAMEWORKS_BUILD_DIR}/openssl/openssl.framework/openssl",
+				"${PODS_XCFRAMEWORKS_BUILD_DIR}/OpenSSL-Apple/openssl.framework/openssl",
 			);
 			name = "[CP] Embed Pods Frameworks";
 			outputPaths = (
@@ -1806,7 +1822,7 @@
 			inputPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-macos-TunnelKitDemo-macOS/Pods-macos-TunnelKitDemo-macOS-frameworks.sh",
 				"${BUILT_PRODUCTS_DIR}/SwiftyBeaver-macOS/SwiftyBeaver.framework",
-				"${PODS_XCFRAMEWORKS_BUILD_DIR}/openssl/openssl.framework/openssl",
+				"${PODS_XCFRAMEWORKS_BUILD_DIR}/OpenSSL-Apple/openssl.framework/openssl",
 			);
 			name = "[CP] Embed Pods Frameworks";
 			outputPaths = (
@@ -1892,7 +1908,7 @@
 			inputPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-macos-TunnelKitTests-macOS/Pods-macos-TunnelKitTests-macOS-frameworks.sh",
 				"${BUILT_PRODUCTS_DIR}/SwiftyBeaver-macOS/SwiftyBeaver.framework",
-				"${PODS_XCFRAMEWORKS_BUILD_DIR}/openssl/openssl.framework/openssl",
+				"${PODS_XCFRAMEWORKS_BUILD_DIR}/OpenSSL-Apple/openssl.framework/openssl",
 			);
 			name = "[CP] Embed Pods Frameworks";
 			outputPaths = (
@@ -1989,6 +2005,7 @@
 				0E23B3DE229749C600304C30 /* LinkProducer.swift in Sources */,
 				0E23B42722982AF800304C30 /* CryptoAEAD.m in Sources */,
 				0EE2F9F222918DA100F56F49 /* NETunnelInterface.swift in Sources */,
+				0EA9F28C26D6A1EE00E806E1 /* NetworkExtensionVPNProvider.swift in Sources */,
 				0E23B46722982AF800304C30 /* Authenticator.swift in Sources */,
 				0E23B43922982AF800304C30 /* OpenVPNError.swift in Sources */,
 				0EAC573F2494277A00D0FCE0 /* VPNProvider.swift in Sources */,
@@ -2027,6 +2044,7 @@
 				0E23B43522982AF800304C30 /* CoreConfiguration+OpenVPN.swift in Sources */,
 				0EFEB46D2006D3C800F81029 /* Data+Manipulation.swift in Sources */,
 				0E23B46B22982AF800304C30 /* CryptoCBC.m in Sources */,
+				0EA9F28926D69FAE00E806E1 /* NetworkExtensionVPNConfiguration.swift in Sources */,
 				0E23B46522982AF800304C30 /* EncryptionBridge.swift in Sources */,
 				0EE2F9F422918DA100F56F49 /* NWTCPConnectionState+Description.swift in Sources */,
 				0EFEB4742006D3C800F81029 /* CoreConfiguration.swift in Sources */,
@@ -2049,6 +2067,7 @@
 				0E23B43722982AF800304C30 /* TLSBox.m in Sources */,
 				0EFEB4702006D3C800F81029 /* Allocation.m in Sources */,
 				0EE2FA0A22918DA100F56F49 /* InterfaceObserver.swift in Sources */,
+				0EA9F28F26D6AC6D00E806E1 /* VPNProviderIPC.swift in Sources */,
 				0E23B43F22982AF800304C30 /* OpenVPNSession.swift in Sources */,
 				0E23B44722982AF800304C30 /* OpenVPN.swift in Sources */,
 				0ECC60D82254981A0020BEAC /* ConfigurationError.swift in Sources */,
@@ -2061,6 +2080,7 @@
 				0E23B45922982AF800304C30 /* OpenVPNTunnelProvider.swift in Sources */,
 				0EFEB45A2006D3C800F81029 /* TunnelInterface.swift in Sources */,
 				0EAC57372494277A00D0FCE0 /* OpenVPNProvider.swift in Sources */,
+				0EA9F29526D6CA7E00E806E1 /* NetworkExtensionLocator.swift in Sources */,
 				0E23B47322982AF800304C30 /* MSS.m in Sources */,
 				0EAC573D2494277A00D0FCE0 /* VPNConfiguration.swift in Sources */,
 				0E23B45D22982AF800304C30 /* ProtocolMacros.swift in Sources */,
@@ -2079,6 +2099,7 @@
 				0E23B3DF229749C600304C30 /* LinkProducer.swift in Sources */,
 				0E23B42822982AF800304C30 /* CryptoAEAD.m in Sources */,
 				0EE2F9F322918DA100F56F49 /* NETunnelInterface.swift in Sources */,
+				0EA9F28D26D6A1EE00E806E1 /* NetworkExtensionVPNProvider.swift in Sources */,
 				0E23B46822982AF800304C30 /* Authenticator.swift in Sources */,
 				0E23B43A22982AF800304C30 /* OpenVPNError.swift in Sources */,
 				0EAC57402494277A00D0FCE0 /* VPNProvider.swift in Sources */,
@@ -2117,6 +2138,7 @@
 				0E23B43622982AF800304C30 /* CoreConfiguration+OpenVPN.swift in Sources */,
 				0EFB902C22788512006405E4 /* RoutingTable.m in Sources */,
 				0E23B46C22982AF800304C30 /* CryptoCBC.m in Sources */,
+				0EA9F28A26D69FAE00E806E1 /* NetworkExtensionVPNConfiguration.swift in Sources */,
 				0E23B46622982AF800304C30 /* EncryptionBridge.swift in Sources */,
 				0EFEB4952006D7F300F81029 /* SecureRandom.swift in Sources */,
 				0EE2F9F522918DA100F56F49 /* NWTCPConnectionState+Description.swift in Sources */,
@@ -2139,6 +2161,7 @@
 				0E23B43822982AF800304C30 /* TLSBox.m in Sources */,
 				0EFEB4902006D7F300F81029 /* TunnelInterface.swift in Sources */,
 				0EFEB49E2006D7F300F81029 /* Allocation.m in Sources */,
+				0EA9F29026D6AC6D00E806E1 /* VPNProviderIPC.swift in Sources */,
 				0E23B44022982AF800304C30 /* OpenVPNSession.swift in Sources */,
 				0E23B44822982AF800304C30 /* OpenVPN.swift in Sources */,
 				0ECC60D92254981A0020BEAC /* ConfigurationError.swift in Sources */,
@@ -2151,6 +2174,7 @@
 				0E23B45A22982AF800304C30 /* OpenVPNTunnelProvider.swift in Sources */,
 				0E011F7B2196D93600BA59EE /* SocketType.swift in Sources */,
 				0EAC57382494277A00D0FCE0 /* OpenVPNProvider.swift in Sources */,
+				0EA9F29626D6CA7E00E806E1 /* NetworkExtensionLocator.swift in Sources */,
 				0E23B47422982AF800304C30 /* MSS.m in Sources */,
 				0EAC573E2494277A00D0FCE0 /* VPNConfiguration.swift in Sources */,
 				0E23B45E22982AF800304C30 /* ProtocolMacros.swift in Sources */,

@@ -1,7 +1,7 @@
 Pod::Spec.new do |s|
     s.name              = "TunnelKit"
-    s.version           = "3.4.0"
-    s.summary           = "Non-official OpenVPN client for Apple platforms."
+    s.version           = "3.5.0"
+    s.summary           = "VPN client library for Apple platforms."
 
     s.homepage          = "https://github.com/passepartoutvpn/tunnelkit"
     s.license           = { :type => "GPLv3", :file => "LICENSE" }
@@ -49,7 +49,7 @@ Pod::Spec.new do |s|
                                         "SWIFT_INCLUDE_PATHS" => "${PODS_TARGET_SRCROOT}/TunnelKit/Sources/Protocols/OpenVPN",
                                         "APPLICATION_EXTENSION_API_ONLY" => "YES" }
 
-            p.dependency "OpenSSL-Apple", "~> 1.1.1k.11"
+            p.dependency "OpenSSL-Apple", "~> 1.1.1l.11"
             p.dependency "TunnelKit/Core"
             p.dependency "TunnelKit/AppExtension"
             p.dependency "TunnelKit/Manager"

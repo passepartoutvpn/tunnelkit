@@ -1,8 +1,8 @@
 //
-//  VPN.swift
+//  NetworkExtensionVPNConfiguration.swift
 //  TunnelKit
 //
-//  Created by Davide De Rosa on 6/12/18.
+//  Created by Davide De Rosa on 8/25/21.
 //  Copyright (c) 2021 Davide De Rosa. All rights reserved.
 //
 //  https://github.com/passepartoutvpn
@@ -24,16 +24,24 @@
 //
 
 import Foundation
+import NetworkExtension
 
-/// Wrapper for shared access to VPN-related objects.
-public class VPN {
+/// A `VPNConfiguration` built on top of NetworkExtension entities.
+public struct NetworkExtensionVPNConfiguration: VPNConfiguration {
     
-    /// The VPN became ready to use.
-    public static let didPrepare = Notification.Name("VPNDidPrepare")
-    
-    /// The VPN did change status.
-    public static let didChangeStatus = Notification.Name("VPNDidChangeStatus")
+    /// :nodoc:
+    public var title: String
 
-    /// The VPN profile did (re)install.
-    public static let didReinstall = Notification.Name("VPNDidReinstall")
+    /// The `NEVPNProtocol` object embedding tunnel configuration.
+    public let protocolConfiguration: NEVPNProtocol
+    
+    /// The on-demand rules to establish.
+    public let onDemandRules: [NEOnDemandRule]
+    
+    /// :nodoc:
+    public init(title: String, protocolConfiguration: NEVPNProtocol, onDemandRules: [NEOnDemandRule]) {
+        self.title = title
+        self.protocolConfiguration = protocolConfiguration
+        self.onDemandRules = onDemandRules
+    }
 }

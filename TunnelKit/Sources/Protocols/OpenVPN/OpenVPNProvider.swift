@@ -26,155 +26,61 @@
 import Foundation
 import NetworkExtension
 
-/// :nodoc:
-public class OpenVPNProvider: VPNProvider {
-    private let bundleIdentifier: String
+/// `VPNProvider` for OpenVPN protocol.
+public class OpenVPNProvider: VPNProvider, VPNProviderIPC {
+    private let provider: NetworkExtensionVPNProvider
     
-    private var manager: NETunnelProviderManager?
-    
-    private var lastNotifiedStatus: VPNStatus?
-    
+    /**
+     Initializes a provider with the bundle identifier of the `OpenVPNTunnelProvider`.
+     
+     - Parameter bundleIdentifier: The bundle identifier of the `OpenVPNTunnelProvider`.
+     */
     public init(bundleIdentifier: String) {
-        self.bundleIdentifier = bundleIdentifier
-
-        let nc = NotificationCenter.default
-        nc.addObserver(self, selector: #selector(vpnDidUpdate(_:)), name: .NEVPNStatusDidChange, object: nil)
-        nc.addObserver(self, selector: #selector(vpnDidReinstall(_:)), name: .NEVPNConfigurationChange, object: nil)
+        provider = NetworkExtensionVPNProvider(locator: NetworkExtensionTunnelLocator(bundleIdentifier: bundleIdentifier))
     }
-
-    deinit {
-        NotificationCenter.default.removeObserver(self)
-    }
-    
+        
     // MARK: VPNProvider
     
     public var isPrepared: Bool {
-        return manager != nil
+        return provider.isPrepared
     }
     
     public var isEnabled: Bool {
-        guard let manager = manager else {
-            return false
-        }
-        return manager.isEnabled && manager.isOnDemandEnabled
+        return provider.isEnabled
     }
     
     public var status: VPNStatus {
-        guard let neStatus = manager?.connection.status else {
-            return .disconnected
-        }
-        switch neStatus {
-        case .connected:
-            return .connected
-            
-        case .connecting, .reasserting:
-            return .connecting
-            
-        case .disconnecting:
-            return .disconnecting
-            
-        case .disconnected, .invalid:
-            return .disconnected
-
-        @unknown default:
-            return .disconnected
-        }
+        return provider.status
     }
     
     public func prepare(completionHandler: (() -> Void)?) {
-        find(with: bundleIdentifier) {
-            self.manager = $0
-            NotificationCenter.default.post(name: VPN.didPrepare, object: nil)
-            completionHandler?()
-        }
+        provider.prepare(completionHandler: completionHandler)
     }
     
     public func install(configuration: VPNConfiguration, completionHandler: ((Error?) -> Void)?) {
-        guard let configuration = configuration as? NetworkExtensionVPNConfiguration else {
-            fatalError("Not a NetworkExtensionVPNConfiguration")
-        }
-        find(with: bundleIdentifier) {
-            guard let manager = $0 else {
-                completionHandler?(nil)
-                return
-            }
-            self.manager = manager
-            manager.localizedDescription = configuration.title
-            manager.protocolConfiguration = configuration.protocolConfiguration
-            manager.onDemandRules = configuration.onDemandRules
-            manager.isOnDemandEnabled = true
-            manager.isEnabled = true
-            manager.saveToPreferences { (error) in
-                guard error == nil else {
-                    manager.isOnDemandEnabled = false
-                    manager.isEnabled = false
-                    completionHandler?(error)
-                    return
-                }
-                manager.loadFromPreferences { (error) in
-                    completionHandler?(error)
-                }
-            }
-        }
+        provider.install(configuration: configuration, completionHandler: completionHandler)
     }
     
     public func connect(completionHandler: ((Error?) -> Void)?) {
-        do {
-            try manager?.connection.startVPNTunnel()
-            completionHandler?(nil)
-        } catch let e {
-            completionHandler?(e)
-        }
+        provider.connect(completionHandler: completionHandler)
     }
     
     public func disconnect(completionHandler: ((Error?) -> Void)?) {
-        guard let manager = manager else {
-            completionHandler?(nil)
-            return
-        }
-        manager.connection.stopVPNTunnel()
-        manager.isOnDemandEnabled = false
-        manager.isEnabled = false
-        manager.saveToPreferences(completionHandler: completionHandler)
+        provider.disconnect(completionHandler: completionHandler)
     }
     
     public func reconnect(configuration: VPNConfiguration, completionHandler: ((Error?) -> Void)?) {
-        guard let configuration = configuration as? NetworkExtensionVPNConfiguration else {
-            fatalError("Not a NetworkExtensionVPNConfiguration")
-        }
-        install(configuration: configuration) { (error) in
-            guard error == nil else {
-                completionHandler?(error)
-                return
-            }
-            let connectBlock = {
-                self.connect(completionHandler: completionHandler)
-            }
-            if self.status != .disconnected {
-                self.manager?.connection.stopVPNTunnel()
-                DispatchQueue.main.asyncAfter(deadline: .now() + CoreConfiguration.reconnectionDelay, execute: connectBlock)
-            } else {
-                connectBlock()
-            }
-        }
+        provider.reconnect(configuration: configuration, completionHandler: completionHandler)
     }
     
     public func uninstall(completionHandler: (() -> Void)?) {
-        find(with: bundleIdentifier) { (manager) in
-            guard let manager = manager else {
-                completionHandler?()
-                return
-            }
-            manager.connection.stopVPNTunnel()
-            manager.removeFromPreferences { (error) in
-                self.manager = nil
-                completionHandler?()
-            }
-        }
+        provider.uninstall(completionHandler: completionHandler)
     }
     
+    // MARK: VPNProviderIPC
+    
     public func requestDebugLog(fallback: (() -> String)?, completionHandler: @escaping (String) -> Void) {
-        guard status != .disconnected else {
+        guard provider.status != .disconnected else {
             completionHandler(fallback?() ?? "")
             return
         }
@@ -188,11 +94,10 @@ public class OpenVPNProvider: VPNProvider {
             }
         }
     }
-    
+
     public func requestBytesCount(completionHandler: @escaping ((UInt, UInt)?) -> Void) {
-        find(with: bundleIdentifier) {
-            self.manager = $0
-            guard let session = self.manager?.connection as? NETunnelProviderSession else {
+        provider.lookup { manager, error in
+            guard let session = manager?.connection as? NETunnelProviderSession else {
                 DispatchQueue.main.async {
                     completionHandler(nil)
                 }
@@ -219,11 +124,10 @@ public class OpenVPNProvider: VPNProvider {
             }
         }
     }
-    
+
     public func requestServerConfiguration(completionHandler: @escaping (Any?) -> Void) {
-        find(with: bundleIdentifier) {
-            self.manager = $0
-            guard let session = self.manager?.connection as? NETunnelProviderSession else {
+        provider.lookup { manager, error in
+            guard let session = manager?.connection as? NETunnelProviderSession else {
                 DispatchQueue.main.async {
                     completionHandler(nil)
                 }
@@ -248,36 +152,19 @@ public class OpenVPNProvider: VPNProvider {
             }
         }
     }
-    
+
     // MARK: Helpers
-    
-    private func find(with bundleIdentifier: String, completionHandler: @escaping (NETunnelProviderManager?) -> Void) {
-        NETunnelProviderManager.loadAllFromPreferences { (managers, error) in
-            guard error == nil else {
-                completionHandler(nil)
-                return
-            }
-            let manager = managers?.first {
-                guard let ptm = $0.protocolConfiguration as? NETunnelProviderProtocol else {
-                    return false
-                }
-                return (ptm.providerBundleIdentifier == bundleIdentifier)
-            }
-            completionHandler(manager ?? NETunnelProviderManager())
-        }
-    }
 
     private func findAndRequestDebugLog(completionHandler: @escaping (String?) -> Void) {
-        find(with: bundleIdentifier) {
-            self.manager = $0
-            guard let session = self.manager?.connection as? NETunnelProviderSession else {
+        provider.lookup { manager, error in
+            guard let session = manager?.connection as? NETunnelProviderSession else {
                 completionHandler(nil)
                 return
             }
             OpenVPNProvider.requestDebugLog(session: session, completionHandler: completionHandler)
         }
     }
-    
+
     private static func requestDebugLog(session: NETunnelProviderSession, completionHandler: @escaping (String?) -> Void) {
         do {
             try session.sendProviderMessage(OpenVPNTunnelProvider.Message.requestLog.data) { (data) in
@@ -291,28 +178,5 @@ public class OpenVPNProvider: VPNProvider {
         } catch {
             completionHandler(nil)
         }
-    }
-    
-    // MARK: Notifications
-    
-    @objc private func vpnDidUpdate(_ notification: Notification) {
-//        guard let connection = notification.object as? NETunnelProviderSession else {
-//            return
-//        }
-//        log.debug("VPN status did change: \(connection.status.rawValue)")
-
-        let status = self.status
-        if let last = lastNotifiedStatus {
-            guard status != last else {
-                return
-            }
-        }
-        lastNotifiedStatus = status
-
-        NotificationCenter.default.post(name: VPN.didChangeStatus, object: self)
-    }
-
-    @objc private func vpnDidReinstall(_ notification: Notification) {
-        NotificationCenter.default.post(name: VPN.didReinstall, object: self)
     }
 }

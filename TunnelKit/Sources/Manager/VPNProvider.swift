@@ -82,26 +82,4 @@ public protocol VPNProvider: AnyObject {
      - Parameter completionHandler: The completion handler.
      */
     func uninstall(completionHandler: (() -> Void)?)
-    
-    /**
-     Request a debug log from the VPN.
-
-     - Parameter fallback: The block resolving to a fallback `String` if no debug log is available.
-     - Parameter completionHandler: The completion handler with the debug log.
-     */
-    func requestDebugLog(fallback: (() -> String)?, completionHandler: @escaping (String) -> Void)
-    
-    /**
-     Requests the current received/sent bytes count from the VPN.
-
-     - Parameter completionHandler: The completion handler with an optional received/sent bytes count.
-     */
-    func requestBytesCount(completionHandler: @escaping ((UInt, UInt)?) -> Void)
-
-    /**
-     Requests the server configuration from the VPN.
-
-     - Parameter completionHandler: The completion handler with an optional configuration object.
-     */
-    func requestServerConfiguration(completionHandler: @escaping (Any?) -> Void)
 }

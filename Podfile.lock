@@ -1,9 +1,9 @@
 PODS:
-  - OpenSSL-Apple (1.1.1k.11)
+  - OpenSSL-Apple (1.1.1l.11)
   - SwiftyBeaver (1.9.5)
 
 DEPENDENCIES:
-  - OpenSSL-Apple (~> 1.1.1k.11)
+  - OpenSSL-Apple (~> 1.1.1l.11)
   - SwiftyBeaver
 
 SPEC REPOS:
@@ -12,9 +12,9 @@ SPEC REPOS:
     - SwiftyBeaver
 
 SPEC CHECKSUMS:
-  OpenSSL-Apple: 3104e6d32de21815b68aeba31edaa6a78d90e7e0
+  OpenSSL-Apple: fb93d9a7ce4529054764ce19bb80947a38aee09b
   SwiftyBeaver: 84069991dd5dca07d7069100985badaca7f0ce82
 
-PODFILE CHECKSUM: 5225b2616fd06cb0c4647192086e31d00e8377c1
+PODFILE CHECKSUM: acb440e8c365ee318f02b159fee4a173163fa454
 
-COCOAPODS: 1.10.1
+COCOAPODS: 1.11.2

@@ -25,8 +25,15 @@
 
 import Foundation
 
-/// :nodoc:
-public class MockVPNProvider: VPNProvider {
+/// Simulates a VPN provider.
+public class MockVPNProvider: VPNProvider, VPNProviderIPC {
+    
+    /// :nodoc:
+    public init() {
+    }
+
+    // MARK: VPNProvider
+
     public let isPrepared: Bool = true
 
     public private(set) var isEnabled: Bool = false
@@ -70,6 +77,8 @@ public class MockVPNProvider: VPNProvider {
         NotificationCenter.default.post(name: VPN.didChangeStatus, object: self)
         completionHandler?()
     }
+    
+    // MARK: VPNProviderIPC
     
     public func requestDebugLog(fallback: (() -> String)?, completionHandler: @escaping (String) -> Void) {
         let log = [String](repeating: "lorem ipsum", count: 1000).joined(separator: " ")

@@ -1,6 +1,6 @@
 ![iOS 12+](https://img.shields.io/badge/ios-12+-green.svg)
 ![macOS 10.15+](https://img.shields.io/badge/macos-10.15+-green.svg)
-[![OpenSSL 1.1.1k](https://img.shields.io/badge/openssl-1.1.1k-d69c68.svg)](https://www.openssl.org/news/openssl-1.1.1-notes.html)
+[![OpenSSL 1.1.1l](https://img.shields.io/badge/openssl-1.1.1l-d69c68.svg)](https://www.openssl.org/news/openssl-1.1.1-notes.html)
 [![License GPLv3](https://img.shields.io/badge/license-GPLv3-lightgray.svg)](LICENSE)
 [![Travis-CI](https://api.travis-ci.org/passepartoutvpn/tunnelkit.svg?branch=master)](https://travis-ci.org/passepartoutvpn/tunnelkit)
 
@@ -163,8 +163,6 @@ This subspec includes convenient classes to control the VPN tunnel from your app
 
 - `MockVPNProvider` (default, useful to test on simulator)
 - `OpenVPNProvider`
-
-Set `VPN.shared` to either of them at app launch time.
 
 ### Protocols/OpenVPN
 

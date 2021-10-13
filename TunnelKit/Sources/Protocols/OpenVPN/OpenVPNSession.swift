@@ -173,7 +173,7 @@ public class OpenVPNSession: Session {
      - Parameter configuration: The `Configuration` to use for this session.
      */
     public init(queue: DispatchQueue, configuration: OpenVPN.Configuration) throws {
-        guard let ca = configuration.ca else {
+        guard let _ = configuration.ca else {
             throw ConfigurationError.missingConfiguration(option: "ca")
         }
         

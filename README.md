@@ -100,9 +100,9 @@ Download the library codebase locally:
 
     $ git clone https://github.com/passepartoutvpn/tunnelkit.git
 
-There are demo targets containing a simple app for testing the tunnel, called `BasicTunnel`. Open `Demo/TunnelKit.xcodeproject` in Xcode and run it on both iOS and macOS.
+There are demo targets containing a simple app for testing the tunnel. Open `Demo/TunnelKit.xcodeproject` in Xcode and run it on both iOS and macOS.
 
-For the VPN to work properly, the `BasicTunnel` demo requires:
+For the VPN to work properly, the demo requires:
 
 - _App Groups_ and _Keychain Sharing_ capabilities
 - App IDs with _Packet Tunnel_ entitlements

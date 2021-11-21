@@ -1,8 +1,8 @@
 //
-//  PacketTunnelProvider.swift
+//  WireGuardPacketTunnelProvider.swift
 //  Demo
 //
-//  Created by Davide De Rosa on 9/15/17.
+//  Created by Davide De Rosa on 11/22/21.
 //  Copyright (c) 2021 Davide De Rosa. All rights reserved.
 //
 //  https://github.com/keeshux
@@ -23,7 +23,7 @@
 //  along with TunnelKit.  If not, see <http://www.gnu.org/licenses/>.
 //
 
-import TunnelKitOpenVPNAppExtension
+import TunnelKitWireGuardAppExtension
 
-class PacketTunnelProvider: OpenVPNTunnelProvider {
+class PacketTunnelProvider: WireGuardTunnelProvider {
 }

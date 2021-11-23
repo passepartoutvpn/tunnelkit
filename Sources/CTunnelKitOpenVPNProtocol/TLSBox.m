@@ -50,7 +50,7 @@ static const char *const TLSBoxServerEKU = "TLS Web Server Authentication";
 
 int TLSBoxVerifyPeer(int ok, X509_STORE_CTX *ctx) {
     if (!ok) {
-        NSError *error = OpenVPNErrorWithCode(OpenVPNErrorCodeTLSCertificateAuthority);
+        NSError *error = OpenVPNErrorWithCode(OpenVPNErrorCodeTLSCAPeerVerification);
         [[NSNotificationCenter defaultCenter] postNotificationName:TLSBoxPeerVerificationErrorNotification
                                                             object:nil
                                                           userInfo:@{OpenVPNErrorKey: error}];
@@ -93,8 +93,10 @@ static BIO *create_BIO_from_PEM(NSString *pem) {
     unsigned int len;
 
     BIO *bio = create_BIO_from_PEM(pem);
+    if (!bio) {
+        return NULL;
+    }
     X509 *cert = PEM_read_bio_X509(bio, NULL, NULL, NULL);
-
     if (!cert) {
         BIO_free(bio);
         return NULL;
@@ -218,42 +220,84 @@ static BIO *create_BIO_from_PEM(NSString *pem) {
 
     if (self.caPEM) {
         BIO *bio = create_BIO_from_PEM(self.caPEM);
+        if (!bio) {
+            if (error) {
+                *error = OpenVPNErrorWithCode(OpenVPNErrorCodeTLSCARead);
+            }
+            return NO;
+        }
         X509 *ca = PEM_read_bio_X509(bio, NULL, NULL, NULL);
+        if (!ca) {
+            if (error) {
+                *error = OpenVPNErrorWithCode(OpenVPNErrorCodeTLSCARead);
+            }
+            BIO_free(bio);
+            return NO;
+        }
         BIO_free(bio);
         X509_STORE *trustedStore = SSL_CTX_get_cert_store(self.ctx);
         if (!X509_STORE_add_cert(trustedStore, ca)) {
             ERR_print_errors_fp(stdout);
             if (error) {
-                *error = OpenVPNErrorWithCode(OpenVPNErrorCodeTLSCertificateAuthority);
+                *error = OpenVPNErrorWithCode(OpenVPNErrorCodeTLSCAUse);
             }
+            X509_free(ca);
             return NO;
         }
+        X509_free(ca);
     }
 
     if (self.clientCertificatePEM) {
         BIO *bio = create_BIO_from_PEM(self.clientCertificatePEM);
+        if (!bio) {
+            if (error) {
+                *error = OpenVPNErrorWithCode(OpenVPNErrorCodeTLSClientCertificateRead);
+            }
+            return NO;
+        }
         X509 *cert = PEM_read_bio_X509(bio, NULL, NULL, NULL);
+        if (!cert) {
+            if (error) {
+                *error = OpenVPNErrorWithCode(OpenVPNErrorCodeTLSClientCertificateRead);
+            }
+            BIO_free(bio);
+            return NO;
+        }
         BIO_free(bio);
         if (!SSL_CTX_use_certificate(self.ctx, cert)) {
             ERR_print_errors_fp(stdout);
             if (error) {
-                *error = OpenVPNErrorWithCode(OpenVPNErrorCodeTLSClientCertificate);
+                *error = OpenVPNErrorWithCode(OpenVPNErrorCodeTLSClientCertificateUse);
             }
+            X509_free(cert);
             return NO;
         }
         X509_free(cert);
 
         if (self.clientKeyPEM) {
             BIO *bio = create_BIO_from_PEM(self.clientKeyPEM);
+            if (!bio) {
+                if (error) {
+                    *error = OpenVPNErrorWithCode(OpenVPNErrorCodeTLSClientKeyRead);
+                }
+                return NO;
+            }
             EVP_PKEY *pkey = PEM_read_bio_PrivateKey(bio, NULL, NULL, NULL);
+            if (!pkey) {
+                if (error) {
+                    *error = OpenVPNErrorWithCode(OpenVPNErrorCodeTLSClientKeyRead);
+                }
+                EVP_PKEY_free(pkey);
+                return NO;
+            }
             BIO_free(bio);
             if (!SSL_CTX_use_PrivateKey(self.ctx, pkey)) {
                 ERR_print_errors_fp(stdout);
                 if (error) {
-                    *error = OpenVPNErrorWithCode(OpenVPNErrorCodeTLSClientKey);
+                    *error = OpenVPNErrorWithCode(OpenVPNErrorCodeTLSClientKeyUse);
                 }
+                EVP_PKEY_free(pkey);
                 return NO;
-
             }
             EVP_PKEY_free(pkey);
         }

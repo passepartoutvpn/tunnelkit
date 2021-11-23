@@ -903,7 +903,9 @@ extension OpenVPNTunnelProvider {
             case .cryptoEncryption, .cryptoHMAC:
                 return .encryptionData
                 
-            case .tlsCertificateAuthority, .tlsClientCertificate, .tlsClientKey:
+            case .tlscaRead, .tlscaUse, .tlscaPeerVerification,
+                    .tlsClientCertificateRead, .tlsClientCertificateUse,
+                    .tlsClientKeyRead, .tlsClientKeyUse:
                 return .tlsInitialization
                 
             case .tlsServerCertificate, .tlsServerEKU, .tlsServerHost:

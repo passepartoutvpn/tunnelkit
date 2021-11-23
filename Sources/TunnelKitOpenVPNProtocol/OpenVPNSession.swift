@@ -72,14 +72,6 @@ public class OpenVPNSession: Session {
         case reconnect
     }
     
-    private struct Caches {
-        static let ca = "ca.pem"
-
-        static let clientCertificate = "cert.pem"
-
-        static let clientKey = "key.pem"
-    }
-    
     // MARK: Configuration
     
     /// The session base configuration.
@@ -174,22 +166,6 @@ public class OpenVPNSession: Session {
     
     private var authenticator: OpenVPN.Authenticator?
     
-    // MARK: Caching
-    
-    private let cachesURL: URL
-    
-    private var caURL: URL {
-        return cachesURL.appendingPathComponent(Caches.ca)
-    }
-    
-    private var clientCertificateURL: URL {
-        return cachesURL.appendingPathComponent(Caches.clientCertificate)
-    }
-    
-    private var clientKeyURL: URL {
-        return cachesURL.appendingPathComponent(Caches.clientKey)
-    }
-    
     // MARK: Init
 
     /**
@@ -198,14 +174,13 @@ public class OpenVPNSession: Session {
      - Parameter queue: The `DispatchQueue` where to run the session loop.
      - Parameter configuration: The `Configuration` to use for this session.
      */
-    public init(queue: DispatchQueue, configuration: OpenVPN.Configuration, cachesURL: URL) throws {
-        guard let ca = configuration.ca else {
+    public init(queue: DispatchQueue, configuration: OpenVPN.Configuration) throws {
+        guard let _ = configuration.ca else {
             throw ConfigurationError.missingConfiguration(option: "ca")
         }
         
         self.queue = queue
         self.configuration = configuration
-        self.cachesURL = cachesURL
 
         withLocalOptions = true
         keys = [:]
@@ -226,25 +201,10 @@ public class OpenVPNSession: Session {
         } else {
             controlChannel = OpenVPN.ControlChannel()
         }
-        
-        // cache PEMs locally (mandatory for OpenSSL)
-        let fm = FileManager.default
-        try ca.pem.write(to: caURL, atomically: true, encoding: .ascii)
-        if let container = configuration.clientCertificate {
-            try container.pem.write(to: clientCertificateURL, atomically: true, encoding: .ascii)
-        } else {
-            try? fm.removeItem(at: clientCertificateURL)
-        }
-        if let container = configuration.clientKey {
-            try container.pem.write(to: clientKeyURL, atomically: true, encoding: .ascii)
-        } else {
-            try? fm.removeItem(at: clientKeyURL)
-        }
     }
     
     deinit {
         cleanup()
-        cleanupCache()
     }
     
     // MARK: Session
@@ -353,13 +313,6 @@ public class OpenVPNSession: Session {
         
         isStopping = false
         stopError = nil
-    }
-
-    func cleanupCache() {
-        let fm = FileManager.default
-        for url in [caURL, clientCertificateURL, clientKeyURL] {
-            try? fm.removeItem(at: url)
-        }
     }
 
     // MARK: Loop
@@ -623,9 +576,13 @@ public class OpenVPNSession: Session {
     
     private func hardResetPayload() -> Data? {
         guard !(configuration.usesPIAPatches ?? false) else {
+            guard let ca = configuration.ca else {
+                log.error("Configuration doesn't have a CA")
+                return nil
+            }
             let caMD5: String
             do {
-                caMD5 = try TLSBox.md5(forCertificatePath: caURL.path)
+                caMD5 = try TLSBox.md5(forCertificatePEM: ca.pem)
             } catch {
                 log.error("CA MD5 could not be computed, skipping custom HARD_RESET")
                 return nil
@@ -766,6 +723,11 @@ public class OpenVPNSession: Session {
             return
         }
         
+        guard let ca = configuration.ca else {
+            log.error("Configuration doesn't have a CA")
+            return
+        }
+        
         // start new TLS handshake
         if ((packet.code == .hardResetServerV2) && (negotiationKey.state == .hardReset)) ||
             ((packet.code == .softResetV1) && (negotiationKey.state == .softReset)) {
@@ -789,9 +751,9 @@ public class OpenVPNSession: Session {
             log.debug("Start TLS handshake")
 
             let tls = TLSBox(
-                caPath: caURL.path,
-                clientCertificatePath: (configuration.clientCertificate != nil) ? clientCertificateURL.path : nil,
-                clientKeyPath: (configuration.clientKey != nil) ? clientKeyURL.path : nil,
+                ca: ca.pem,
+                clientCertificate: configuration.clientCertificate?.pem,
+                clientKey: configuration.clientKey?.pem,
                 checksEKU: configuration.checksEKU ?? false,
                 checksSANHost: configuration.checksSANHost ?? false,
                 hostname: configuration.sanHost
@@ -1253,7 +1215,6 @@ public class OpenVPNSession: Session {
             switch method {
             case .shutdown:
                 self?.doShutdown(error: error)
-                self?.cleanupCache()
                 
             case .reconnect:
                 self?.doReconnect(error: error)

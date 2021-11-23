@@ -226,7 +226,7 @@ static BIO *create_BIO_from_PEM(NSString *pem) {
             }
             return NO;
         }
-        X509 *ca = PEM_read_bio_X509(bio, NULL, NULL, NULL);
+        X509 *ca = PEM_read_bio_X509_AUX(bio, NULL, NULL, NULL);
         if (!ca) {
             if (error) {
                 *error = OpenVPNErrorWithCode(OpenVPNErrorCodeTLSCARead);

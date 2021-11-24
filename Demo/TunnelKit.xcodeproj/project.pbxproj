@@ -654,6 +654,7 @@
 				CODE_SIGN_ENTITLEMENTS = Demo/iOS/Demo.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				DEVELOPMENT_TEAM = DTDYD63ZX9;
+				ENABLE_BITCODE = NO;
 				INFOPLIST_FILE = "$(SRCROOT)/Demo/iOS/Demo.plist";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -697,6 +698,7 @@
 				CODE_SIGN_ENTITLEMENTS = Demo/iOS/DemoTunnel.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				DEVELOPMENT_TEAM = DTDYD63ZX9;
+				ENABLE_BITCODE = NO;
 				INFOPLIST_FILE = "$(SRCROOT)/Demo/DemoTunnel.plist";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",

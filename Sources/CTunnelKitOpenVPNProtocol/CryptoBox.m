@@ -34,7 +34,9 @@
 //      THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 //
 
-@import CNIOBoringSSL;
+#import <openssl/evp.h>
+#import <openssl/hmac.h>
+#import <openssl/rand.h>
 
 #import "CryptoBox.h"
 #import "CryptoMacros.h"
@@ -168,7 +170,7 @@
     int code = 1;
 
     HMAC_CTX *ctx = HMAC_CTX_new();
-    HMAC_CTX_reset(ctx);
+    TUNNEL_CRYPTO_TRACK_STATUS(code) HMAC_CTX_reset(ctx);
     TUNNEL_CRYPTO_TRACK_STATUS(code) HMAC_Init_ex(ctx, secret, (int)secretLength, EVP_get_digestbyname([digestName cStringUsingEncoding:NSASCIIStringEncoding]), NULL);
     TUNNEL_CRYPTO_TRACK_STATUS(code) HMAC_Update(ctx, data, dataLength);
     TUNNEL_CRYPTO_TRACK_STATUS(code) HMAC_Final(ctx, hmac, &l);

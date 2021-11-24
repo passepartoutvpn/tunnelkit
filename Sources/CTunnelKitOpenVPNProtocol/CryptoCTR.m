@@ -23,7 +23,8 @@
 //  along with TunnelKit.  If not, see <http://www.gnu.org/licenses/>.
 //
 
-@import CNIOBoringSSL;
+#import <openssl/evp.h>
+#import <openssl/hmac.h>
 
 #import "CryptoCTR.h"
 #import "CryptoMacros.h"

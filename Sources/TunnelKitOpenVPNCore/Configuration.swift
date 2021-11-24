@@ -201,6 +201,9 @@ extension OpenVPN {
         /// The optional TLS wrapping.
         public var tlsWrap: TLSWrap?
         
+        /// If set, overrides TLS security level (0 = lowest).
+        public var tlsSecurityLevel: Int?
+
         /// Sends periodical keep-alive packets if set.
         public var keepAliveInterval: TimeInterval?
         
@@ -316,6 +319,7 @@ extension OpenVPN {
                 clientCertificate: clientCertificate,
                 clientKey: clientKey,
                 tlsWrap: tlsWrap,
+                tlsSecurityLevel: tlsSecurityLevel,
                 keepAliveInterval: keepAliveInterval,
                 keepAliveTimeout: keepAliveTimeout,
                 renegotiatesAfter: renegotiatesAfter,
@@ -393,6 +397,9 @@ extension OpenVPN {
         
         /// - Seealso: `ConfigurationBuilder.tlsWrap`
         public let tlsWrap: TLSWrap?
+
+        /// - Seealso: `ConfigurationBuilder.tlsSecurityLevel`
+        public let tlsSecurityLevel: Int?
 
         /// - Seealso: `ConfigurationBuilder.keepAliveInterval`
         public let keepAliveInterval: TimeInterval?
@@ -508,6 +515,7 @@ extension OpenVPN.Configuration {
         builder.clientCertificate = clientCertificate
         builder.clientKey = clientKey
         builder.tlsWrap = tlsWrap
+        builder.tlsSecurityLevel = tlsSecurityLevel
         builder.keepAliveInterval = keepAliveInterval
         builder.keepAliveTimeout = keepAliveTimeout
         builder.renegotiatesAfter = renegotiatesAfter
@@ -564,6 +572,11 @@ extension OpenVPN.Configuration {
             log.info("\tTLS wrapping: \(tlsWrap.strategy)")
         } else {
             log.info("\tTLS wrapping: disabled")
+        }
+        if let tlsSecurityLevel = tlsSecurityLevel {
+            log.info("\tTLS security level: \(tlsSecurityLevel)")
+        } else {
+            log.info("\tTLS security level: default")
         }
         if let keepAliveSeconds = keepAliveInterval, keepAliveSeconds > 0 {
             log.info("\tKeep-alive interval: \(keepAliveSeconds.asTimeString)")

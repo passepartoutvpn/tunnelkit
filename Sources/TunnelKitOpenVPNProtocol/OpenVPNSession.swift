@@ -796,6 +796,9 @@ public class OpenVPNSession: Session {
                 checksSANHost: configuration.checksSANHost ?? false,
                 hostname: configuration.sanHost
             )
+            if let tlsSecurityLevel = configuration.tlsSecurityLevel {
+                tls.securityLevel = tlsSecurityLevel
+            }
             negotiationKey.tlsOptional = tls
             do {
                 try negotiationKey.tls.start()

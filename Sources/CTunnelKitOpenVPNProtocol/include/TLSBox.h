@@ -42,6 +42,8 @@ extern const NSInteger TLSBoxMaxBufferLength;
 
 extern NSString *const TLSBoxPeerVerificationErrorNotification;
 
+extern const NSInteger TLSBoxDefaultSecurityLevel;
+
 //
 // cipher text is safe within NSData
 // plain text might be sensitive and must avoid NSData
@@ -49,6 +51,8 @@ extern NSString *const TLSBoxPeerVerificationErrorNotification;
 // WARNING: not thread-safe!
 //
 @interface TLSBox : NSObject
+
+@property (nonatomic, assign) NSInteger securityLevel; // TLSBoxDefaultSecurityLevel for default
 
 + (nullable NSString *)md5ForCertificatePath:(NSString *)path error:(NSError **)error;
 + (nullable NSString *)decryptedPrivateKeyFromPath:(NSString *)path passphrase:(NSString *)passphrase error:(NSError **)error;

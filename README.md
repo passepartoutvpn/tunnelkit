@@ -1,10 +1,10 @@
-![iOS 12+](https://img.shields.io/badge/ios-12+-green.svg)
+![iOS 11+](https://img.shields.io/badge/ios-11+-green.svg)
 ![macOS 10.15+](https://img.shields.io/badge/macos-10.15+-green.svg)
 [![License GPLv3](https://img.shields.io/badge/license-GPLv3-lightgray.svg)](LICENSE)
 
 # TunnelKit
 
-This library provides a generic framework for VPN development and a simplified Swift/Obj-C implementation of the OpenVPN® protocol for the Apple platforms. The crypto layer is built on top of [BoringSSL][dep-boringssl] (as seen in [SwiftNIO SSL][dep-swiftniossl]), which in turn enables support for a certain range of encryption and digest algorithms.
+This library provides a generic framework for VPN development and a simplified Swift/Obj-C implementation of the OpenVPN® protocol for the Apple platforms. The crypto layer is built on top of [OpenSSL 1.1.1][dep-openssl], which in turn enables support for a certain range of encryption and digest algorithms.
 
 ## Getting started
 
@@ -70,11 +70,13 @@ Many other flags are ignored too but it's normally not an issue.
 
 ### Requirements
 
-- iOS 13.0+ / macOS 10.15+
+- iOS 11.0+ / macOS 10.15+
 - SwiftPM 5.3
 - Git (preinstalled with Xcode Command Line Tools)
 
 It's highly recommended to use the Git package provided by [Homebrew][dep-brew].
+
+Make sure to disable Bitcode in "Release" targets (iOS), otherwise the library [would not be able to locate OpenSSL][about-pr-bitcode].
 
 ### Demo
 
@@ -142,7 +144,7 @@ Here you find `NativeProvider`, a generic way to manage a VPN profile based on t
 
 #### Protocol
 
-Here are the low-level entities on top of which an OpenVPN connection is established. Code is mixed Swift and Obj-C, most of it is not exposed to consumers. The protocol implementation in particular depends on BoringSSL.
+Here are the low-level entities on top of which an OpenVPN connection is established. Code is mixed Swift and Obj-C, most of it is not exposed to consumers. The protocol implementation in particular depends on OpenSSL.
 
 The entry point is the `OpenVPNSession` class. The networking layer is fully abstract and delegated externally with the use of opaque `IOInterface` (`LinkInterface` and `TunnelInterface`) and `OpenVPNSessionDelegate` protocols.
 
@@ -162,7 +164,7 @@ Due to the restrictive license (GPLv2), LZO support is provided as an optional c
 
 ## License
 
-Copyright (c) 2020 Davide De Rosa. All rights reserved.
+Copyright (c) 2021 Davide De Rosa. All rights reserved.
 
 ### Part I
 
@@ -205,8 +207,6 @@ Website: [passepartoutvpn.app][about-website]
 [openvpn]: https://openvpn.net/index.php/open-source/overview.html
 
 [dep-brew]: https://brew.sh/
-[dep-boringssl]: https://boringssl.googlesource.com/boringssl/
-[dep-swiftniossl]: https://github.com/apple/swift-nio-ssl
 [dep-openssl]: https://www.openssl.org/
 
 [ne-home]: https://developer.apple.com/documentation/networkextension
@@ -227,6 +227,7 @@ Website: [passepartoutvpn.app][about-website]
 [ppl-xmb5]: https://github.com/XMB5
 [ppl-xmb5-xor]: https://github.com/passepartoutvpn/tunnelkit/pull/170
 [about-tunnelblick-xor]: https://tunnelblick.net/cOpenvpn_xorpatch.html
+[about-pr-bitcode]: https://github.com/passepartoutvpn/tunnelkit/issues/51
 
 [about-twitter]: https://twitter.com/keeshux
 [about-website]: https://passepartoutvpn.app

@@ -86,33 +86,6 @@ static BIO *create_BIO_from_PEM(NSString *pem) {
 
 @implementation TLSBox
 
-+ (NSString *)md5ForCertificatePath:(NSString *)path error:(NSError * _Nullable __autoreleasing * _Nullable)error
-{
-    const EVP_MD *alg = EVP_get_digestbyname("MD5");
-    uint8_t md[16];
-    unsigned int len;
-
-    FILE *pem = fopen([path cStringUsingEncoding:NSASCIIStringEncoding], "r");
-    if (!pem) {
-        return NULL;
-    }
-    X509 *cert = PEM_read_X509(pem, NULL, NULL, NULL);
-    if (!cert) {
-        fclose(pem);
-        return NULL;
-    }
-    X509_digest(cert, alg, md, &len);
-    X509_free(cert);
-    fclose(pem);
-    NSCAssert2(len == sizeof(md), @"Unexpected MD5 size (%d != %lu)", len, sizeof(md));
-
-    NSMutableString *hex = [[NSMutableString alloc] initWithCapacity:2 * sizeof(md)];
-    for (int i = 0; i < sizeof(md); ++i) {
-        [hex appendFormat:@"%02x", md[i]];
-    }
-    return hex;
-}
-
 + (NSString *)md5ForCertificatePEM:(NSString *)pem error:(NSError * _Nullable __autoreleasing * _Nullable)error
 {
     const EVP_MD *alg = EVP_get_digestbyname("MD5");

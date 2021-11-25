@@ -236,6 +236,7 @@ static BIO *create_BIO_from_PEM(NSString *pem) {
         }
         BIO_free(bio);
         X509_STORE *trustedStore = SSL_CTX_get_cert_store(self.ctx);
+        X509_STORE_set_flags(trustedStore, X509_V_FLAG_PARTIAL_CHAIN);
         if (!X509_STORE_add_cert(trustedStore, ca)) {
             ERR_print_errors_fp(stdout);
             if (error) {

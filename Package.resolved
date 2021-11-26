@@ -6,8 +6,8 @@
         "repositoryURL": "https://github.com/passepartoutvpn/openssl-apple",
         "state": {
           "branch": null,
-          "revision": "7fe4127c8ef5a06a2040f521ff1b4c2a9a38f417",
-          "version": "1.1.112-no-bitcode"
+          "revision": "42a049c406c1aa3df11a8dd14b1b11cd470f4a00",
+          "version": "1.1.11200"
         }
       },
       {

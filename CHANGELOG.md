@@ -5,11 +5,16 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## Unreleased
+## 4.0.2 (2021-11-25)
 
 ### Changed
 
 - Revert to OpenSSL. [#233](https://github.com/passepartoutvpn/tunnelkit/pull/233)
+
+### Fixed
+
+- TLS fails on CA verification on some servers. [#232](https://github.com/passepartoutvpn/tunnelkit/issues/232)
+- TLS negotiation times out with ProtonVPN. [#230](https://github.com/passepartoutvpn/tunnelkit/issues/230)
 
 ## 4.0.1 (2021-11-18)
 
@@ -33,6 +38,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Avoid caching PEMs on disk (roop). [#213](https://github.com/passepartoutvpn/tunnelkit/pull/213)
 - Upgrade OpenSSL to 1.1.1l.
 
 ### Fixed

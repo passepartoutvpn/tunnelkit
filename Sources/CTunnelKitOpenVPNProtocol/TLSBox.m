@@ -50,7 +50,7 @@ static const char *const TLSBoxServerEKU = "TLS Web Server Authentication";
 
 int TLSBoxVerifyPeer(int ok, X509_STORE_CTX *ctx) {
     if (!ok) {
-        NSError *error = OpenVPNErrorWithCode(OpenVPNErrorCodeTLSCertificateAuthority);
+        NSError *error = OpenVPNErrorWithCode(OpenVPNErrorCodeTLSCAPeerVerification);
         [[NSNotificationCenter defaultCenter] postNotificationName:TLSBoxPeerVerificationErrorNotification
                                                             object:nil
                                                           userInfo:@{OpenVPNErrorKey: error}];
@@ -62,9 +62,9 @@ const NSInteger TLSBoxDefaultSecurityLevel = 0;
 
 @interface TLSBox ()
 
-@property (nonatomic, strong) NSString *caPath;
-@property (nonatomic, strong) NSString *clientCertificatePath;
-@property (nonatomic, strong) NSString *clientKeyPath;
+@property (nonatomic, strong) NSString *caPEM;
+@property (nonatomic, strong) NSString *clientCertificatePEM;
+@property (nonatomic, strong) NSString *clientKeyPEM;
 @property (nonatomic, assign) BOOL checksEKU;
 @property (nonatomic, assign) BOOL checksSANHost;
 @property (nonatomic, strong) NSString *hostname;
@@ -79,6 +79,10 @@ const NSInteger TLSBoxDefaultSecurityLevel = 0;
 @property (nonatomic, unsafe_unretained) uint8_t *bufferCipherText;
 
 @end
+
+static BIO *create_BIO_from_PEM(NSString *pem) {
+    return BIO_new_mem_buf([pem cStringUsingEncoding:NSASCIIStringEncoding], (int)[pem length]);
+}
 
 @implementation TLSBox
 
@@ -100,6 +104,33 @@ const NSInteger TLSBoxDefaultSecurityLevel = 0;
     X509_digest(cert, alg, md, &len);
     X509_free(cert);
     fclose(pem);
+    NSCAssert2(len == sizeof(md), @"Unexpected MD5 size (%d != %lu)", len, sizeof(md));
+
+    NSMutableString *hex = [[NSMutableString alloc] initWithCapacity:2 * sizeof(md)];
+    for (int i = 0; i < sizeof(md); ++i) {
+        [hex appendFormat:@"%02x", md[i]];
+    }
+    return hex;
+}
+
++ (NSString *)md5ForCertificatePEM:(NSString *)pem error:(NSError * _Nullable __autoreleasing * _Nullable)error
+{
+    const EVP_MD *alg = EVP_get_digestbyname("MD5");
+    uint8_t md[16];
+    unsigned int len;
+
+    BIO *bio = create_BIO_from_PEM(pem);
+    if (!bio) {
+        return NULL;
+    }
+    X509 *cert = PEM_read_bio_X509(bio, NULL, NULL, NULL);
+    if (!cert) {
+        BIO_free(bio);
+        return NULL;
+    }
+    X509_digest(cert, alg, md, &len);
+    X509_free(cert);
+    BIO_free(bio);
     NSCAssert2(len == sizeof(md), @"Unexpected MD5 size (%d != %lu)", len, sizeof(md));
 
     NSMutableString *hex = [[NSMutableString alloc] initWithCapacity:2 * sizeof(md)];
@@ -169,17 +200,17 @@ const NSInteger TLSBoxDefaultSecurityLevel = 0;
     return nil;
 }
 
-- (instancetype)initWithCAPath:(NSString *)caPath
-         clientCertificatePath:(NSString *)clientCertificatePath
-                 clientKeyPath:(NSString *)clientKeyPath
-                     checksEKU:(BOOL)checksEKU
-                 checksSANHost:(BOOL)checksSANHost
-                      hostname:(nullable NSString *)hostname
+- (instancetype)initWithCA:(nonnull NSString *)caPEM
+         clientCertificate:(nullable NSString *)clientCertificatePEM
+                 clientKey:(nullable NSString *)clientKeyPEM
+                 checksEKU:(BOOL)checksEKU
+             checksSANHost:(BOOL)checksSANHost
+                  hostname:(nullable NSString *)hostname
 {
     if ((self = [super init])) {
-        self.caPath = caPath;
-        self.clientCertificatePath = clientCertificatePath;
-        self.clientKeyPath = clientKeyPath;
+        self.caPEM = caPEM;
+        self.clientCertificatePEM = clientCertificatePEM;
+        self.clientKeyPEM = clientKeyPEM;
         self.checksEKU = checksEKU;
         self.checksSANHost = checksSANHost;
         self.bufferCipherText = allocate_safely(TLSBoxMaxBufferLength);
@@ -214,31 +245,89 @@ const NSInteger TLSBoxDefaultSecurityLevel = 0;
         SSL_CTX_set_security_level(self.ctx, (int)self.securityLevel);
     }
 
-    if (!SSL_CTX_load_verify_locations(self.ctx, [self.caPath cStringUsingEncoding:NSASCIIStringEncoding], NULL)) {
-        ERR_print_errors_fp(stdout);
-        if (error) {
-            *error = OpenVPNErrorWithCode(OpenVPNErrorCodeTLSCertificateAuthority);
-        }
-        return NO;
-    }
-    
-    if (self.clientCertificatePath) {
-        if (!SSL_CTX_use_certificate_file(self.ctx, [self.clientCertificatePath cStringUsingEncoding:NSASCIIStringEncoding], SSL_FILETYPE_PEM)) {
-            ERR_print_errors_fp(stdout);
+    if (self.caPEM) {
+        BIO *bio = create_BIO_from_PEM(self.caPEM);
+        if (!bio) {
             if (error) {
-                *error = OpenVPNErrorWithCode(OpenVPNErrorCodeTLSClientCertificate);
+                *error = OpenVPNErrorWithCode(OpenVPNErrorCodeTLSCARead);
             }
             return NO;
         }
+        X509 *ca = PEM_read_bio_X509_AUX(bio, NULL, NULL, NULL);
+        if (!ca) {
+            if (error) {
+                *error = OpenVPNErrorWithCode(OpenVPNErrorCodeTLSCARead);
+            }
+            BIO_free(bio);
+            return NO;
+        }
+        BIO_free(bio);
+        X509_STORE *trustedStore = SSL_CTX_get_cert_store(self.ctx);
+        X509_STORE_set_flags(trustedStore, X509_V_FLAG_PARTIAL_CHAIN);
+        if (!X509_STORE_add_cert(trustedStore, ca)) {
+            ERR_print_errors_fp(stdout);
+            if (error) {
+                *error = OpenVPNErrorWithCode(OpenVPNErrorCodeTLSCAUse);
+            }
+            X509_free(ca);
+            return NO;
+        }
+        X509_free(ca);
+    }
 
-        if (self.clientKeyPath) {
-            if (!SSL_CTX_use_PrivateKey_file(self.ctx, [self.clientKeyPath cStringUsingEncoding:NSASCIIStringEncoding], SSL_FILETYPE_PEM)) {
-                ERR_print_errors_fp(stdout);
+    if (self.clientCertificatePEM) {
+        BIO *bio = create_BIO_from_PEM(self.clientCertificatePEM);
+        if (!bio) {
+            if (error) {
+                *error = OpenVPNErrorWithCode(OpenVPNErrorCodeTLSClientCertificateRead);
+            }
+            return NO;
+        }
+        X509 *cert = PEM_read_bio_X509(bio, NULL, NULL, NULL);
+        if (!cert) {
+            if (error) {
+                *error = OpenVPNErrorWithCode(OpenVPNErrorCodeTLSClientCertificateRead);
+            }
+            BIO_free(bio);
+            return NO;
+        }
+        BIO_free(bio);
+        if (!SSL_CTX_use_certificate(self.ctx, cert)) {
+            ERR_print_errors_fp(stdout);
+            if (error) {
+                *error = OpenVPNErrorWithCode(OpenVPNErrorCodeTLSClientCertificateUse);
+            }
+            X509_free(cert);
+            return NO;
+        }
+        X509_free(cert);
+
+        if (self.clientKeyPEM) {
+            BIO *bio = create_BIO_from_PEM(self.clientKeyPEM);
+            if (!bio) {
                 if (error) {
-                    *error = OpenVPNErrorWithCode(OpenVPNErrorCodeTLSClientKey);
+                    *error = OpenVPNErrorWithCode(OpenVPNErrorCodeTLSClientKeyRead);
                 }
                 return NO;
             }
+            EVP_PKEY *pkey = PEM_read_bio_PrivateKey(bio, NULL, NULL, NULL);
+            if (!pkey) {
+                if (error) {
+                    *error = OpenVPNErrorWithCode(OpenVPNErrorCodeTLSClientKeyRead);
+                }
+                EVP_PKEY_free(pkey);
+                return NO;
+            }
+            BIO_free(bio);
+            if (!SSL_CTX_use_PrivateKey(self.ctx, pkey)) {
+                ERR_print_errors_fp(stdout);
+                if (error) {
+                    *error = OpenVPNErrorWithCode(OpenVPNErrorCodeTLSClientKeyUse);
+                }
+                EVP_PKEY_free(pkey);
+                return NO;
+            }
+            EVP_PKEY_free(pkey);
         }
     }
 

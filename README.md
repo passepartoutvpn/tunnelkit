@@ -78,7 +78,7 @@ It's highly recommended to use the Git package provided by [Homebrew][dep-brew].
 
 ### Caveats
 
-Make sure to disable Bitcode in "Release" targets (iOS), otherwise the library [would not be able to link OpenSSL][about-pr-bitcode].
+Make sure to set "Enable Bitcode" (iOS) to NO, otherwise the library [would not be able to link OpenSSL][about-pr-bitcode].
 
 Recent versions of Xcode (latest is 13.1) have an issue where the "Frameworks" directory is replicated inside application extensions. This is not a blocker during development, but will prevent your archive from being validated against App Store Connect due to the following error:
 

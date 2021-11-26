@@ -241,7 +241,7 @@ open class OpenVPNTunnelProvider: NEPacketTunnelProvider {
 
         let session: OpenVPNSession
         do {
-            session = try OpenVPNSession(queue: tunnelQueue, configuration: cfg.sessionConfiguration, cachesURL: cachesURL)
+            session = try OpenVPNSession(queue: tunnelQueue, configuration: cfg.sessionConfiguration)
             refreshDataCount()
         } catch let e {
             completionHandler(e)
@@ -903,7 +903,9 @@ extension OpenVPNTunnelProvider {
             case .cryptoEncryption, .cryptoHMAC:
                 return .encryptionData
                 
-            case .tlsCertificateAuthority, .tlsClientCertificate, .tlsClientKey:
+            case .tlscaRead, .tlscaUse, .tlscaPeerVerification,
+                    .tlsClientCertificateRead, .tlsClientCertificateUse,
+                    .tlsClientKeyRead, .tlsClientKeyUse:
                 return .tlsInitialization
                 
             case .tlsServerCertificate, .tlsServerEKU, .tlsServerHost:

@@ -11,6 +11,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - WireGuard support. [#236](https://github.com/passepartoutvpn/tunnelkit/pull/236)
 
+## 4.0.3 (2021-11-27)
+
+### Fixed
+
+- Verify CA from on-disk file. [#237](https://github.com/passepartoutvpn/tunnelkit/pull/237)
+
 ## 4.0.2 (2021-11-25)
 
 ### Changed

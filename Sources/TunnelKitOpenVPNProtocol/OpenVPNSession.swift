@@ -72,6 +72,10 @@ public class OpenVPNSession: Session {
         case reconnect
     }
     
+    private struct Caches {
+        static let ca = "ca.pem"
+    }
+
     // MARK: Configuration
     
     /// The session base configuration.
@@ -166,6 +170,14 @@ public class OpenVPNSession: Session {
     
     private var authenticator: OpenVPN.Authenticator?
     
+    // MARK: Caching
+
+    private let cachesURL: URL
+
+    private var caURL: URL {
+        return cachesURL.appendingPathComponent(Caches.ca)
+    }
+
     // MARK: Init
 
     /**
@@ -174,13 +186,14 @@ public class OpenVPNSession: Session {
      - Parameter queue: The `DispatchQueue` where to run the session loop.
      - Parameter configuration: The `Configuration` to use for this session.
      */
-    public init(queue: DispatchQueue, configuration: OpenVPN.Configuration) throws {
-        guard let _ = configuration.ca else {
+    public init(queue: DispatchQueue, configuration: OpenVPN.Configuration, cachesURL: URL) throws {
+        guard let ca = configuration.ca else {
             throw ConfigurationError.missingConfiguration(option: "ca")
         }
         
         self.queue = queue
         self.configuration = configuration
+        self.cachesURL = cachesURL
 
         withLocalOptions = true
         keys = [:]
@@ -201,10 +214,14 @@ public class OpenVPNSession: Session {
         } else {
             controlChannel = OpenVPN.ControlChannel()
         }
+
+        // cache CA locally (mandatory for OpenSSL)
+        try ca.pem.write(to: caURL, atomically: true, encoding: .ascii)
     }
     
     deinit {
         cleanup()
+        cleanupCache()
     }
     
     // MARK: Session
@@ -313,6 +330,13 @@ public class OpenVPNSession: Session {
         
         isStopping = false
         stopError = nil
+    }
+
+    func cleanupCache() {
+        let fm = FileManager.default
+        for url in [caURL] {
+            try? fm.removeItem(at: url)
+        }
     }
 
     // MARK: Loop
@@ -576,13 +600,13 @@ public class OpenVPNSession: Session {
     
     private func hardResetPayload() -> Data? {
         guard !(configuration.usesPIAPatches ?? false) else {
-            guard let ca = configuration.ca else {
+            guard let _ = configuration.ca else {
                 log.error("Configuration doesn't have a CA")
                 return nil
             }
             let caMD5: String
             do {
-                caMD5 = try TLSBox.md5(forCertificatePEM: ca.pem)
+                caMD5 = try TLSBox.md5(forCertificatePath: caURL.path)
             } catch {
                 log.error("CA MD5 could not be computed, skipping custom HARD_RESET")
                 return nil
@@ -723,7 +747,7 @@ public class OpenVPNSession: Session {
             return
         }
         
-        guard let ca = configuration.ca else {
+        guard let _ = configuration.ca else {
             log.error("Configuration doesn't have a CA")
             return
         }
@@ -751,7 +775,7 @@ public class OpenVPNSession: Session {
             log.debug("Start TLS handshake")
 
             let tls = TLSBox(
-                ca: ca.pem,
+                caPath: caURL.path,
                 clientCertificate: configuration.clientCertificate?.pem,
                 clientKey: configuration.clientKey?.pem,
                 checksEKU: configuration.checksEKU ?? false,
@@ -1215,6 +1239,7 @@ public class OpenVPNSession: Session {
             switch method {
             case .shutdown:
                 self?.doShutdown(error: error)
+                self?.cleanupCache()
                 
             case .reconnect:
                 self?.doReconnect(error: error)

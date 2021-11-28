@@ -55,16 +55,15 @@ extern const NSInteger TLSBoxDefaultSecurityLevel;
 @property (nonatomic, assign) NSInteger securityLevel; // TLSBoxDefaultSecurityLevel for default
 
 + (nullable NSString *)md5ForCertificatePath:(NSString *)path error:(NSError **)error;
-+ (nullable NSString *)md5ForCertificatePEM:(NSString *)pem error:(NSError **)error;
 + (nullable NSString *)decryptedPrivateKeyFromPath:(NSString *)path passphrase:(NSString *)passphrase error:(NSError **)error;
 + (nullable NSString *)decryptedPrivateKeyFromPEM:(NSString *)pem passphrase:(NSString *)passphrase error:(NSError **)error;
 
-- (instancetype)initWithCA:(nonnull NSString *)caPEM
-         clientCertificate:(nullable NSString *)clientCertificatePEM
-                 clientKey:(nullable NSString *)clientKeyPEM
-                 checksEKU:(BOOL)checksEKU
-             checksSANHost:(BOOL)checksSANHost
-                  hostname:(nullable NSString *)hostname;
+- (instancetype)initWithCAPath:(nonnull NSString *)caPath
+             clientCertificate:(nullable NSString *)clientCertificatePEM
+                     clientKey:(nullable NSString *)clientKeyPEM
+                     checksEKU:(BOOL)checksEKU
+                 checksSANHost:(BOOL)checksSANHost
+                      hostname:(nullable NSString *)hostname;
 
 - (BOOL)startWithError:(NSError **)error;
 

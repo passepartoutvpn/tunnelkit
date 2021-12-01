@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <Scheme
-   LastUpgradeVersion = "1250"
+   LastUpgradeVersion = "1310"
    wasCreatedForAppExtension = "YES"
    version = "2.0">
    <BuildAction
@@ -15,9 +15,9 @@
             buildForAnalyzing = "YES">
             <BuildableReference
                BuildableIdentifier = "primary"
-               BlueprintIdentifier = "0E05427625A239C600EFC5FF"
-               BuildableName = "TunnelKitDemoTunnel-macOS.appex"
-               BlueprintName = "TunnelKitDemoTunnel-macOS"
+               BlueprintIdentifier = "0E833A94274BC3B1008EA397"
+               BuildableName = "TunnelKitDemoWireGuardTunnel-macOS.appex"
+               BlueprintName = "TunnelKitDemoWireGuardTunnel-macOS"
                ReferencedContainer = "container:TunnelKit.xcodeproj">
             </BuildableReference>
          </BuildActionEntry>
@@ -57,16 +57,6 @@
       debugServiceExtension = "internal"
       allowLocationSimulation = "YES"
       launchAutomaticallySubstyle = "2">
-      <BuildableProductRunnable
-         runnableDebuggingMode = "0">
-         <BuildableReference
-            BuildableIdentifier = "primary"
-            BlueprintIdentifier = "0E05422B25A236EB00EFC5FF"
-            BuildableName = "TunnelKitDemo-macOS.app"
-            BlueprintName = "TunnelKitDemo-macOS"
-            ReferencedContainer = "container:TunnelKit.xcodeproj">
-         </BuildableReference>
-      </BuildableProductRunnable>
    </LaunchAction>
    <ProfileAction
       buildConfiguration = "Release"
@@ -76,16 +66,15 @@
       debugDocumentVersioning = "YES"
       askForAppToLaunch = "Yes"
       launchAutomaticallySubstyle = "2">
-      <BuildableProductRunnable
-         runnableDebuggingMode = "0">
+      <MacroExpansion>
          <BuildableReference
             BuildableIdentifier = "primary"
-            BlueprintIdentifier = "0E05422B25A236EB00EFC5FF"
-            BuildableName = "TunnelKitDemo-macOS.app"
-            BlueprintName = "TunnelKitDemo-macOS"
+            BlueprintIdentifier = "0E833A94274BC3B1008EA397"
+            BuildableName = "TunnelKitDemoWireGuardTunnel-macOS.appex"
+            BlueprintName = "TunnelKitDemoWireGuardTunnel-macOS"
             ReferencedContainer = "container:TunnelKit.xcodeproj">
          </BuildableReference>
-      </BuildableProductRunnable>
+      </MacroExpansion>
    </ProfileAction>
    <AnalyzeAction
       buildConfiguration = "Debug">

@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<document type="com.apple.InterfaceBuilder3.Cocoa.Storyboard.XIB" version="3.0" toolsVersion="17701" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none" useAutolayout="YES" initialViewController="B8D-0N-5wS">
+<document type="com.apple.InterfaceBuilder3.Cocoa.Storyboard.XIB" version="3.0" toolsVersion="19455" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none" useAutolayout="YES" initialViewController="B8D-0N-5wS">
     <dependencies>
         <deployment identifier="macosx"/>
-        <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="17701"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="19455"/>
         <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
     </dependencies>
     <scenes>
@@ -12,11 +12,11 @@
                 <application id="hnw-xV-0zn" sceneMemberID="viewController">
                     <menu key="mainMenu" title="Main Menu" systemMenu="main" id="AYu-sK-qS6">
                         <items>
-                            <menuItem title="BasicTunnelMac" id="1Xt-HY-uBw">
+                            <menuItem title="TunnelKitDemo" id="1Xt-HY-uBw" userLabel="TunnelKitDemo">
                                 <modifierMask key="keyEquivalentModifierMask"/>
-                                <menu key="submenu" title="BasicTunnelMac" systemMenu="apple" id="uQy-DD-JDr">
+                                <menu key="submenu" title="TunnelKitDemo" systemMenu="apple" id="uQy-DD-JDr">
                                     <items>
-                                        <menuItem title="About BasicTunnelMac" id="5kV-Vb-QxS">
+                                        <menuItem title="About TunnelKitDemo" id="5kV-Vb-QxS">
                                             <modifierMask key="keyEquivalentModifierMask"/>
                                             <connections>
                                                 <action selector="orderFrontStandardAboutPanel:" target="Ady-hI-5gd" id="Exp-CZ-Vem"/>
@@ -30,7 +30,7 @@
                                             <menu key="submenu" title="Services" systemMenu="services" id="hz9-B4-Xy5"/>
                                         </menuItem>
                                         <menuItem isSeparatorItem="YES" id="4je-JR-u6R"/>
-                                        <menuItem title="Hide BasicTunnelMac" keyEquivalent="h" id="Olw-nP-bQN">
+                                        <menuItem title="Hide TunnelKitDemo" keyEquivalent="h" id="Olw-nP-bQN">
                                             <connections>
                                                 <action selector="hide:" target="Ady-hI-5gd" id="PnN-Uc-m68"/>
                                             </connections>
@@ -48,7 +48,7 @@
                                             </connections>
                                         </menuItem>
                                         <menuItem isSeparatorItem="YES" id="kCx-OE-vgT"/>
-                                        <menuItem title="Quit BasicTunnelMac" keyEquivalent="q" id="4sb-4s-VLi">
+                                        <menuItem title="Quit TunnelKitDemo" keyEquivalent="q" id="4sb-4s-VLi">
                                             <connections>
                                                 <action selector="terminate:" target="Ady-hI-5gd" id="Te7-pn-YzF"/>
                                             </connections>
@@ -661,7 +661,7 @@
                                 <modifierMask key="keyEquivalentModifierMask"/>
                                 <menu key="submenu" title="Help" systemMenu="help" id="F2S-fz-NVQ">
                                     <items>
-                                        <menuItem title="BasicTunnelMac Help" keyEquivalent="?" id="FKE-Sm-Kum">
+                                        <menuItem title="TunnelKitDemo Help" keyEquivalent="?" id="FKE-Sm-Kum">
                                             <connections>
                                                 <action selector="showHelp:" target="Ady-hI-5gd" id="y7X-2Q-9no"/>
                                             </connections>
@@ -675,17 +675,17 @@
                         <outlet property="delegate" destination="Voe-Tx-rLC" id="PrD-fu-P6m"/>
                     </connections>
                 </application>
-                <customObject id="Voe-Tx-rLC" customClass="AppDelegate" customModule="Demo_macOS" customModuleProvider="target"/>
+                <customObject id="Voe-Tx-rLC" customClass="AppDelegate" customModule="TunnelKitDemo_macOS" customModuleProvider="target"/>
                 <customObject id="YLy-65-1bz" customClass="NSFontManager"/>
                 <customObject id="Ady-hI-5gd" userLabel="First Responder" customClass="NSResponder" sceneMemberID="firstResponder"/>
             </objects>
-            <point key="canvasLocation" x="75" y="0.0"/>
+            <point key="canvasLocation" x="-662" y="-582"/>
         </scene>
         <!--Window Controller-->
         <scene sceneID="R2V-B0-nI4">
             <objects>
                 <windowController id="B8D-0N-5wS" sceneMemberID="viewController">
-                    <window key="window" title="Window" allowsToolTipsWhenApplicationIsInactive="NO" autorecalculatesKeyViewLoop="NO" releasedWhenClosed="NO" visibleAtLaunch="NO" animationBehavior="default" id="IQv-IB-iLA">
+                    <window key="window" title="TunnelKit" allowsToolTipsWhenApplicationIsInactive="NO" autorecalculatesKeyViewLoop="NO" releasedWhenClosed="NO" visibleAtLaunch="NO" animationBehavior="default" titlebarAppearsTransparent="YES" id="IQv-IB-iLA">
                         <windowStyleMask key="styleMask" titled="YES" closable="YES" miniaturizable="YES" resizable="YES"/>
                         <windowPositionMask key="initialPositionMask" leftStrut="YES" rightStrut="YES" topStrut="YES" bottomStrut="YES"/>
                         <rect key="contentRect" x="196" y="240" width="480" height="480"/>
@@ -695,17 +695,150 @@
                         </connections>
                     </window>
                     <connections>
-                        <segue destination="XfG-lQ-9wD" kind="relationship" relationship="window.shadowedContentViewController" id="cq2-FE-JQM"/>
+                        <segue destination="Ph7-kL-etv" kind="relationship" relationship="window.shadowedContentViewController" id="J86-FA-iJb"/>
                     </connections>
                 </windowController>
                 <customObject id="Oky-zY-oP4" userLabel="First Responder" customClass="NSResponder" sceneMemberID="firstResponder"/>
             </objects>
-            <point key="canvasLocation" x="75" y="250"/>
+            <point key="canvasLocation" x="-656" y="-222"/>
         </scene>
-        <!--View Controller-->
+        <!--Tab View Controller-->
+        <scene sceneID="ygq-sG-3Ln">
+            <objects>
+                <tabViewController selectedTabViewItemIndex="0" id="Ph7-kL-etv" sceneMemberID="viewController">
+                    <tabViewItems>
+                        <tabViewItem id="p9v-bL-mqr"/>
+                        <tabViewItem id="Ocn-Fg-u0t"/>
+                    </tabViewItems>
+                    <tabView key="tabView" type="noTabsNoBorder" id="iR8-80-79B">
+                        <rect key="frame" x="0.0" y="0.0" width="450" height="300"/>
+                        <autoresizingMask key="autoresizingMask"/>
+                        <font key="font" metaFont="message"/>
+                        <connections>
+                            <outlet property="delegate" destination="Ph7-kL-etv" id="E0r-Ol-Xr3"/>
+                        </connections>
+                    </tabView>
+                    <connections>
+                        <outlet property="tabView" destination="iR8-80-79B" id="GQL-C9-54d"/>
+                        <segue destination="XfG-lQ-9wD" kind="relationship" relationship="tabItems" id="EL7-V7-Rli"/>
+                        <segue destination="veh-JO-i63" kind="relationship" relationship="tabItems" id="bXX-lO-UXd"/>
+                    </connections>
+                </tabViewController>
+                <customObject id="eeQ-AU-wde" userLabel="First Responder" customClass="NSResponder" sceneMemberID="firstResponder"/>
+            </objects>
+            <point key="canvasLocation" x="-656" y="404"/>
+        </scene>
+        <!--WireGuard-->
+        <scene sceneID="Gpw-y6-EY1">
+            <objects>
+                <viewController title="WireGuard" id="veh-JO-i63" customClass="WireGuardViewController" customModule="TunnelKitDemo_macOS" customModuleProvider="target" sceneMemberID="viewController">
+                    <view key="view" id="dOb-bH-xlV">
+                        <rect key="frame" x="0.0" y="0.0" width="480" height="182"/>
+                        <autoresizingMask key="autoresizingMask"/>
+                        <subviews>
+                            <customView translatesAutoresizingMaskIntoConstraints="NO" id="rq1-jz-XJV">
+                                <rect key="frame" x="20" y="20" width="440" height="142"/>
+                                <subviews>
+                                    <textField verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="uR4-9E-kLl">
+                                        <rect key="frame" x="0.0" y="121" width="440" height="21"/>
+                                        <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" selectable="YES" editable="YES" sendsActionOnEndEditing="YES" borderStyle="bezel" drawsBackground="YES" id="JRs-jT-MUr">
+                                            <font key="font" usesAppearanceFont="YES"/>
+                                            <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
+                                            <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
+                                        </textFieldCell>
+                                    </textField>
+                                    <textField verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="nk0-nl-iaW">
+                                        <rect key="frame" x="0.0" y="90" width="440" height="21"/>
+                                        <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" selectable="YES" editable="YES" sendsActionOnEndEditing="YES" borderStyle="bezel" drawsBackground="YES" id="KgL-In-jV9">
+                                            <font key="font" usesAppearanceFont="YES"/>
+                                            <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
+                                            <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
+                                        </textFieldCell>
+                                    </textField>
+                                    <textField verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="KGQ-ny-X4s">
+                                        <rect key="frame" x="0.0" y="59" width="440" height="21"/>
+                                        <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" selectable="YES" editable="YES" sendsActionOnEndEditing="YES" borderStyle="bezel" drawsBackground="YES" id="i7u-Xh-TAb">
+                                            <font key="font" usesAppearanceFont="YES"/>
+                                            <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
+                                            <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
+                                        </textFieldCell>
+                                    </textField>
+                                    <textField verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="2qO-tT-LCY">
+                                        <rect key="frame" x="0.0" y="28" width="312" height="21"/>
+                                        <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" selectable="YES" editable="YES" sendsActionOnEndEditing="YES" borderStyle="bezel" drawsBackground="YES" id="XR9-No-Udo">
+                                            <font key="font" usesAppearanceFont="YES"/>
+                                            <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
+                                            <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
+                                        </textFieldCell>
+                                    </textField>
+                                    <button verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="Tiq-ap-zD3">
+                                        <rect key="frame" x="-7" y="-7" width="454" height="32"/>
+                                        <buttonCell key="cell" type="push" title="Connect" bezelStyle="rounded" alignment="center" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="Mx7-Fy-SJ6">
+                                            <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
+                                            <font key="font" metaFont="system"/>
+                                        </buttonCell>
+                                        <connections>
+                                            <action selector="connectionClicked:" target="veh-JO-i63" id="7yr-xP-5NW"/>
+                                        </connections>
+                                    </button>
+                                    <textField verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="0SZ-mT-ekY">
+                                        <rect key="frame" x="320" y="28" width="120" height="21"/>
+                                        <constraints>
+                                            <constraint firstAttribute="width" constant="120" id="Y6G-q2-muW"/>
+                                        </constraints>
+                                        <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" selectable="YES" editable="YES" sendsActionOnEndEditing="YES" borderStyle="bezel" drawsBackground="YES" id="zL3-gF-dTw">
+                                            <font key="font" usesAppearanceFont="YES"/>
+                                            <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
+                                            <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
+                                        </textFieldCell>
+                                    </textField>
+                                </subviews>
+                                <constraints>
+                                    <constraint firstAttribute="trailing" secondItem="0SZ-mT-ekY" secondAttribute="trailing" id="3ib-83-Fzq"/>
+                                    <constraint firstItem="Tiq-ap-zD3" firstAttribute="top" secondItem="2qO-tT-LCY" secondAttribute="bottom" constant="8" symbolic="YES" id="6CE-7C-VeP"/>
+                                    <constraint firstItem="Tiq-ap-zD3" firstAttribute="leading" secondItem="rq1-jz-XJV" secondAttribute="leading" id="8l4-c3-88J"/>
+                                    <constraint firstItem="2qO-tT-LCY" firstAttribute="top" secondItem="KGQ-ny-X4s" secondAttribute="bottom" constant="10" symbolic="YES" id="A49-xG-MpP"/>
+                                    <constraint firstItem="0SZ-mT-ekY" firstAttribute="centerY" secondItem="2qO-tT-LCY" secondAttribute="centerY" id="EKs-iy-CXT"/>
+                                    <constraint firstItem="0SZ-mT-ekY" firstAttribute="leading" secondItem="2qO-tT-LCY" secondAttribute="trailing" constant="8" symbolic="YES" id="EVP-mS-GXl"/>
+                                    <constraint firstAttribute="trailing" secondItem="KGQ-ny-X4s" secondAttribute="trailing" id="I2q-zJ-6dl"/>
+                                    <constraint firstItem="uR4-9E-kLl" firstAttribute="leading" secondItem="rq1-jz-XJV" secondAttribute="leading" id="K90-IM-FOm"/>
+                                    <constraint firstItem="2qO-tT-LCY" firstAttribute="leading" secondItem="rq1-jz-XJV" secondAttribute="leading" id="LHr-Ar-Ap5"/>
+                                    <constraint firstAttribute="trailing" secondItem="nk0-nl-iaW" secondAttribute="trailing" id="ei2-ya-hZT"/>
+                                    <constraint firstItem="nk0-nl-iaW" firstAttribute="leading" secondItem="rq1-jz-XJV" secondAttribute="leading" id="few-oS-Tyc"/>
+                                    <constraint firstItem="uR4-9E-kLl" firstAttribute="top" secondItem="rq1-jz-XJV" secondAttribute="top" id="fjG-U6-4v1"/>
+                                    <constraint firstAttribute="bottom" secondItem="Tiq-ap-zD3" secondAttribute="bottom" id="gEg-rf-8Ii"/>
+                                    <constraint firstItem="KGQ-ny-X4s" firstAttribute="top" secondItem="nk0-nl-iaW" secondAttribute="bottom" constant="10" symbolic="YES" id="gbO-Lm-2lv"/>
+                                    <constraint firstAttribute="trailing" secondItem="uR4-9E-kLl" secondAttribute="trailing" id="ikN-Ft-JeC"/>
+                                    <constraint firstItem="nk0-nl-iaW" firstAttribute="top" secondItem="uR4-9E-kLl" secondAttribute="bottom" constant="10" symbolic="YES" id="pri-94-Pto"/>
+                                    <constraint firstItem="KGQ-ny-X4s" firstAttribute="leading" secondItem="rq1-jz-XJV" secondAttribute="leading" id="q6z-Cn-J3z"/>
+                                    <constraint firstAttribute="trailing" secondItem="Tiq-ap-zD3" secondAttribute="trailing" id="yKA-nb-XUR"/>
+                                </constraints>
+                            </customView>
+                        </subviews>
+                        <constraints>
+                            <constraint firstItem="rq1-jz-XJV" firstAttribute="leading" secondItem="dOb-bH-xlV" secondAttribute="leading" constant="20" symbolic="YES" id="SRf-9v-bqS"/>
+                            <constraint firstAttribute="trailing" secondItem="rq1-jz-XJV" secondAttribute="trailing" constant="20" symbolic="YES" id="Tuh-wz-3pJ"/>
+                            <constraint firstAttribute="bottom" secondItem="rq1-jz-XJV" secondAttribute="bottom" constant="20" symbolic="YES" id="Zn8-xp-J3m"/>
+                            <constraint firstItem="rq1-jz-XJV" firstAttribute="top" secondItem="dOb-bH-xlV" secondAttribute="top" constant="20" symbolic="YES" id="gRO-l8-uod"/>
+                        </constraints>
+                    </view>
+                    <connections>
+                        <outlet property="buttonConnection" destination="Tiq-ap-zD3" id="lXt-h5-V0q"/>
+                        <outlet property="textAddress" destination="uR4-9E-kLl" id="gFs-K9-BS6"/>
+                        <outlet property="textClientPrivateKey" destination="nk0-nl-iaW" id="cdn-Vz-28s"/>
+                        <outlet property="textServerAddress" destination="2qO-tT-LCY" id="1tc-22-pSB"/>
+                        <outlet property="textServerPort" destination="0SZ-mT-ekY" id="xnt-oV-11k"/>
+                        <outlet property="textServerPublicKey" destination="KGQ-ny-X4s" id="o26-MI-51j"/>
+                    </connections>
+                </viewController>
+                <customObject id="jiZ-E1-ajD" userLabel="First Responder" customClass="NSResponder" sceneMemberID="firstResponder"/>
+            </objects>
+            <point key="canvasLocation" x="-1" y="521"/>
+        </scene>
+        <!--OpenVPN-->
         <scene sceneID="hIz-AP-VOD">
             <objects>
-                <viewController id="XfG-lQ-9wD" customClass="ViewController" customModule="Demo_macOS" customModuleProvider="target" sceneMemberID="viewController">
+                <viewController title="OpenVPN" id="XfG-lQ-9wD" customClass="OpenVPNViewController" customModule="TunnelKitDemo_macOS" customModuleProvider="target" sceneMemberID="viewController">
                     <view key="view" wantsLayer="YES" id="m2S-Jp-Qdl">
                         <rect key="frame" x="0.0" y="0.0" width="480" height="140"/>
                         <autoresizingMask key="autoresizingMask"/>
@@ -798,7 +931,7 @@
                 </viewController>
                 <customObject id="rPt-NT-nkU" userLabel="First Responder" customClass="NSResponder" sceneMemberID="firstResponder"/>
             </objects>
-            <point key="canvasLocation" x="75" y="708"/>
+            <point key="canvasLocation" x="-1" y="193"/>
         </scene>
     </scenes>
 </document>

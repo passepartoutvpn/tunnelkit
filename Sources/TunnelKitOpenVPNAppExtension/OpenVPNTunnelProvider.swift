@@ -241,7 +241,7 @@ open class OpenVPNTunnelProvider: NEPacketTunnelProvider {
 
         let session: OpenVPNSession
         do {
-            session = try OpenVPNSession(queue: tunnelQueue, configuration: cfg.sessionConfiguration)
+            session = try OpenVPNSession(queue: tunnelQueue, configuration: cfg.sessionConfiguration, cachesURL: cachesURL)
             refreshDataCount()
         } catch let e {
             completionHandler(e)

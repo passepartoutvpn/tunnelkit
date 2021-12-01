@@ -1,0 +1,48 @@
+name: Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'TunnelKit version (e.g. 3.12.6)'
+        required: true
+
+jobs:
+  run_tests:
+    runs-on: macos-11
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v2
+      - uses: maxim-lobanov/setup-xcode@v1
+        with:
+          xcode-version: latest-stable
+      - name: Run tests
+        run: |
+          swift test
+  publish_release:
+    runs-on: ubuntu-latest
+    needs: run_tests
+    steps:
+      - uses: actions/checkout@v2
+      - name: Import GPG key
+        uses: crazy-max/ghaction-import-gpg@v4
+        with:
+          gpg_private_key: ${{ secrets.GPG_KEY }}
+          passphrase: ${{ secrets.GPG_PASSPHRASE }}
+          git_user_signingkey: true
+          git_commit_gpgsign: true
+          git_tag_gpgsign: true
+          git_push_gpgsign: false
+      - name: Tag release
+        env:
+          VERSION: ${{ github.event.inputs.version }}
+        run: |
+          DATE=`date "+%Y-%m-%d"`
+          COMMIT_MESSAGE="[ci skip] Set release date"
+          TAG_MESSAGE="Release"
+
+          sed -i'' -E "s/^## Unreleased.*$/## $VERSION ($DATE)/" CHANGELOG.md
+          git add CHANGELOG.md
+          git commit -m "$COMMIT_MESSAGE"
+          git tag "v$VERSION" -m "$TAG_MESSAGE"
+          git push && git push --tags

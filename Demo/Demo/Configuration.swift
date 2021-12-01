@@ -26,9 +26,11 @@
 import Foundation
 import TunnelKitCore
 import TunnelKitOpenVPN
+import TunnelKitWireGuard
 
-struct Configuration {
-    static let ca = OpenVPN.CryptoContainer(pem: """
+extension OpenVPN {
+    struct DemoConfiguration {
+        static let ca = OpenVPN.CryptoContainer(pem: """
 -----BEGIN CERTIFICATE-----
 MIIG6zCCBNOgAwIBAgIJAJhm2PWFkE8NMA0GCSqGSIb3DQEBCwUAMIGpMQswCQYD
 VQQGEwJVUzELMAkGA1UECBMCQ0ExFjAUBgNVBAcTDU1vdW50YWluIFZpZXcxEzAR
@@ -70,7 +72,7 @@ HiT8esMeX+/orMetzuTPgZInMhznvVdNdfwAfibwlXOKvm154UgDVgnKV405oNM=
 -----END CERTIFICATE-----
 """)
 
-    static let clientCertificate = OpenVPN.CryptoContainer(pem: """
+        static let clientCertificate = OpenVPN.CryptoContainer(pem: """
 -----BEGIN CERTIFICATE-----
 MIIHPTCCBSWgAwIBAgIBAjANBgkqhkiG9w0BAQsFADCBqTELMAkGA1UEBhMCVVMx
 CzAJBgNVBAgTAkNBMRYwFAYDVQQHEw1Nb3VudGFpbiBWaWV3MRMwEQYDVQQKEwpH
@@ -114,7 +116,7 @@ kiJ6Ts2iqIvR7T7Eme2vBYH/UJ1DXrdCJx6IDGxxgoXk
 -----END CERTIFICATE-----
 """)
 
-    static let clientKey = OpenVPN.CryptoContainer(pem: """
+        static let clientKey = OpenVPN.CryptoContainer(pem: """
 -----BEGIN PRIVATE KEY-----
 MIIJQgIBADANBgkqhkiG9w0BAQEFAASCCSwwggkoAgEAAoICAQDvgpUJoqgvHmbF
 2y7Uvt1BfglAXWmzzhaSjr4ZqYLMQncpcwC1iuVgDseGp/rl4C/C64RebIx0hLU1
@@ -169,21 +171,47 @@ M69t86apMrAxkUxVJAWLRBd9fbYyzJgTW61tFqXWTZpiz6bhuWApSEzaHcL3/f5l
 -----END PRIVATE KEY-----
 """)
 
-    static func make(hostname: String, port: UInt16, socketType: SocketType) -> OpenVPNProvider.Configuration {
-        var sessionBuilder = OpenVPN.ConfigurationBuilder()
-        sessionBuilder.ca = ca
-        sessionBuilder.cipher = .aes128cbc
-        sessionBuilder.digest = .sha1
-        sessionBuilder.compressionFraming = .compLZO
-        sessionBuilder.renegotiatesAfter = nil
-        sessionBuilder.hostname = hostname
-        sessionBuilder.endpointProtocols = [EndpointProtocol(socketType, port)]
-        sessionBuilder.clientCertificate = clientCertificate
-        sessionBuilder.clientKey = clientKey
-        sessionBuilder.mtu = 1350
-        var builder = OpenVPNProvider.ConfigurationBuilder(sessionConfiguration: sessionBuilder.build())
-        builder.shouldDebug = true
-        builder.masksPrivateData = false
-        return builder.build()
+        static func make(hostname: String, port: UInt16, socketType: SocketType) -> OpenVPNProvider.Configuration {
+            var sessionBuilder = OpenVPN.ConfigurationBuilder()
+            sessionBuilder.ca = ca
+            sessionBuilder.cipher = .aes128cbc
+            sessionBuilder.digest = .sha1
+            sessionBuilder.compressionFraming = .compLZO
+            sessionBuilder.renegotiatesAfter = nil
+            sessionBuilder.hostname = hostname
+            sessionBuilder.endpointProtocols = [EndpointProtocol(socketType, port)]
+            sessionBuilder.clientCertificate = clientCertificate
+            sessionBuilder.clientKey = clientKey
+            sessionBuilder.mtu = 1350
+            var builder = OpenVPNProvider.ConfigurationBuilder(sessionConfiguration: sessionBuilder.build())
+            builder.shouldDebug = true
+            builder.masksPrivateData = false
+            return builder.build()
+        }
+    }
+}
+
+extension WireGuard {
+    struct DemoConfiguration {
+        static func make(
+            clientPrivateKey: String,
+            clientAddress: String,
+            serverPublicKey: String,
+            serverAddress: String,
+            serverPort: String
+        ) -> WireGuardProvider.Configuration? {
+            var builder = WireGuard.ConfigurationBuilder()
+            builder.privateKey = clientPrivateKey
+            builder.addresses = [clientAddress]
+            builder.peerPublicKey = serverPublicKey
+            builder.peerAddress = serverAddress
+            builder.peerPort = UInt16(serverPort)
+            builder.allowedIPs = ["0.0.0.0/0"]
+            builder.dns = ["1.1.1.1", "1.0.0.1"]
+            guard let cfg = builder.build() else {
+                return nil
+            }
+            return WireGuardProvider.Configuration(innerConfiguration: cfg)
+        }
     }
 }

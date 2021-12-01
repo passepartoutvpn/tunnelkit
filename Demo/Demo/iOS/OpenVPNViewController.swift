@@ -1,5 +1,5 @@
 //
-//  ViewController.swift
+//  OpenVPNViewController.swift
 //  Demo
 //
 //  Created by Davide De Rosa on 2/11/17.
@@ -25,15 +25,14 @@
 
 import UIKit
 import TunnelKitCore
-import TunnelKitAppExtension
 import TunnelKitManager
 import TunnelKitOpenVPN
 
 private let appGroup = "group.com.algoritmico.TunnelKit.Demo"
 
-private let tunnelIdentifier = "com.algoritmico.ios.TunnelKit.Demo.Tunnel"
+private let tunnelIdentifier = "com.algoritmico.ios.TunnelKit.Demo.OpenVPN.Tunnel"
 
-class ViewController: UIViewController, URLSessionDataDelegate {
+class OpenVPNViewController: UIViewController {
     @IBOutlet var textUsername: UITextField!
     
     @IBOutlet var textPassword: UITextField!
@@ -97,14 +96,14 @@ class ViewController: UIViewController, URLSessionDataDelegate {
         let socketType: SocketType = switchTCP.isOn ? .tcp : .udp
 
         let credentials = OpenVPN.Credentials(textUsername.text!, textPassword.text!)
-        let cfg = Configuration.make(hostname: hostname, port: port, socketType: socketType)
+        let cfg = OpenVPN.DemoConfiguration.make(hostname: hostname, port: port, socketType: socketType)
         let proto = try! cfg.generatedTunnelProtocol(
             withBundleIdentifier: tunnelIdentifier,
             appGroup: appGroup,
             context: tunnelIdentifier,
             credentials: credentials
         )
-        let neCfg = NetworkExtensionVPNConfiguration(title: "BasicTunnel", protocolConfiguration: proto, onDemandRules: [])
+        let neCfg = NetworkExtensionVPNConfiguration(title: "TunnelKit.OpenVPN", protocolConfiguration: proto, onDemandRules: [])
         vpn.reconnect(configuration: neCfg) { (error) in
             if let error = error {
                 print("configure error: \(error)")

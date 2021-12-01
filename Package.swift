@@ -6,7 +6,7 @@ import PackageDescription
 let package = Package(
     name: "TunnelKit",
     platforms: [
-        .iOS(.v11), .macOS(.v10_15)
+        .iOS(.v12), .macOS(.v10_15)
     ],
     products: [
         // Products define the executables and libraries a package produces, and make them visible to other packages.
@@ -27,6 +27,14 @@ let package = Package(
             targets: ["TunnelKitOpenVPNAppExtension"]
         ),
         .library(
+            name: "TunnelKitWireGuard",
+            targets: ["TunnelKitWireGuard"]
+        ),
+        .library(
+            name: "TunnelKitWireGuardAppExtension",
+            targets: ["TunnelKitWireGuardAppExtension"]
+        ),
+        .library(
             name: "TunnelKitLZO",
             targets: ["TunnelKitLZO"]
         )
@@ -35,7 +43,8 @@ let package = Package(
         // Dependencies declare other packages that this package depends on.
         // .package(url: /* package url */, from: "1.0.0"),
         .package(url: "https://github.com/SwiftyBeaver/SwiftyBeaver", from: "1.9.0"),
-        .package(url: "https://github.com/passepartoutvpn/openssl-apple", from: "1.1.11200")
+        .package(url: "https://github.com/passepartoutvpn/openssl-apple", from: "1.1.11200"),
+        .package(name: "WireGuardKit", url: "https://git.zx2c4.com/wireguard-apple", .exact("1.0.15-26"))
     ],
     targets: [
         // Targets are the basic building blocks of a package. A target can define a module or a test suite.
@@ -102,6 +111,30 @@ let package = Package(
                 "TunnelKitOpenVPNCore",
                 "TunnelKitOpenVPNManager",
                 "TunnelKitOpenVPNProtocol"
+            ]),
+        //
+        .target(
+            name: "TunnelKitWireGuard",
+            dependencies: [
+                "TunnelKitWireGuardCore",
+                "TunnelKitWireGuardManager"
+            ]),
+        .target(
+            name: "TunnelKitWireGuardCore",
+            dependencies: [
+                "WireGuardKit"
+            ]),
+        .target(
+            name: "TunnelKitWireGuardManager",
+            dependencies: [
+                "TunnelKitManager",
+                "TunnelKitWireGuardCore"
+            ]),
+        .target(
+            name: "TunnelKitWireGuardAppExtension",
+            dependencies: [
+                "TunnelKitWireGuardCore",
+                "TunnelKitWireGuardManager"
             ]),
         .target(
             name: "TunnelKitLZO",

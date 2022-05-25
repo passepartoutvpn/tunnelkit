@@ -29,9 +29,9 @@ NS_ASSUME_NONNULL_BEGIN
 
 @interface PacketStream : NSObject
 
-+ (NSArray<NSData *> *)packetsFromStream:(NSData *)stream until:(NSInteger *)until xorMask:(uint8_t)xorMask;
-+ (NSData *)streamFromPacket:(NSData *)packet xorMask:(uint8_t)xorMask;
-+ (NSData *)streamFromPackets:(NSArray<NSData *> *)packets xorMask:(uint8_t)xorMask;
++ (NSArray<NSData *> *)packetsFromStream:(NSData *)stream until:(NSInteger *)until xorMask:(NSData *)xorMask;
++ (NSData *)streamFromPacket:(NSData *)packet xorMask:(NSData *)xorMask;
++ (NSData *)streamFromPackets:(NSArray<NSData *> *)packets xorMask:(NSData *)xorMask;
 
 @end
 

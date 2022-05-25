@@ -34,12 +34,12 @@ class NETCPLink: LinkInterface {
     
     private let maxPacketSize: Int
     
-    let xorMask: UInt8
+    let xorMask: Data
     
-    init(impl: NWTCPConnection, maxPacketSize: Int? = nil, xorMask: UInt8?) {
+    init(impl: NWTCPConnection, maxPacketSize: Int? = nil, xorMask: Data?) {
         self.impl = impl
         self.maxPacketSize = maxPacketSize ?? (512 * 1024)
-        self.xorMask = xorMask ?? 0
+        self.xorMask = xorMask ?? Data(repeating: 0, count: 1)
     }
     
     // MARK: LinkInterface
@@ -99,7 +99,7 @@ class NETCPLink: LinkInterface {
 }
 
 extension NETCPSocket: LinkProducer {
-    public func link(xorMask: UInt8?) -> LinkInterface {
+    public func link(xorMask: Data?) -> LinkInterface {
         return NETCPLink(impl: impl, maxPacketSize: nil, xorMask: xorMask)
     }
 }

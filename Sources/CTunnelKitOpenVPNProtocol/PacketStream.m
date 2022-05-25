@@ -29,18 +29,18 @@ static const NSInteger PacketStreamHeaderLength = sizeof(uint16_t);
 
 @implementation PacketStream
 
-+ (void)memcpyXor:(uint8_t *)dst src:(NSData *)src xorMask:(uint8_t)xorMask
++ (void)memcpyXor:(uint8_t *)dst src:(NSData *)src xorMask:(NSData *)xorMask
 {
-    if (xorMask != 0) {
+    if (((uint8_t *)(xorMask.bytes))[0] != 0) {
         for (int i = 0; i < src.length; ++i) {
-            dst[i] = ((uint8_t *)(src.bytes))[i] ^ xorMask;
+            dst[i] = ((uint8_t *)(src.bytes))[i] ^ ((uint8_t *)(xorMask.bytes))[i % xorMask.length];
         }
         return;
     }
     memcpy(dst, src.bytes, src.length);
 }
 
-+ (NSArray<NSData *> *)packetsFromStream:(NSData *)stream until:(NSInteger *)until xorMask:(uint8_t)xorMask
++ (NSArray<NSData *> *)packetsFromStream:(NSData *)stream until:(NSInteger *)until xorMask:(NSData *)xorMask
 {
     NSInteger ni = 0;
     NSMutableArray<NSData *> *parsed = [[NSMutableArray alloc] init];
@@ -54,9 +54,9 @@ static const NSInteger PacketStreamHeaderLength = sizeof(uint16_t);
         }
         NSData *packet = [stream subdataWithRange:NSMakeRange(start, packlen)];
         uint8_t* packetBytes = (uint8_t*) packet.bytes;
-        if (xorMask != 0) {
+        if (((uint8_t *)(xorMask.bytes))[0] != 0) {
             for (int i = 0; i < packet.length; i++) {
-                packetBytes[i] ^= xorMask;
+                packetBytes[i] ^= ((uint8_t *)(xorMask.bytes))[i % xorMask.length];
             }
         }
         [parsed addObject:packet];
@@ -68,7 +68,7 @@ static const NSInteger PacketStreamHeaderLength = sizeof(uint16_t);
     return parsed;
 }
 
-+ (NSData *)streamFromPacket:(NSData *)packet xorMask:(uint8_t)xorMask
++ (NSData *)streamFromPacket:(NSData *)packet xorMask:(NSData *)xorMask
 {
     NSMutableData *raw = [[NSMutableData alloc] initWithLength:(PacketStreamHeaderLength + packet.length)];
 
@@ -80,7 +80,7 @@ static const NSInteger PacketStreamHeaderLength = sizeof(uint16_t);
     return raw;
 }
 
-+ (NSData *)streamFromPackets:(NSArray<NSData *> *)packets xorMask:(uint8_t)xorMask
++ (NSData *)streamFromPackets:(NSArray<NSData *> *)packets xorMask:(NSData *)xorMask
 {
     NSInteger streamLength = 0;
     for (NSData *p in packets) {

@@ -197,8 +197,8 @@ extension OpenVPN {
         /// The number of seconds after which a renegotiation should be initiated. If `nil`, the client will never initiate a renegotiation.
         public var renegotiatesAfter: TimeInterval?
         
-        /// A byte to xor all packet payloads with.
-        public var xorMask: UInt8?
+        /// A set of bytes to xor all packet payloads with.
+        public var xorMask: Data?
         
         // MARK: Client
         
@@ -407,7 +407,7 @@ extension OpenVPN {
         public let renegotiatesAfter: TimeInterval?
 
         /// - Seealso: `ConfigurationBuilder.xorMask`
-        public let xorMask: UInt8?
+        public let xorMask: Data?
         
         /// - Seealso: `ConfigurationBuilder.remotes`
         public let remotes: [Endpoint]?

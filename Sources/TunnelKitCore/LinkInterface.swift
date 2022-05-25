@@ -49,5 +49,5 @@ public protocol LinkInterface: IOInterface {
     var packetBufferSize: Int { get }
     
     /// A byte to xor all packet payloads with.
-    var xorMask: UInt8 { get }
+    var xorMask: Data { get }
 }

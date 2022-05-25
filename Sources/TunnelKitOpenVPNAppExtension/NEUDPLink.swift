@@ -33,12 +33,12 @@ class NEUDPLink: LinkInterface {
     
     private let maxDatagrams: Int
     
-    let xorMask: UInt8
+    let xorMask: Data
     
-    init(impl: NWUDPSession, maxDatagrams: Int? = nil, xorMask: UInt8?) {
+    init(impl: NWUDPSession, maxDatagrams: Int? = nil, xorMask: Data?) {
         self.impl = impl
         self.maxDatagrams = maxDatagrams ?? 200
-        self.xorMask = xorMask ?? 0
+        self.xorMask = xorMask ?? Data(repeating: 0, count: 1)
     }
     
     // MARK: LinkInterface
@@ -61,9 +61,9 @@ class NEUDPLink: LinkInterface {
                 return
             }
             var packetsToUse: [Data]?
-            if let packets = packets, self.xorMask != 0 {
+            if let packets = packets, [UInt8](self.xorMask)[0] != 0 {
                 packetsToUse = packets.map { packet in
-                    Data(bytes: packet.map { $0 ^ self.xorMask }, count: packet.count)
+                    self.xorPacket(packet: packet)
                 }
             } else {
                 packetsToUse = packets
@@ -75,12 +75,7 @@ class NEUDPLink: LinkInterface {
     }
     
     func writePacket(_ packet: Data, completionHandler: ((Error?) -> Void)?) {
-        var dataToUse: Data
-        if xorMask != 0 {
-            dataToUse = Data(bytes: packet.map { $0 ^ xorMask }, count: packet.count)
-        } else {
-            dataToUse = packet
-        }
+        let dataToUse: Data = xorPacket(packet: packet)
         impl.writeDatagram(dataToUse) { error in
             completionHandler?(error)
         }
@@ -88,9 +83,9 @@ class NEUDPLink: LinkInterface {
     
     func writePackets(_ packets: [Data], completionHandler: ((Error?) -> Void)?) {
         var packetsToUse: [Data]
-        if xorMask != 0 {
+        if [UInt8](xorMask)[0] != 0 {
             packetsToUse = packets.map { packet in
-                Data(bytes: packet.map { $0 ^ xorMask }, count: packet.count)
+                xorPacket(packet: packet)
             }
         } else {
             packetsToUse = packets
@@ -99,10 +94,19 @@ class NEUDPLink: LinkInterface {
             completionHandler?(error)
         }
     }
+    
+    private func xorPacket(packet: Data) -> Data {
+        if [UInt8](xorMask)[0] != 0 {
+            return packet
+        }
+        return Data(packet.enumerated().map { (index, byte) in
+            byte ^ [UInt8](self.xorMask)[index % self.xorMask.count]
+        })
+    }
 }
 
 extension NEUDPSocket: LinkProducer {
-    public func link(xorMask: UInt8?) -> LinkInterface {
+    public func link(xorMask: Data?) -> LinkInterface {
         return NEUDPLink(impl: impl, maxDatagrams: nil, xorMask: xorMask)
     }
 }

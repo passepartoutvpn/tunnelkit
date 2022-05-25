@@ -64,7 +64,7 @@ extension OpenVPN {
             
             static let renegSec = NSRegularExpression("^reneg-sec +\\d+")
             
-            static let xorMask = NSRegularExpression("^scramble +xormask +.$")
+            static let xorMask = NSRegularExpression("^scramble +xormask +[^\\s]+$")
             
             static let blockBegin = NSRegularExpression("^<[\\w\\-]+>")
             
@@ -263,7 +263,7 @@ extension OpenVPN {
             var optKeepAliveSeconds: TimeInterval?
             var optKeepAliveTimeoutSeconds: TimeInterval?
             var optRenegotiateAfterSeconds: TimeInterval?
-            var optXorMask: UInt8?
+            var optXorMask: Data?
             //
             var optDefaultProto: SocketType?
             var optDefaultPort: UInt16?
@@ -519,7 +519,7 @@ extension OpenVPN {
                     if $0.count != 2 {
                         return
                     }
-                    optXorMask = Character($0[1]).asciiValue
+                    optXorMask = $0[1].data(using: .utf8)
                 }
                 
                 // MARK: Client

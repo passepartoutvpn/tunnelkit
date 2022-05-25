@@ -63,7 +63,7 @@ class NEUDPLink: LinkInterface {
                 return
             }
             var packetsToUse: [Data]?
-            if let packets = packets, [UInt8](self.xorMask)[0] != 0 {
+            if let packets = packets, self.xorMethod != 0 {
                 packetsToUse = packets.map { packet in
                     self.xorPacket(packet: packet, mode: .read)
                 }
@@ -85,7 +85,7 @@ class NEUDPLink: LinkInterface {
     
     func writePackets(_ packets: [Data], completionHandler: ((Error?) -> Void)?) {
         var packetsToUse: [Data]
-        if [UInt8](xorMask)[0] != 0 {
+        if xorMethod != 0 {
             packetsToUse = packets.map { packet in
                 xorPacket(packet: packet, mode: .write)
             }
@@ -119,7 +119,7 @@ class NEUDPLink: LinkInterface {
     }
     
     private func xormask(packet: Data) -> Data {
-        if [UInt8](xorMask)[0] != 0 {
+        if xorMask.count == 0 {
             return packet
         }
         return Data(packet.enumerated().map { (index, byte) in
@@ -129,7 +129,7 @@ class NEUDPLink: LinkInterface {
     
     private func xorptrpos(packet: Data) -> Data {
         return Data(packet.enumerated().map { (index, byte) in
-            byte ^ UInt8((index + 1))
+            byte ^ UInt8(truncatingIfNeeded: index &+ 1)
         })
     }
     

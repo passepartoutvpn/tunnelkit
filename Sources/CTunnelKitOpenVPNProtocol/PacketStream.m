@@ -31,7 +31,7 @@ static const NSInteger PacketStreamHeaderLength = sizeof(uint16_t);
 
 + (void)xormask:(uint8_t *)dst src:(uint8_t *)src xorMask:(NSData *)xorMask length:(int)length
 {
-    if (((uint8_t *)(xorMask.bytes))[0] != 0) {
+    if (xorMask.length > 0) {
         for (int i = 0; i < length; ++i) {
             dst[i] = src[i] ^ ((uint8_t *)(xorMask.bytes))[i % xorMask.length];
         }
@@ -49,12 +49,19 @@ static const NSInteger PacketStreamHeaderLength = sizeof(uint16_t);
 
 + (void)reverse:(uint8_t *)dst src:(uint8_t *)src length:(int)length
 {
+    int start = 1;
+    int end = length - 1;
     uint8_t temp = 0;
     dst[0] = src[0];
-    for (int i = 1; i < length/2; ++i) {
-        temp = dst[length - 1 - i];
-        dst[length - 1 - i] = src[i];
-        dst[i] = temp;
+    while (start < end) {
+        temp = src[start];
+        dst[start] = src[end];
+        dst[end] = temp;
+        start++;
+        end--;
+    }
+    if (start == end) {
+        dst[start] = src[start];
     }
 }
 

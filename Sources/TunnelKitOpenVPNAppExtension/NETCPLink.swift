@@ -35,11 +35,13 @@ class NETCPLink: LinkInterface {
     private let maxPacketSize: Int
     
     let xorMask: Data
+    let xorMethod: Int
     
-    init(impl: NWTCPConnection, maxPacketSize: Int? = nil, xorMask: Data?) {
+    init(impl: NWTCPConnection, maxPacketSize: Int? = nil, xorMask: Data?, xorMethod: Int?) {
         self.impl = impl
         self.maxPacketSize = maxPacketSize ?? (512 * 1024)
         self.xorMask = xorMask ?? Data(repeating: 0, count: 1)
+        self.xorMethod = xorMethod ?? 0
     }
     
     // MARK: LinkInterface
@@ -74,7 +76,7 @@ class NETCPLink: LinkInterface {
                 var newBuffer = buffer
                 newBuffer.append(contentsOf: data)
                 var until = 0
-                let packets = PacketStream.packets(fromStream: newBuffer, until: &until, xorMask: self.xorMask)
+                let packets = PacketStream.packets(fromStream: newBuffer, until: &until, xorMask: self.xorMask, xorMethod: Int32(self.xorMethod), mode: Int32(Mode.read.rawValue))
                 newBuffer = newBuffer.subdata(in: until..<newBuffer.count)
                 self.loopReadPackets(queue, newBuffer, handler)
                 
@@ -84,14 +86,14 @@ class NETCPLink: LinkInterface {
     }
     
     func writePacket(_ packet: Data, completionHandler: ((Error?) -> Void)?) {
-        let stream = PacketStream.stream(fromPacket: packet, xorMask: xorMask)
+        let stream = PacketStream.stream(fromPacket: packet, xorMask: xorMask, xorMethod: Int32(self.xorMethod), mode: Int32(Mode.write.rawValue))
         impl.write(stream) { (error) in
             completionHandler?(error)
         }
     }
     
     func writePackets(_ packets: [Data], completionHandler: ((Error?) -> Void)?) {
-        let stream = PacketStream.stream(fromPackets: packets, xorMask: xorMask)
+        let stream = PacketStream.stream(fromPackets: packets, xorMask: xorMask, xorMethod: Int32(self.xorMethod), mode: Int32(Mode.write.rawValue))
         impl.write(stream) { (error) in
             completionHandler?(error)
         }
@@ -99,7 +101,7 @@ class NETCPLink: LinkInterface {
 }
 
 extension NETCPSocket: LinkProducer {
-    public func link(xorMask: Data?) -> LinkInterface {
-        return NETCPLink(impl: impl, maxPacketSize: nil, xorMask: xorMask)
+    public func link(xorMask: Data?, xorMethod: Int?) -> LinkInterface {
+        return NETCPLink(impl: impl, maxPacketSize: nil, xorMask: xorMask, xorMethod: xorMethod)
     }
 }

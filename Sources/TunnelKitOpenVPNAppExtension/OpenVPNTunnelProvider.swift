@@ -413,10 +413,10 @@ extension OpenVPNTunnelProvider: GenericSocketDelegate {
             return
         }
         if session.canRebindLink() {
-            session.rebindLink(producer.link(xorMask: cfg.configuration.xorMask))
+            session.rebindLink(producer.link(xorMask: cfg.configuration.xorMask, xorMethod: cfg.configuration.xorMethod?.rawValue))
             reasserting = false
         } else {
-            session.setLink(producer.link(xorMask: cfg.configuration.xorMask))
+            session.setLink(producer.link(xorMask: cfg.configuration.xorMask, xorMethod: cfg.configuration.xorMethod?.rawValue))
         }
     }
     

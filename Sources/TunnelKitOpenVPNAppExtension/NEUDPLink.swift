@@ -34,11 +34,13 @@ class NEUDPLink: LinkInterface {
     private let maxDatagrams: Int
     
     let xorMask: Data
+    let xorMethod: Int
     
-    init(impl: NWUDPSession, maxDatagrams: Int? = nil, xorMask: Data?) {
+    init(impl: NWUDPSession, maxDatagrams: Int? = nil, xorMask: Data?, xorMethod: Int?) {
         self.impl = impl
         self.maxDatagrams = maxDatagrams ?? 200
         self.xorMask = xorMask ?? Data(repeating: 0, count: 1)
+        self.xorMethod = xorMethod ?? 0
     }
     
     // MARK: LinkInterface
@@ -63,7 +65,7 @@ class NEUDPLink: LinkInterface {
             var packetsToUse: [Data]?
             if let packets = packets, [UInt8](self.xorMask)[0] != 0 {
                 packetsToUse = packets.map { packet in
-                    self.xorPacket(packet: packet)
+                    self.xorPacket(packet: packet, mode: .read)
                 }
             } else {
                 packetsToUse = packets
@@ -75,7 +77,7 @@ class NEUDPLink: LinkInterface {
     }
     
     func writePacket(_ packet: Data, completionHandler: ((Error?) -> Void)?) {
-        let dataToUse: Data = xorPacket(packet: packet)
+        let dataToUse: Data = xorPacket(packet: packet, mode: .write)
         impl.writeDatagram(dataToUse) { error in
             completionHandler?(error)
         }
@@ -85,7 +87,7 @@ class NEUDPLink: LinkInterface {
         var packetsToUse: [Data]
         if [UInt8](xorMask)[0] != 0 {
             packetsToUse = packets.map { packet in
-                xorPacket(packet: packet)
+                xorPacket(packet: packet, mode: .write)
             }
         } else {
             packetsToUse = packets
@@ -95,7 +97,28 @@ class NEUDPLink: LinkInterface {
         }
     }
     
-    private func xorPacket(packet: Data) -> Data {
+    private func xorPacket(packet: Data, mode: Mode) -> Data {
+        switch xorMethod {
+        case 0:
+            return packet
+        case 1:
+            return xormask(packet: packet)
+        case 2:
+            return xorptrpos(packet: packet)
+        case 3:
+            return reverse(packet: packet)
+        case 4:
+            if mode == .read {
+                return xorptrpos(packet: reverse(packet: xorptrpos(packet: xormask(packet: packet))))
+            } else {
+                return xormask(packet: xorptrpos(packet: reverse(packet: xorptrpos(packet: packet))))
+            }
+        default:
+            return packet
+        }
+    }
+    
+    private func xormask(packet: Data) -> Data {
         if [UInt8](xorMask)[0] != 0 {
             return packet
         }
@@ -103,10 +126,20 @@ class NEUDPLink: LinkInterface {
             byte ^ [UInt8](self.xorMask)[index % self.xorMask.count]
         })
     }
+    
+    private func xorptrpos(packet: Data) -> Data {
+        return Data(packet.enumerated().map { (index, byte) in
+            byte ^ UInt8((index + 1))
+        })
+    }
+    
+    private func reverse(packet: Data) -> Data {
+        Data(([UInt8](packet)).reversed())
+    }
 }
 
 extension NEUDPSocket: LinkProducer {
-    public func link(xorMask: Data?) -> LinkInterface {
-        return NEUDPLink(impl: impl, maxDatagrams: nil, xorMask: xorMask)
+    public func link(xorMask: Data?, xorMethod: Int?) -> LinkInterface {
+        return NEUDPLink(impl: impl, maxDatagrams: nil, xorMask: xorMask, xorMethod: xorMethod)
     }
 }

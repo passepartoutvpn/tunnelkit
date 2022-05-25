@@ -1,8 +1,8 @@
 //
-//  LinkProducer.swift
+//  NEUDPLink.swift
 //  TunnelKit
 //
-//  Created by Davide De Rosa on 5/23/19.
+//  Created by Tejas Mehta on 5/24/22.
 //  Copyright (c) 2022 Davide De Rosa. All rights reserved.
 //
 //  https://github.com/passepartoutvpn
@@ -24,15 +24,9 @@
 //
 
 import Foundation
-import TunnelKitCore
 
-/// Entity able to produce a `LinkInterface`.
-public protocol LinkProducer {
-
-    /**
-     Returns a `LinkInterface`.
- 
-     - Parameter xorMask: The XOR mask.
-     **/
-    func link(xorMask: Data?, xorMethod: Int?) -> LinkInterface
+/// Represents whether an operation is reading or writing
+enum Mode: Int {
+    case read = 0
+    case write = 1
 }

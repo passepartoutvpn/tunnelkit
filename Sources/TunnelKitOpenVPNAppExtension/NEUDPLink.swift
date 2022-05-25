@@ -134,7 +134,7 @@ class NEUDPLink: LinkInterface {
     }
     
     private func reverse(packet: Data) -> Data {
-        Data(([UInt8](packet)).reversed())
+        Data(([UInt8](packet))[0..<1] + ([UInt8](packet)[1...]).reversed())
     }
 }
 

@@ -50,7 +50,8 @@ static const NSInteger PacketStreamHeaderLength = sizeof(uint16_t);
 + (void)reverse:(uint8_t *)dst src:(uint8_t *)src length:(int)length
 {
     uint8_t temp = 0;
-    for (int i = 0; i < length/2; ++i) {
+    dst[0] = src[0];
+    for (int i = 1; i < length/2; ++i) {
         temp = dst[length - 1 - i];
         dst[length - 1 - i] = src[i];
         dst[i] = temp;

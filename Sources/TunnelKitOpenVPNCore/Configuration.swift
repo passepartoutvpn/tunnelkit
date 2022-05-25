@@ -153,6 +153,24 @@ extension OpenVPN {
         case blockLocal
     }
     
+    /// XOR method
+    public enum XORMethod: Int, Codable {
+        /// No XOR specified
+        case none = 0
+        
+        /// XOR the bytes in each buffer with the given xormask
+        case xormask = 1
+        
+        /// XOR each byte with its position in the packet
+        case xorptrpos = 2
+        
+        /// Reverse the order of bytes in each buffer except for the first (abcde becomes aedcb)
+        case reverse = 3
+        
+        /// Performs several of the above steps (xormask -> xorptrpos -> reverse -> xorptrpos)
+        case obfuscate = 4
+    }
+    
     /// The way to create a `Configuration` object for a `OpenVPNSession`.
     public struct ConfigurationBuilder {
 
@@ -196,6 +214,9 @@ extension OpenVPN {
         
         /// The number of seconds after which a renegotiation should be initiated. If `nil`, the client will never initiate a renegotiation.
         public var renegotiatesAfter: TimeInterval?
+        
+        /// The method to follow in regards to the XOR patch
+        public var xorMethod: XORMethod?
         
         /// A set of bytes to xor all packet payloads with.
         public var xorMask: Data?
@@ -324,6 +345,7 @@ extension OpenVPN {
                 keepAliveInterval: keepAliveInterval,
                 keepAliveTimeout: keepAliveTimeout,
                 renegotiatesAfter: renegotiatesAfter,
+                xorMethod: xorMethod,
                 xorMask: xorMask,
                 remotes: remotes,
                 checksEKU: checksEKU,
@@ -406,6 +428,9 @@ extension OpenVPN {
         /// - Seealso: `ConfigurationBuilder.renegotiatesAfter`
         public let renegotiatesAfter: TimeInterval?
 
+        /// - Seealso: `ConfigurationBuilder.xorMethod`
+        public let xorMethod: XORMethod?
+        
         /// - Seealso: `ConfigurationBuilder.xorMask`
         public let xorMask: Data?
         
@@ -547,6 +572,7 @@ extension OpenVPN.Configuration {
         builder.proxyBypassDomains = proxyBypassDomains
         builder.routingPolicies = routingPolicies
         builder.xorMask = xorMask
+        builder.xorMethod = xorMethod
         return builder
     }
 }

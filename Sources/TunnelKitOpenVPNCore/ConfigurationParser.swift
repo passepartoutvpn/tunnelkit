@@ -64,7 +64,7 @@ extension OpenVPN {
             
             static let renegSec = NSRegularExpression("^reneg-sec +\\d+")
             
-            static let xorMask = NSRegularExpression("^scramble +xormask +[^\\s]+$")
+            static let xorInfo = NSRegularExpression("^scramble +(xormask|xorptrpos|reverse|obfuscate)[\\s]?([^\\s]+)?")
             
             static let blockBegin = NSRegularExpression("^<[\\w\\-]+>")
             
@@ -263,6 +263,7 @@ extension OpenVPN {
             var optKeepAliveSeconds: TimeInterval?
             var optKeepAliveTimeoutSeconds: TimeInterval?
             var optRenegotiateAfterSeconds: TimeInterval?
+            var optXorMethod: XORMethod?
             var optXorMask: Data?
             //
             var optDefaultProto: SocketType?
@@ -514,8 +515,26 @@ extension OpenVPN {
                     }
                     optRenegotiateAfterSeconds = TimeInterval(arg)
                 }
-                Regex.xorMask.enumerateArguments(in: line) {
+                Regex.xorInfo.enumerateArguments(in: line) {
                     isHandled = true
+                    if $0.count >= 1 {
+                        switch $0[0] {
+                            case "xormask":
+                                optXorMethod = .xormask
+                                break
+                            case "reverse":
+                                optXorMethod = .reverse
+                                break
+                            case "xorptrpos":
+                                optXorMethod = .xorptrpos
+                                break
+                            case "obfuscate":
+                                optXorMethod = .obfuscate
+                                break
+                            default:
+                                optXorMethod = OpenVPN.XORMethod.none
+                        }
+                    }
                     if $0.count != 2 {
                         return
                     }
@@ -790,6 +809,7 @@ extension OpenVPN {
             sessionBuilder.checksEKU = optChecksEKU
             sessionBuilder.randomizeEndpoint = optRandomizeEndpoint
             sessionBuilder.mtu = optMTU
+            sessionBuilder.xorMethod = optXorMethod
             sessionBuilder.xorMask = optXorMask
             
             // MARK: Server

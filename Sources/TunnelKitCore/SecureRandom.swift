@@ -37,7 +37,7 @@
 import Foundation
 import Security.SecRandom
 import CTunnelKitCore
-import __TunnelKitUtils
+import TunnelKitUtils
 
 public enum SecureRandomError: Error {
     case randomGenerator

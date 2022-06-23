@@ -1,7 +1,7 @@
 import TunnelKitWireGuardCore
 import TunnelKitWireGuardManager
 import WireGuardKit
-import __TunnelKitUtils
+import TunnelKitUtils
 import SwiftyBeaver
 
 // SPDX-License-Identifier: MIT

@@ -56,7 +56,7 @@ let package = Package(
         .target(
             name: "TunnelKitCore",
             dependencies: [
-                "__TunnelKitUtils",
+                "TunnelKitUtils",
                 "CTunnelKitCore",
                 "SwiftyBeaver"
             ]),
@@ -114,7 +114,7 @@ let package = Package(
         .target(
             name: "TunnelKitWireGuardCore",
             dependencies: [
-                "__TunnelKitUtils",
+                "TunnelKitUtils",
                 "WireGuardKit",
                 "SwiftyBeaver"
             ]),
@@ -154,7 +154,7 @@ let package = Package(
                 "openssl-apple"
             ]),
         .target(
-            name: "__TunnelKitUtils",
+            name: "TunnelKitUtils",
             dependencies: []),
         //
         .testTarget(

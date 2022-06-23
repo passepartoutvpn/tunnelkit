@@ -29,7 +29,7 @@ import TunnelKitManager
 import TunnelKitWireGuardCore
 import WireGuardKit
 import SwiftyBeaver
-import __TunnelKitUtils
+import TunnelKitUtils
 
 private let log = SwiftyBeaver.self
 

@@ -48,7 +48,7 @@ import TunnelKitOpenVPNManager
 import TunnelKitOpenVPNProtocol
 import TunnelKitAppExtension
 import CTunnelKitCore
-import __TunnelKitUtils
+import TunnelKitUtils
 
 private let log = SwiftyBeaver.self
 

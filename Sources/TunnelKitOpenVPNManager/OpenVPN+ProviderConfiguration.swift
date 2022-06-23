@@ -29,7 +29,7 @@ import TunnelKitCore
 import TunnelKitOpenVPNCore
 import NetworkExtension
 import SwiftyBeaver
-import __TunnelKitUtils
+import TunnelKitUtils
 
 private let log = SwiftyBeaver.self
 

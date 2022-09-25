@@ -119,6 +119,8 @@ extension OpenVPN {
             
             static let redirectGateway = NSRegularExpression("^redirect-gateway.*")
 
+            static let routeNoPull = NSRegularExpression("^route-nopull")
+
             // MARK: Unsupported
             
     //        static let fragment = NSRegularExpression("^fragment +\\d+")
@@ -291,6 +293,7 @@ extension OpenVPN {
             var optProxyAutoConfigurationURL: URL?
             var optProxyBypass: [String]?
             var optRedirectGateway: Set<RedirectGateway>?
+            var optRouteNoPull: Bool?
 
             log.verbose("Configuration file:")
             for line in lines {
@@ -702,6 +705,9 @@ extension OpenVPN {
                         optRedirectGateway?.insert(opt)
                     }
                 }
+                Regex.routeNoPull.enumerateComponents(in: line) { _ in
+                    optRouteNoPull = true
+                }
 
                 //
                 
@@ -888,6 +894,9 @@ extension OpenVPN {
             sessionBuilder.httpsProxy = optHTTPSProxy
             sessionBuilder.proxyAutoConfigurationURL = optProxyAutoConfigurationURL
             sessionBuilder.proxyBypassDomains = optProxyBypass
+            if optRouteNoPull ?? false {
+                sessionBuilder.noPullMask = [.routes, .dns, .proxy]
+            }
 
             if let flags = optRedirectGateway {
                 var policies: Set<RoutingPolicy> = []

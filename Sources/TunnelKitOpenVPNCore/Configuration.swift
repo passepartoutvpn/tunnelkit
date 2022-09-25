@@ -152,6 +152,19 @@ extension OpenVPN {
         case blockLocal
     }
     
+    /// Settings that can be pulled from server.
+    public enum PullMask: String, Codable, CaseIterable {
+
+        /// Routes and gateways.
+        case routes
+        
+        /// DNS settings.
+        case dns
+        
+        /// Proxy settings.
+        case proxy
+    }
+
     /// The way to create a `Configuration` object for a `OpenVPNSession`.
     public struct ConfigurationBuilder {
 
@@ -289,6 +302,9 @@ extension OpenVPN {
         /// Policies for redirecting traffic through the VPN gateway.
         public var routingPolicies: [RoutingPolicy]?
         
+        /// Server settings that must not be pulled.
+        public var noPullMask: [PullMask]?
+
         /**
          Creates a `ConfigurationBuilder`.
          
@@ -347,7 +363,8 @@ extension OpenVPN {
                 httpsProxy: httpsProxy,
                 proxyAutoConfigurationURL: proxyAutoConfigurationURL,
                 proxyBypassDomains: proxyBypassDomains,
-                routingPolicies: routingPolicies
+                routingPolicies: routingPolicies,
+                noPullMask: noPullMask
             )
         }
     }
@@ -478,6 +495,9 @@ extension OpenVPN {
         /// - Seealso: `ConfigurationBuilder.routingPolicies`
         public let routingPolicies: [RoutingPolicy]?
         
+        /// - Seealso: `ConfigurationBuilder.noPullMask`
+        public let noPullMask: [PullMask]?
+        
         // MARK: Shortcuts
         
         public var fallbackCipher: Cipher {
@@ -494,6 +514,15 @@ extension OpenVPN {
 
         public var fallbackCompressionAlgorithm: CompressionAlgorithm {
             return compressionAlgorithm ?? Fallback.compressionAlgorithm
+        }
+
+        public var pullMask: [PullMask]? {
+            let all = PullMask.allCases
+            guard let notPulled = noPullMask else {
+                return all
+            }
+            let pulled = Array(Set(all).subtracting(notPulled))
+            return !pulled.isEmpty ? pulled : nil
         }
     }
 }
@@ -523,6 +552,7 @@ extension OpenVPN.Configuration {
         builder.keepAliveInterval = keepAliveInterval
         builder.keepAliveTimeout = keepAliveTimeout
         builder.renegotiatesAfter = renegotiatesAfter
+        builder.xorMask = xorMask
         builder.remotes = remotes
         builder.checksEKU = checksEKU
         builder.checksSANHost = checksSANHost
@@ -547,7 +577,7 @@ extension OpenVPN.Configuration {
         builder.proxyAutoConfigurationURL = proxyAutoConfigurationURL
         builder.proxyBypassDomains = proxyBypassDomains
         builder.routingPolicies = routingPolicies
-        builder.xorMask = xorMask
+        builder.noPullMask = noPullMask
         return builder
     }
 }
@@ -654,6 +684,9 @@ extension OpenVPN.Configuration {
             log.info("\tMTU: \(mtu)")
         } else {
             log.info("\tMTU: default")
+        }
+        if let noPullMask = noPullMask {
+            log.info("\tNot pulled: \(noPullMask.map(\.rawValue))")
         }
     }
 }

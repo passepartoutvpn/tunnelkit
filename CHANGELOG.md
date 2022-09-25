@@ -7,9 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+### Added
+
+- OpenVPN: Support for `--route-nopull`.
+
 ### Changed
 
 - Upgrade OpenSSL to 1.1.1q.
+
+### Fixed
+
+- OpenVPN: Prioritize server configuration over client (standard behavior).
 
 ## 5.0.0 (2022-09-23)
 

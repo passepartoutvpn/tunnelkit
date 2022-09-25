@@ -563,7 +563,12 @@ extension OpenVPNTunnelProvider: OpenVPNSessionDelegate {
     }
     
     private func bringNetworkUp(remoteAddress: String, localOptions: OpenVPN.Configuration, options: OpenVPN.Configuration, completionHandler: @escaping (Error?) -> Void) {
-        let routingPolicies = localOptions.routingPolicies ?? options.routingPolicies
+        let pullMask = localOptions.pullMask
+        let pullRoutes = pullMask?.contains(.routes) ?? false
+        let pullDNS = pullMask?.contains(.dns) ?? false
+        let pullProxy = pullMask?.contains(.proxy) ?? false
+
+        let routingPolicies = pullRoutes ? options.routingPolicies : localOptions.routingPolicies
         let isIPv4Gateway = routingPolicies?.contains(.IPv4) ?? false
         let isIPv6Gateway = routingPolicies?.contains(.IPv6) ?? false
         let isGateway = isIPv4Gateway || isIPv6Gateway
@@ -585,13 +590,15 @@ extension OpenVPNTunnelProvider: OpenVPNSessionDelegate {
                 log.info("Routing.IPv4: Setting default gateway to \(ipv4.defaultGateway.maskedDescription)")
             }
             
-            for r in ipv4.routes {
-                let ipv4Route = NEIPv4Route(destinationAddress: r.destination, subnetMask: r.mask)
-                ipv4Route.gatewayAddress = r.gateway
-                routes.append(ipv4Route)
-                log.info("Routing.IPv4: Adding route \(r.destination.maskedDescription)/\(r.mask) -> \(r.gateway)")
+            if pullRoutes {
+                for r in ipv4.routes {
+                    let ipv4Route = NEIPv4Route(destinationAddress: r.destination, subnetMask: r.mask)
+                    ipv4Route.gatewayAddress = r.gateway
+                    routes.append(ipv4Route)
+                    log.info("Routing.IPv4: Adding route \(r.destination.maskedDescription)/\(r.mask) -> \(r.gateway)")
+                }
             }
-            
+
             ipv4Settings = NEIPv4Settings(addresses: [ipv4.address], subnetMasks: [ipv4.addressMask])
             ipv4Settings?.includedRoutes = routes
             ipv4Settings?.excludedRoutes = []
@@ -614,11 +621,13 @@ extension OpenVPNTunnelProvider: OpenVPNSessionDelegate {
                 log.info("Routing.IPv6: Setting default gateway to \(ipv6.defaultGateway.maskedDescription)")
             }
 
-            for r in ipv6.routes {
-                let ipv6Route = NEIPv6Route(destinationAddress: r.destination, networkPrefixLength: r.prefixLength as NSNumber)
-                ipv6Route.gatewayAddress = r.gateway
-                routes.append(ipv6Route)
-                log.info("Routing.IPv6: Adding route \(r.destination.maskedDescription)/\(r.prefixLength) -> \(r.gateway)")
+            if pullRoutes {
+                for r in ipv6.routes {
+                    let ipv6Route = NEIPv6Route(destinationAddress: r.destination, networkPrefixLength: r.prefixLength as NSNumber)
+                    ipv6Route.gatewayAddress = r.gateway
+                    routes.append(ipv6Route)
+                    log.info("Routing.IPv6: Adding route \(r.destination.maskedDescription)/\(r.prefixLength) -> \(r.gateway)")
+                }
             }
 
             ipv6Settings = NEIPv6Settings(addresses: [ipv6.address], networkPrefixLengths: [ipv6.addressPrefixLength as NSNumber])
@@ -671,15 +680,29 @@ extension OpenVPNTunnelProvider: OpenVPNSessionDelegate {
                 }
             }
 
+            // ensure that non-nil arrays also imply non-empty
+            if let array = options.dnsServers {
+                precondition(!array.isEmpty)
+            }
+            if let array = options.searchDomains {
+                precondition(!array.isEmpty)
+            }
+            if let array = options.proxyBypassDomains {
+                precondition(!array.isEmpty)
+            }
+            if let array = cfg.configuration.dnsServers {
+                precondition(!array.isEmpty)
+            }
+            if let array = cfg.configuration.searchDomains {
+                precondition(!array.isEmpty)
+            }
+            if let array = cfg.configuration.proxyBypassDomains {
+                precondition(!array.isEmpty)
+            }
+
             // fall back
             if dnsSettings == nil {
-                dnsServers = []
-                if let servers = localOptions.dnsServers,
-                   !servers.isEmpty {
-                    dnsServers = servers
-                } else if let servers = options.dnsServers {
-                    dnsServers = servers
-                }
+                dnsServers = (pullDNS ? options.dnsServers : localOptions.dnsServers) ?? []
                 if !dnsServers.isEmpty {
                     log.info("DNS: Using servers \(dnsServers.maskedDescription)")
                     dnsSettings = NEDNSSettings(servers: dnsServers)
@@ -695,7 +718,7 @@ extension OpenVPNTunnelProvider: OpenVPNSessionDelegate {
                 dnsSettings?.matchDomains = [""]
             }
             
-            if let searchDomains = localOptions.searchDomains ?? options.searchDomains {
+            if let searchDomains = pullDNS ? options.searchDomains : localOptions.searchDomains {
                 log.info("DNS: Using search domains \(searchDomains.maskedDescription)")
                 dnsSettings?.domainName = searchDomains.first
                 dnsSettings?.searchDomains = searchDomains
@@ -718,13 +741,13 @@ extension OpenVPNTunnelProvider: OpenVPNSessionDelegate {
         
         var proxySettings: NEProxySettings?
         if localOptions.isProxyEnabled ?? true {
-            if let httpsProxy = cfg.configuration.httpsProxy ?? options.httpsProxy {
+            if let httpsProxy = pullProxy ? options.httpsProxy : localOptions.httpsProxy {
                 proxySettings = NEProxySettings()
                 proxySettings?.httpsServer = httpsProxy.neProxy()
                 proxySettings?.httpsEnabled = true
                 log.info("Routing: Setting HTTPS proxy \(httpsProxy.address.maskedDescription):\(httpsProxy.port)")
             }
-            if let httpProxy = localOptions.httpProxy ?? options.httpProxy {
+            if let httpProxy = pullProxy ? options.httpProxy : localOptions.httpProxy {
                 if proxySettings == nil {
                     proxySettings = NEProxySettings()
                 }
@@ -732,7 +755,7 @@ extension OpenVPNTunnelProvider: OpenVPNSessionDelegate {
                 proxySettings?.httpEnabled = true
                 log.info("Routing: Setting HTTP proxy \(httpProxy.address.maskedDescription):\(httpProxy.port)")
             }
-            if let pacURL = localOptions.proxyAutoConfigurationURL ?? options.proxyAutoConfigurationURL {
+            if let pacURL = pullProxy ? options.proxyAutoConfigurationURL : localOptions.proxyAutoConfigurationURL {
                 if proxySettings == nil {
                     proxySettings = NEProxySettings()
                 }
@@ -742,7 +765,7 @@ extension OpenVPNTunnelProvider: OpenVPNSessionDelegate {
             }
 
             // only set if there is a proxy (proxySettings set to non-nil above)
-            if let bypass = localOptions.proxyBypassDomains ?? options.proxyBypassDomains {
+            if let bypass = pullProxy ? options.proxyBypassDomains : localOptions.proxyBypassDomains {
                 proxySettings?.exceptionList = bypass
                 log.info("Routing: Setting proxy by-pass list: \(bypass.maskedDescription)")
             }

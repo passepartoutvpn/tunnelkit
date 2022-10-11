@@ -31,7 +31,6 @@ private let log = SwiftyBeaver.self
 
 /// `VPN` based on the NetworkExtension framework.
 public class NetworkExtensionVPN: VPN {
-    private let semaphore = DispatchSemaphore(value: 1)
 
     /**
      Initializes a provider.
@@ -49,13 +48,9 @@ public class NetworkExtensionVPN: VPN {
     // MARK: Public
 
     public func prepare() async {
-        await withCheckedContinuation { (continuation: CheckedContinuation<Void, Never>) in
-            NETunnelProviderManager.loadAllFromPreferences { managers, error in
-                continuation.resume()
-            }
-        }
+        _ = try? await NETunnelProviderManager.loadAllFromPreferences()
     }
-
+    
     public func install(
         _ tunnelBundleIdentifier: String,
         configuration: NetworkExtensionConfiguration,
@@ -104,48 +99,30 @@ public class NetworkExtensionVPN: VPN {
     }
     
     public func disconnect() async {
-        do {
-            let managers = try await lookupAll()
-            await withCheckedContinuation { (continuation: CheckedContinuation<Void, Never>) in
-                guard !managers.isEmpty else {
-                    continuation.resume()
-                    return
-                }
-                managers.forEach {
-                    let isLast = ($0 == managers.last)
-                    $0.connection.stopVPNTunnel()
-                    $0.isOnDemandEnabled = false
-                    $0.isEnabled = false
-                    $0.saveToPreferences { _ in
-                        if isLast {
-                            continuation.resume()
-                        }
-                    }
-                }
-            }
-        } catch {
+        guard let managers = try? await lookupAll() else {
+            return
+        }
+        guard !managers.isEmpty else {
+            return
+        }
+        for m in managers {
+            m.connection.stopVPNTunnel()
+            m.isOnDemandEnabled = false
+            m.isEnabled = false
+            try? await m.saveToPreferences()
         }
     }
     
     public func uninstall() async {
-        do {
-            let managers = try await lookupAll()
-            await withCheckedContinuation { (continuation: CheckedContinuation<Void, Never>) in
-                guard !managers.isEmpty else {
-                    continuation.resume()
-                    return
-                }
-                managers.forEach {
-                    let isLast = ($0 == managers.last)
-                    $0.connection.stopVPNTunnel()
-                    $0.removeFromPreferences { _ in
-                        if isLast {
-                            continuation.resume()
-                        }
-                    }
-                }
-            }
-        } catch {
+        guard let managers = try? await lookupAll() else {
+            return
+        }
+        guard !managers.isEmpty else {
+            return
+        }
+        for m in managers {
+            m.connection.stopVPNTunnel()
+            try? await m.removeFromPreferences()
         }
     }
 
@@ -190,69 +167,44 @@ public class NetworkExtensionVPN: VPN {
         protocolConfiguration: NETunnelProviderProtocol,
         onDemandRules: [NEOnDemandRule]
     ) async throws -> NETunnelProviderManager {
-        try await withCheckedThrowingContinuation { continuation in
-            manager.localizedDescription = title
-            manager.protocolConfiguration = protocolConfiguration
+        manager.localizedDescription = title
+        manager.protocolConfiguration = protocolConfiguration
 
-            if !onDemandRules.isEmpty {
-                manager.onDemandRules = onDemandRules
-                manager.isOnDemandEnabled = true
-            } else {
-                manager.isOnDemandEnabled = false
-            }
+        if !onDemandRules.isEmpty {
+            manager.onDemandRules = onDemandRules
+            manager.isOnDemandEnabled = true
+        } else {
+            manager.isOnDemandEnabled = false
+        }
 
-            manager.isEnabled = true
-            manager.saveToPreferences { error in
-                if let error = error {
-                    manager.isOnDemandEnabled = false
-                    manager.isEnabled = false
-                    continuation.resume(throwing: error)
-                    self.notifyInstallError(error)
-                } else {
-                    manager.loadFromPreferences { error in
-                        if let error = error {
-                            continuation.resume(throwing: error)
-                            self.notifyInstallError(error)
-                        } else {
-                            continuation.resume(returning: manager)
-                            self.notifyReinstall(manager)
-                        }
-                    }
-                }
-            }
+        manager.isEnabled = true
+        do {
+            try await manager.saveToPreferences()
+            try await manager.loadFromPreferences()
+            notifyReinstall(manager)
+            return manager
+        } catch {
+            manager.isOnDemandEnabled = false
+            manager.isEnabled = false
+            notifyInstallError(error)
+            throw error
         }
     }
 
     private func retainManagers(_ managers: [NETunnelProviderManager], isIncluded: (NETunnelProviderManager) -> Bool) async {
-        await withCheckedContinuation { (continuation: CheckedContinuation<Void, Never>) in
-            let others = managers.filter {
-                !isIncluded($0)
-            }
-            guard !others.isEmpty else {
-                continuation.resume()
-                return
-            }
-            others.forEach {
-                let isLast = ($0 == others.last)
-                $0.removeFromPreferences { _ in
-                    if isLast {
-                        continuation.resume()
-                    }
-                }
-            }
+        let others = managers.filter {
+            !isIncluded($0)
+        }
+        guard !others.isEmpty else {
+            return
+        }
+        for o in others {
+            try? await o.removeFromPreferences()
         }
     }
     
     private func lookupAll() async throws -> [NETunnelProviderManager] {
-        try await withCheckedThrowingContinuation { continuation in
-            NETunnelProviderManager.loadAllFromPreferences { managers, error in
-                if let error = error {
-                    continuation.resume(throwing: error)
-                } else {
-                    continuation.resume(returning: managers ?? [])
-                }
-            }
-        }
+        try await NETunnelProviderManager.loadAllFromPreferences()
     }
     
     // MARK: Notifications

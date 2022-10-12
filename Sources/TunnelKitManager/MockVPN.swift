@@ -32,7 +32,10 @@ public class MockVPN: VPN {
     
     private var currentIsEnabled = false
     
-    public init() {
+    private let delayNanoseconds: UInt64
+    
+    public init(delay: Int) {
+        delayNanoseconds = DispatchTimeInterval.seconds(delay).nanoseconds
     }
     
     // MARK: VPN
@@ -51,6 +54,7 @@ public class MockVPN: VPN {
     }
     
     public func reconnect(after: DispatchTimeInterval) async throws {
+        await delay()
         notifyStatus(.connected)
     }
     
@@ -62,15 +66,22 @@ public class MockVPN: VPN {
     ) async throws {
         self.tunnelBundleIdentifier = tunnelBundleIdentifier
         notifyReinstall(true)
+        await delay()
+        notifyStatus(.connecting)
+        await delay()
         notifyStatus(.connected)
     }
     
     public func disconnect() async {
         notifyReinstall(false)
+        await delay()
+        notifyStatus(.disconnecting)
+        await delay()
         notifyStatus(.disconnected)
     }
     
     public func uninstall() async {
+        await delay()
         notifyReinstall(false)
     }
     
@@ -91,5 +102,9 @@ public class MockVPN: VPN {
         notification.vpnIsEnabled = currentIsEnabled
         notification.vpnStatus = status
         NotificationCenter.default.post(notification)
+    }
+
+    private func delay() async {
+        try? await Task.sleep(nanoseconds: delayNanoseconds)
     }
 }

@@ -34,7 +34,7 @@ public class MockVPN: VPN {
     
     private let delayNanoseconds: UInt64
     
-    public init(delay: Int) {
+    public init(delay: Int = 1) {
         delayNanoseconds = DispatchTimeInterval.seconds(delay).nanoseconds
     }
     

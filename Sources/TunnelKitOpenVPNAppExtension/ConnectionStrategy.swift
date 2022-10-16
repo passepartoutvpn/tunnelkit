@@ -63,7 +63,10 @@ class ConnectionStrategy {
         if configuration.randomizeEndpoint ?? false {
             remotes.shuffle()
         }
-        self.remotes = remotes.map(ResolvedRemote.init)
+        let randomPrefixLength = (configuration.randomizeHostnames ?? false) ? OpenVPN.Configuration.randomHostnamePrefixLength : nil
+        self.remotes = remotes.map {
+            ResolvedRemote($0, randomPrefixLength: randomPrefixLength)
+        }
         currentRemoteIndex = 0
     }
 

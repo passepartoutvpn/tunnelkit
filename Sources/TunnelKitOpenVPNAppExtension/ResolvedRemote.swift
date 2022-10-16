@@ -30,7 +30,7 @@ import SwiftyBeaver
 private let log = SwiftyBeaver.self
 
 class ResolvedRemote: CustomStringConvertible {
-    let originalEndpoint: Endpoint
+    private let originalEndpoint: Endpoint
     
     private(set) var isResolved: Bool
     
@@ -45,8 +45,17 @@ class ResolvedRemote: CustomStringConvertible {
         return resolvedEndpoints[currentEndpointIndex]
     }
     
-    init(_ originalEndpoint: Endpoint) {
-        self.originalEndpoint = originalEndpoint
+    init(_ originalEndpoint: Endpoint, randomPrefixLength: Int?) {
+        if let randomPrefixLength = randomPrefixLength {
+            do {
+                self.originalEndpoint = try originalEndpoint.withRandomPrefixLength(randomPrefixLength)
+            } catch {
+                log.warning("Could not prepend random prefix: \(error)")
+                self.originalEndpoint = originalEndpoint
+            }
+        } else {
+            self.originalEndpoint = originalEndpoint
+        }
         isResolved = false
         resolvedEndpoints = []
         currentEndpointIndex = 0

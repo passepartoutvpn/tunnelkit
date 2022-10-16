@@ -31,9 +31,38 @@ public struct Endpoint: RawRepresentable, Codable, Equatable, CustomStringConver
     
     public let proto: EndpointProtocol
 
-        public init(_ address: String, _ proto: EndpointProtocol) {
+    public init(_ address: String, _ proto: EndpointProtocol) {
         self.address = address
         self.proto = proto
+    }
+
+    public var isIPv4: Bool {
+        var addr = in_addr()
+        let result = address.withCString {
+            inet_pton(AF_INET, $0, &addr)
+        }
+        return result > 0
+    }
+
+    public var isIPv6: Bool {
+        var addr = in_addr()
+        let result = address.withCString {
+            inet_pton(AF_INET6, $0, &addr)
+        }
+        return result > 0
+    }
+
+    public var isHostname: Bool {
+        !isIPv4 && !isIPv6
+    }
+    
+    public func withRandomPrefixLength(_ length: Int) throws -> Endpoint {
+        guard isHostname else {
+            return self
+        }
+        let prefix = try SecureRandom.data(length: length)
+        let prefixedAddress = "\(prefix.toHex()).\(address)"
+        return Endpoint(prefixedAddress, proto)
     }
     
     // MARK: RawRepresentable

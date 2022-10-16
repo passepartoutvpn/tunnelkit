@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - OpenVPN: Support for `--route-nopull`. [#280](https://github.com/passepartoutvpn/tunnelkit/pull/280)
+- OpenVPN: Support for `--remote-random-hostname`. [#286](https://github.com/passepartoutvpn/tunnelkit/pull/286)
 
 ### Changed
 

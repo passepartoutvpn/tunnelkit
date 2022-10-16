@@ -85,6 +85,8 @@ extension OpenVPN {
             
             static let remoteRandom = NSRegularExpression("^remote-random")
             
+            static let remoteRandomHostname = NSRegularExpression("^remote-random-hostname")
+            
             static let mtu = NSRegularExpression("^tun-mtu +\\d+")
             
             // MARK: Server
@@ -123,7 +125,7 @@ extension OpenVPN {
 
             // MARK: Unsupported
             
-    //        static let fragment = NSRegularExpression("^fragment +\\d+")
+//            static let fragment = NSRegularExpression("^fragment +\\d+")
             static let fragment = NSRegularExpression("^fragment")
             
             static let connectionProxy = NSRegularExpression("^\\w+-proxy")
@@ -274,6 +276,7 @@ extension OpenVPN {
             var authUserPass = false
             var optChecksEKU: Bool?
             var optRandomizeEndpoint: Bool?
+            var optRandomizeHostnames: Bool?
             var optMTU: Int?
             //
             var optAuthToken: String?
@@ -574,6 +577,10 @@ extension OpenVPN {
                     isHandled = true
                     optRandomizeEndpoint = true
                 }
+                Regex.remoteRandomHostname.enumerateComponents(in: line) { _ in
+                    isHandled = true
+                    optRandomizeHostnames = true
+                }
                 Regex.mtu.enumerateArguments(in: line) {
                     isHandled = true
                     guard let str = $0.first else {
@@ -796,6 +803,7 @@ extension OpenVPN {
             sessionBuilder.authUserPass = authUserPass
             sessionBuilder.checksEKU = optChecksEKU
             sessionBuilder.randomizeEndpoint = optRandomizeEndpoint
+            sessionBuilder.randomizeHostnames = optRandomizeHostnames
             sessionBuilder.mtu = optMTU
             sessionBuilder.xorMask = optXorMask
             

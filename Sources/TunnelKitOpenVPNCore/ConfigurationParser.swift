@@ -284,8 +284,8 @@ extension OpenVPN {
             var optIfconfig4Arguments: [String]?
             var optIfconfig6Arguments: [String]?
             var optGateway4Arguments: [String]?
-            var optRoutes4: [(String, String, String?)] = [] // address, netmask, gateway
-            var optRoutes6: [(String, UInt8, String?)] = [] // destination, prefix, gateway
+            var optRoutes4: [(String, String, String?)]?    // address, netmask, gateway
+            var optRoutes6: [(String, UInt8, String?)]?     // destination, prefix, gateway
             var optDNSServers: [String]?
             var optSearchDomains: [String]?
             var optHTTPProxy: Proxy?
@@ -619,7 +619,10 @@ extension OpenVPN {
                     if gateway == "vpn_gateway" {
                         gateway = nil
                     }
-                    optRoutes4.append((address, mask, gateway))
+                    if optRoutes4 == nil {
+                        optRoutes4 = []
+                    }
+                    optRoutes4?.append((address, mask, gateway))
                 }
                 Regex.route6.enumerateSpacedArguments(in: line) {
                     let routeEntryArguments = $0
@@ -637,7 +640,10 @@ extension OpenVPN {
                     if gateway == "vpn_gateway" {
                         gateway = nil
                     }
-                    optRoutes6.append((destination, prefix, gateway))
+                    if optRoutes6 == nil {
+                        optRoutes6 = []
+                    }
+                    optRoutes6?.append((destination, prefix, gateway))
                 }
                 Regex.gateway.enumerateSpacedArguments(in: line) {
                     optGateway4Arguments = $0
@@ -726,6 +732,12 @@ extension OpenVPN {
             // MARK: Post-processing
             
             // ensure that non-nil network settings also imply non-empty
+            if let array = optRoutes4 {
+                assert(!array.isEmpty)
+            }
+            if let array = optRoutes6 {
+                assert(!array.isEmpty)
+            }
             if let array = optDNSServers {
                 assert(!array.isEmpty)
             }
@@ -857,16 +869,15 @@ extension OpenVPN {
                     addressMask4 = "255.255.255.255"
                     defaultGateway4 = ifconfig4Arguments[1]
                 }
-                let routes4 = optRoutes4.map {
-                    IPv4Settings.Route($0.0, $0.1, $0.2)
-                }
 
                 sessionBuilder.ipv4 = IPv4Settings(
                     address: address4,
                     addressMask: addressMask4,
-                    defaultGateway: defaultGateway4,
-                    routes: routes4
+                    defaultGateway: defaultGateway4
                 )
+            }
+            sessionBuilder.routes4 = optRoutes4?.map {
+                IPv4Settings.Route($0.0, $0.1, $0.2)
             }
             
             if let ifconfig6Arguments = optIfconfig6Arguments {
@@ -883,16 +894,15 @@ extension OpenVPN {
                 
                 let address6 = address6Components[0]
                 let defaultGateway6 = ifconfig6Arguments[1]
-                let routes6 = optRoutes6.map {
-                    IPv6Settings.Route($0.0, $0.1, $0.2)
-                }
                 
                 sessionBuilder.ipv6 = IPv6Settings(
                     address: address6,
                     addressPrefixLength: addressPrefix6,
-                    defaultGateway: defaultGateway6,
-                    routes: routes6
+                    defaultGateway: defaultGateway6
                 )
+            }
+            sessionBuilder.routes6 = optRoutes6?.map {
+                IPv6Settings.Route($0.0, $0.1, $0.2)
             }
             
             sessionBuilder.dnsServers = optDNSServers

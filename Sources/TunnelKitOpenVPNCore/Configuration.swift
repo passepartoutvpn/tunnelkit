@@ -257,6 +257,12 @@ extension OpenVPN {
         /// The settings for IPv6. `OpenVPNSession` only evaluates this server-side.
         public var ipv6: IPv6Settings?
         
+        /// The IPv4 routes if `ipv4` is nil.
+        public var routes4: [IPv4Settings.Route]?
+
+        /// The IPv6 routes if `ipv6` is nil.
+        public var routes6: [IPv6Settings.Route]?
+
         /// Set false to ignore DNS settings, even when pushed.
         public var isDNSEnabled: Bool?
         
@@ -356,6 +362,8 @@ extension OpenVPN {
                 peerId: peerId,
                 ipv4: ipv4,
                 ipv6: ipv6,
+                routes4: routes4,
+                routes6: routes6,
                 isDNSEnabled: isDNSEnabled,
                 dnsProtocol: dnsProtocol,
                 dnsServers: dnsServers,
@@ -467,6 +475,12 @@ extension OpenVPN {
 
         /// - Seealso: `ConfigurationBuilder.ipv6`
         public let ipv6: IPv6Settings?
+
+        /// - Seealso: `ConfigurationBuilder.routes4`
+        public let routes4: [IPv4Settings.Route]?
+
+        /// - Seealso: `ConfigurationBuilder.routes6`
+        public let routes6: [IPv6Settings.Route]?
 
         /// - Seealso: `ConfigurationBuilder.isDNSEnabled`
         public let isDNSEnabled: Bool?
@@ -597,6 +611,8 @@ extension OpenVPN.Configuration {
         builder.peerId = peerId
         builder.ipv4 = ipv4
         builder.ipv6 = ipv6
+        builder.routes4 = routes4
+        builder.routes6 = routes6
         builder.isDNSEnabled = isDNSEnabled
         builder.dnsProtocol = dnsProtocol
         builder.dnsServers = dnsServers
@@ -630,6 +646,12 @@ extension OpenVPN.Configuration {
         if !isLocal {
             log.info("\tIPv4: \(ipv4?.description ?? "not configured")")
             log.info("\tIPv6: \(ipv6?.description ?? "not configured")")
+        }
+        if let routes = routes4 {
+            log.info("\tRoutes (IPv4): \(routes)")
+        }
+        if let routes = routes6 {
+            log.info("\tRoutes (IPv6): \(routes)")
         }
 
         if let cipher = cipher {

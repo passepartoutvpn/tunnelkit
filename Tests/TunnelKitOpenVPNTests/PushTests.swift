@@ -76,7 +76,7 @@ class PushTests: XCTestCase {
         let reply = try! OpenVPN.PushReply(message: msg)!
         reply.debug()
         
-        let route = reply.options.ipv4!.routes.first!
+        let route = reply.options.routes4!.first!
         
         XCTAssertEqual(route.destination, "192.168.0.0")
         XCTAssertEqual(route.mask, "255.255.255.0")

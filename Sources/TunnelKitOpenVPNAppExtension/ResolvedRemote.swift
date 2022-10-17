@@ -30,7 +30,7 @@ import SwiftyBeaver
 private let log = SwiftyBeaver.self
 
 class ResolvedRemote: CustomStringConvertible {
-    private let originalEndpoint: Endpoint
+    let originalEndpoint: Endpoint
     
     private(set) var isResolved: Bool
     

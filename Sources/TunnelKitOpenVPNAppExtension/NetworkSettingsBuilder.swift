@@ -103,6 +103,48 @@ extension NetworkSettingsBuilder {
     private var isIPv6Gateway: Bool {
         routingPolicies?.contains(.IPv6) ?? false
     }
+    
+    // FIXME: this is ineffective until #278 is fixed (localOptions.ipv6 is always nil)
+    private var allRoutes4: [IPv4Settings.Route] {
+        var routes = localOptions.ipv4?.routes ?? []
+        if pullRoutes, let remoteRoutes = remoteOptions.ipv4?.routes {
+            routes.append(contentsOf: remoteRoutes)
+        }
+        return routes
+    }
+    
+    // FIXME: this is ineffective until #278 is fixed (localOptions.ipv6 is always nil)
+    private var allRoutes6: [IPv6Settings.Route] {
+        var routes = localOptions.ipv6?.routes ?? []
+        if pullRoutes, let remoteRoutes = remoteOptions.ipv6?.routes {
+            routes.append(contentsOf: remoteRoutes)
+        }
+        return routes
+    }
+    
+    private var allDNSServers: [String] {
+        var servers = localOptions.dnsServers ?? []
+        if pullDNS, let remoteServers = remoteOptions.dnsServers {
+            servers.append(contentsOf: remoteServers)
+        }
+        return servers
+    }
+    
+    private var allDNSSearchDomains: [String] {
+        var searchDomains = localOptions.searchDomains ?? []
+        if pullDNS, let remoteSearchDomains = remoteOptions.searchDomains {
+            searchDomains.append(contentsOf: remoteSearchDomains)
+        }
+        return searchDomains
+    }
+    
+    private var allProxyBypassDomains: [String] {
+        var bypass = localOptions.proxyBypassDomains ?? []
+        if pullProxy, let remoteBypass = remoteOptions.proxyBypassDomains {
+            bypass.append(contentsOf: remoteBypass)
+        }
+        return bypass
+    }
 }
 
 extension NetworkSettingsBuilder {
@@ -117,26 +159,25 @@ extension NetworkSettingsBuilder {
             return nil
         }
         let ipv4Settings = NEIPv4Settings(addresses: [ipv4.address], subnetMasks: [ipv4.addressMask])
-        var routes: [NEIPv4Route] = []
+        var neRoutes: [NEIPv4Route] = []
         
         // route all traffic to VPN?
         if isIPv4Gateway {
             let defaultRoute = NEIPv4Route.default()
             defaultRoute.gatewayAddress = ipv4.defaultGateway
-            routes.append(defaultRoute)
+            neRoutes.append(defaultRoute)
             log.info("Routing.IPv4: Setting default gateway to \(ipv4.defaultGateway)")
         }
         
         // FIXME: this is ineffective until #278 is fixed (localOptions.ipv4 is always nil)
-        let computedRoutes = (pullRoutes ? (remoteOptions.ipv4?.routes ?? localOptions.ipv4?.routes) : localOptions.ipv4?.routes) ?? []
-        for r in computedRoutes {
+        for r in allRoutes4 {
             let ipv4Route = NEIPv4Route(destinationAddress: r.destination, subnetMask: r.mask)
             ipv4Route.gatewayAddress = r.gateway
-            routes.append(ipv4Route)
+            neRoutes.append(ipv4Route)
             log.info("Routing.IPv4: Adding route \(r.destination)/\(r.mask) -> \(r.gateway)")
         }
 
-        ipv4Settings.includedRoutes = routes
+        ipv4Settings.includedRoutes = neRoutes
         ipv4Settings.excludedRoutes = []
         return ipv4Settings
     }
@@ -146,26 +187,24 @@ extension NetworkSettingsBuilder {
             return nil
         }
         let ipv6Settings = NEIPv6Settings(addresses: [ipv6.address], networkPrefixLengths: [ipv6.addressPrefixLength as NSNumber])
-        var routes: [NEIPv6Route] = []
+        var neRoutes: [NEIPv6Route] = []
         
         // route all traffic to VPN?
         if isIPv6Gateway {
             let defaultRoute = NEIPv6Route.default()
             defaultRoute.gatewayAddress = ipv6.defaultGateway
-            routes.append(defaultRoute)
+            neRoutes.append(defaultRoute)
             log.info("Routing.IPv6: Setting default gateway to \(ipv6.defaultGateway)")
         }
         
-        // FIXME: this is ineffective until #278 is fixed (localOptions.ipv6 is always nil)
-        let computedRoutes = (pullRoutes ? (remoteOptions.ipv6?.routes ?? localOptions.ipv6?.routes) : localOptions.ipv6?.routes) ?? []
-        for r in computedRoutes {
+        for r in allRoutes6 {
             let ipv6Route = NEIPv6Route(destinationAddress: r.destination, networkPrefixLength: r.prefixLength as NSNumber)
             ipv6Route.gatewayAddress = r.gateway
-            routes.append(ipv6Route)
+            neRoutes.append(ipv6Route)
             log.info("Routing.IPv6: Adding route \(r.destination)/\(r.prefixLength) -> \(r.gateway)")
         }
 
-        ipv6Settings.includedRoutes = routes
+        ipv6Settings.includedRoutes = neRoutes
         ipv6Settings.excludedRoutes = []
         return ipv6Settings
     }
@@ -188,11 +227,10 @@ extension NetworkSettingsBuilder {
             return nil
         }
         var dnsSettings: NEDNSSettings?
-        var dnsServers: [String] = []
         if #available(iOS 14, macOS 11, *) {
             switch localOptions.dnsProtocol {
             case .https:
-                dnsServers = localOptions.dnsServers ?? []
+                let dnsServers = localOptions.dnsServers ?? []
                 guard let serverURL = localOptions.dnsHTTPSURL else {
                     break
                 }
@@ -203,7 +241,7 @@ extension NetworkSettingsBuilder {
                 log.info("\tHTTPS URL: \(serverURL)")
                 
             case .tls:
-                dnsServers = localOptions.dnsServers ?? []
+                let dnsServers = localOptions.dnsServers ?? []
                 guard let serverName = localOptions.dnsTLSServerName else {
                     break
                 }
@@ -220,13 +258,13 @@ extension NetworkSettingsBuilder {
         
         // fall back
         if dnsSettings == nil {
-            dnsServers = (pullDNS ? (remoteOptions.dnsServers ?? localOptions.dnsServers) : localOptions.dnsServers) ?? []
+            let dnsServers = allDNSServers
             if !dnsServers.isEmpty {
                 log.info("DNS: Using servers \(dnsServers)")
                 dnsSettings = NEDNSSettings(servers: dnsServers)
             } else {
-//                    log.warning("DNS: No servers provided, using fall-back servers: \(fallbackDNSServers)")
-//                    dnsSettings = NEDNSSettings(servers: fallbackDNSServers)
+//                log.warning("DNS: No servers provided, using fall-back servers: \(fallbackDNSServers)")
+//                dnsSettings = NEDNSSettings(servers: fallbackDNSServers)
                 if isGateway {
                     log.warning("DNS: No settings provided")
                 } else {
@@ -239,8 +277,9 @@ extension NetworkSettingsBuilder {
         if !isGateway {
             dnsSettings?.matchDomains = [""]
         }
-        
-        if let searchDomains = pullDNS ? (remoteOptions.searchDomains ?? localOptions.searchDomains) : localOptions.searchDomains {
+
+        let searchDomains = allDNSSearchDomains
+        if !searchDomains.isEmpty {
             log.info("DNS: Using search domains \(searchDomains)")
             dnsSettings?.domainName = searchDomains.first
             dnsSettings?.searchDomains = searchDomains
@@ -283,9 +322,12 @@ extension NetworkSettingsBuilder {
         }
         
         // only set if there is a proxy (proxySettings set to non-nil above)
-        if let bypass = pullProxy ? (remoteOptions.proxyBypassDomains ?? localOptions.proxyBypassDomains) : localOptions.proxyBypassDomains {
-            proxySettings?.exceptionList = bypass
-            log.info("Routing: Setting proxy by-pass list: \(bypass)")
+        if proxySettings != nil {
+            let bypass = allProxyBypassDomains
+            if !bypass.isEmpty {
+                proxySettings?.exceptionList = bypass
+                log.info("Routing: Setting proxy by-pass list: \(bypass)")
+            }
         }
         return proxySettings
     }

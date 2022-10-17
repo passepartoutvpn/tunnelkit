@@ -113,8 +113,6 @@ extension OpenVPN {
             
             static let domain = NSRegularExpression("^dhcp-option +DOMAIN +[^ ]+")
             
-            static let domainSearch = NSRegularExpression("^dhcp-option +DOMAIN-SEARCH +[^ ]+")
-            
             static let proxy = NSRegularExpression("^dhcp-option +PROXY_(HTTPS? +[^ ]+ +\\d+|AUTO_CONFIG_URL +[^ ]+)")
             
             static let proxyBypass = NSRegularExpression("^dhcp-option +PROXY_BYPASS +.+")
@@ -289,7 +287,6 @@ extension OpenVPN {
             var optRoutes4: [(String, String, String?)] = [] // address, netmask, gateway
             var optRoutes6: [(String, UInt8, String?)] = [] // destination, prefix, gateway
             var optDNSServers: [String]?
-            var optDomain: String?
             var optSearchDomains: [String]?
             var optHTTPProxy: Proxy?
             var optHTTPSProxy: Proxy?
@@ -658,12 +655,6 @@ extension OpenVPN {
                     guard $0.count == 2 else {
                         return
                     }
-                    optDomain = $0[1]
-                }
-                Regex.domainSearch.enumerateSpacedArguments(in: line) {
-                    guard $0.count == 2 else {
-                        return
-                    }
                     if optSearchDomains == nil {
                         optSearchDomains = []
                     }
@@ -733,15 +724,6 @@ extension OpenVPN {
             }
             
             // MARK: Post-processing
-            
-            // prepend search domains with main domain (if set)
-            if let domain = optDomain {
-                if optSearchDomains == nil {
-                    optSearchDomains = [domain]
-                } else {
-                    optSearchDomains?.insert(domain, at: 0)
-                }
-            }
             
             // ensure that non-nil network settings also imply non-empty
             if let array = optDNSServers {
@@ -875,7 +857,9 @@ extension OpenVPN {
                     addressMask4 = "255.255.255.255"
                     defaultGateway4 = ifconfig4Arguments[1]
                 }
-                let routes4 = optRoutes4.map { IPv4Settings.Route($0.0, $0.1, $0.2 ?? defaultGateway4) }
+                let routes4 = optRoutes4.map {
+                    IPv4Settings.Route($0.0, $0.1, $0.2 ?? defaultGateway4)
+                }
 
                 sessionBuilder.ipv4 = IPv4Settings(
                     address: address4,
@@ -899,7 +883,9 @@ extension OpenVPN {
                 
                 let address6 = address6Components[0]
                 let defaultGateway6 = ifconfig6Arguments[1]
-                let routes6 = optRoutes6.map { IPv6Settings.Route($0.0, $0.1, $0.2 ?? defaultGateway6) }
+                let routes6 = optRoutes6.map {
+                    IPv6Settings.Route($0.0, $0.1, $0.2 ?? defaultGateway6)
+                }
                 
                 sessionBuilder.ipv6 = IPv6Settings(
                     address: address6,

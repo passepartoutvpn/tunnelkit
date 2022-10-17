@@ -57,16 +57,10 @@ class ConnectionStrategy {
     }
 
     init(configuration: OpenVPN.Configuration) {
-        guard var remotes = configuration.remotes, !remotes.isEmpty else {
+        guard let remotes = configuration.processedRemotes, !remotes.isEmpty else {
             fatalError("No remotes provided")
         }
-        if configuration.randomizeEndpoint ?? false {
-            remotes.shuffle()
-        }
-        let randomPrefixLength = (configuration.randomizeHostnames ?? false) ? OpenVPN.Configuration.randomHostnamePrefixLength : nil
-        self.remotes = remotes.map {
-            ResolvedRemote($0, randomPrefixLength: randomPrefixLength)
-        }
+        self.remotes = remotes.map(ResolvedRemote.init)
         currentRemoteIndex = 0
     }
 

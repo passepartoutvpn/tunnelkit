@@ -385,8 +385,7 @@ extension OpenVPN {
             static let compressionAlgorithm: CompressionAlgorithm = .disabled
         }
         
-        /// - Seealso: `ConfigurationBuilder.randomizeHostnames`
-        public static let randomHostnamePrefixLength = 6
+        private static let randomHostnamePrefixLength = 6
         
         /// - Seealso: `ConfigurationBuilder.cipher`
         public let cipher: Cipher?
@@ -533,6 +532,28 @@ extension OpenVPN {
             }
             let pulled = Array(Set(all).subtracting(notPulled))
             return !pulled.isEmpty ? pulled : nil
+        }
+        
+        // MARK: Computed
+        
+        public var processedRemotes: [Endpoint]? {
+            guard var processedRemotes = remotes else {
+                return nil
+            }
+            if randomizeEndpoint ?? false {
+                processedRemotes.shuffle()
+            }
+            if let randomPrefixLength = (randomizeHostnames ?? false) ? Self.randomHostnamePrefixLength : nil {
+                processedRemotes = processedRemotes.compactMap {
+                    do {
+                        return try $0.withRandomPrefixLength(randomPrefixLength)
+                    } catch {
+                        log.warning("Could not prepend random prefix: \(error)")
+                        return nil
+                    }
+                }
+            }
+            return processedRemotes
         }
     }
 }

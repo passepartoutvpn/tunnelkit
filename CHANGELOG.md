@@ -16,6 +16,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Upgrade OpenSSL to 1.1.1q.
 - Use natively async methods from NetworkExtension. [#284](https://github.com/passepartoutvpn/tunnelkit/pull/284)
+- OpenVPN: Unmask PUSH_REPLY and network settings in logs.
 
 ### Fixed
 

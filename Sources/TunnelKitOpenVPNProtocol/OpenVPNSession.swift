@@ -944,7 +944,7 @@ public class OpenVPNSession: Session {
                 return
             }
             reply = optionalReply
-            log.debug("Received PUSH_REPLY: \"\(reply.maskedDescription)\"")
+            log.debug("Received PUSH_REPLY: \"\(reply)\"")
             
             if let framing = reply.options.compressionFraming, let compression = reply.options.compressionAlgorithm {
                 switch compression {

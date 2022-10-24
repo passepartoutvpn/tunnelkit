@@ -524,7 +524,7 @@ extension OpenVPNTunnelProvider: OpenVPNSessionDelegate {
 
         cfg._appexSetServerConfiguration(session.serverConfiguration() as? OpenVPN.Configuration)
 
-        bringNetworkUp(remoteAddress: remoteAddress, localOptions: session.configuration, options: options) { (error) in
+        bringNetworkUp(remoteAddress: remoteAddress, localOptions: session.configuration, remoteOptions: options) { (error) in
 
             // FIXME: XPC queue
             
@@ -565,266 +565,52 @@ extension OpenVPNTunnelProvider: OpenVPNSessionDelegate {
         socket?.shutdown()
     }
     
-    private func bringNetworkUp(remoteAddress: String, localOptions: OpenVPN.Configuration, options: OpenVPN.Configuration, completionHandler: @escaping (Error?) -> Void) {
-        let pullMask = localOptions.pullMask
-        let pullRoutes = pullMask?.contains(.routes) ?? false
-        let pullDNS = pullMask?.contains(.dns) ?? false
-        let pullProxy = pullMask?.contains(.proxy) ?? false
+    private func bringNetworkUp(remoteAddress: String, localOptions: OpenVPN.Configuration, remoteOptions: OpenVPN.Configuration, completionHandler: @escaping (Error?) -> Void) {
+        let newSettings = NetworkSettingsBuilder(remoteAddress: remoteAddress, localOptions: localOptions, remoteOptions: remoteOptions)
 
-        let routingPolicies = pullRoutes ? options.routingPolicies : localOptions.routingPolicies
-        let isIPv4Gateway = routingPolicies?.contains(.IPv4) ?? false
-        let isIPv6Gateway = routingPolicies?.contains(.IPv6) ?? false
-        let isGateway = isIPv4Gateway || isIPv6Gateway
-
-        var ipv4Settings: NEIPv4Settings?
-        if let ipv4 = options.ipv4 {
-            var routes: [NEIPv4Route] = []
-
-            // route all traffic to VPN?
-            if isIPv4Gateway {
-                let defaultRoute = NEIPv4Route.default()
-                defaultRoute.gatewayAddress = ipv4.defaultGateway
-                routes.append(defaultRoute)
-//                for network in ["0.0.0.0", "128.0.0.0"] {
-//                    let route = NEIPv4Route(destinationAddress: network, subnetMask: "128.0.0.0")
-//                    route.gatewayAddress = ipv4.defaultGateway
-//                    routes.append(route)
-//                }
-                log.info("Routing.IPv4: Setting default gateway to \(ipv4.defaultGateway.maskedDescription)")
-            }
-            
-            if pullRoutes {
-                for r in ipv4.routes {
-                    let ipv4Route = NEIPv4Route(destinationAddress: r.destination, subnetMask: r.mask)
-                    ipv4Route.gatewayAddress = r.gateway
-                    routes.append(ipv4Route)
-                    log.info("Routing.IPv4: Adding route \(r.destination.maskedDescription)/\(r.mask) -> \(r.gateway)")
-                }
-            }
-
-            ipv4Settings = NEIPv4Settings(addresses: [ipv4.address], subnetMasks: [ipv4.addressMask])
-            ipv4Settings?.includedRoutes = routes
-            ipv4Settings?.excludedRoutes = []
-        }
-
-        var ipv6Settings: NEIPv6Settings?
-        if let ipv6 = options.ipv6 {
-            var routes: [NEIPv6Route] = []
-
-            // route all traffic to VPN?
-            if isIPv6Gateway {
-                let defaultRoute = NEIPv6Route.default()
-                defaultRoute.gatewayAddress = ipv6.defaultGateway
-                routes.append(defaultRoute)
-//                for network in ["2000::", "3000::"] {
-//                    let route = NEIPv6Route(destinationAddress: network, networkPrefixLength: 4)
-//                    route.gatewayAddress = ipv6.defaultGateway
-//                    routes.append(route)
-//                }
-                log.info("Routing.IPv6: Setting default gateway to \(ipv6.defaultGateway.maskedDescription)")
-            }
-
-            if pullRoutes {
-                for r in ipv6.routes {
-                    let ipv6Route = NEIPv6Route(destinationAddress: r.destination, networkPrefixLength: r.prefixLength as NSNumber)
-                    ipv6Route.gatewayAddress = r.gateway
-                    routes.append(ipv6Route)
-                    log.info("Routing.IPv6: Adding route \(r.destination.maskedDescription)/\(r.prefixLength) -> \(r.gateway)")
-                }
-            }
-
-            ipv6Settings = NEIPv6Settings(addresses: [ipv6.address], networkPrefixLengths: [ipv6.addressPrefixLength as NSNumber])
-            ipv6Settings?.includedRoutes = routes
-            ipv6Settings?.excludedRoutes = []
-        }
-
-        // shut down if default gateway is not attainable
-        var hasGateway = false
-        if isIPv4Gateway && (ipv4Settings != nil) {
-            hasGateway = true
-        }
-        if isIPv6Gateway && (ipv6Settings != nil) {
-            hasGateway = true
-        }
-        guard !isGateway || hasGateway else {
+        guard !newSettings.isGateway || newSettings.hasGateway else {
             session?.shutdown(error: OpenVPNProviderError.gatewayUnattainable)
             return
         }
-        
-        var dnsSettings: NEDNSSettings?
-        if localOptions.isDNSEnabled ?? true {
-            var dnsServers: [String] = []
-            if #available(iOS 14, macOS 11, *) {
-                switch localOptions.dnsProtocol {
-                case .https:
-                    dnsServers = localOptions.dnsServers ?? []
-                    guard let serverURL = localOptions.dnsHTTPSURL else {
-                        break
-                    }
-                    let specific = NEDNSOverHTTPSSettings(servers: dnsServers)
-                    specific.serverURL = serverURL
-                    dnsSettings = specific
-                    log.info("DNS over HTTPS: Using servers \(dnsServers.maskedDescription)")
-                    log.info("\tHTTPS URL: \(serverURL.maskedDescription)")
 
-                case .tls:
-                    dnsServers = localOptions.dnsServers ?? []
-                    guard let serverName = localOptions.dnsTLSServerName else {
-                        break
-                    }
-                    let specific = NEDNSOverTLSSettings(servers: dnsServers)
-                    specific.serverName = serverName
-                    dnsSettings = specific
-                    log.info("DNS over TLS: Using servers \(dnsServers.maskedDescription)")
-                    log.info("\tTLS server name: \(serverName.maskedDescription)")
+//        // block LAN if desired
+//        if routingPolicies?.contains(.blockLocal) ?? false {
+//            let table = RoutingTable()
+//            if isIPv4Gateway,
+//                let gateway = table.defaultGateway4()?.gateway(),
+//                let route = table.broadestRoute4(matchingDestination: gateway) {
+//
+//                route.partitioned()?.forEach {
+//                    let destination = $0.network()
+//                    guard let netmask = $0.networkMask() else {
+//                        return
+//                    }
+//
+//                    log.info("Block local: Suppressing IPv4 route \(destination)/\($0.prefix())")
+//
+//                    let included = NEIPv4Route(destinationAddress: destination, subnetMask: netmask)
+//                    included.gatewayAddress = options.ipv4?.defaultGateway
+//                    ipv4Settings?.includedRoutes?.append(included)
+//                }
+//            }
+//            if isIPv6Gateway,
+//                let gateway = table.defaultGateway6()?.gateway(),
+//                let route = table.broadestRoute6(matchingDestination: gateway) {
+//
+//                route.partitioned()?.forEach {
+//                    let destination = $0.network()
+//                    let prefix = $0.prefix()
+//
+//                    log.info("Block local: Suppressing IPv6 route \(destination)/\($0.prefix())")
+//
+//                    let included = NEIPv6Route(destinationAddress: destination, networkPrefixLength: prefix as NSNumber)
+//                    included.gatewayAddress = options.ipv6?.defaultGateway
+//                    ipv6Settings?.includedRoutes?.append(included)
+//                }
+//            }
+//        }
 
-                default:
-                    break
-                }
-            }
-
-            // ensure that non-nil arrays also imply non-empty
-            if let array = options.dnsServers {
-                precondition(!array.isEmpty)
-            }
-            if let array = options.searchDomains {
-                precondition(!array.isEmpty)
-            }
-            if let array = options.proxyBypassDomains {
-                precondition(!array.isEmpty)
-            }
-            if let array = cfg.configuration.dnsServers {
-                precondition(!array.isEmpty)
-            }
-            if let array = cfg.configuration.searchDomains {
-                precondition(!array.isEmpty)
-            }
-            if let array = cfg.configuration.proxyBypassDomains {
-                precondition(!array.isEmpty)
-            }
-
-            // fall back
-            if dnsSettings == nil {
-                dnsServers = (pullDNS ? options.dnsServers : localOptions.dnsServers) ?? []
-                if !dnsServers.isEmpty {
-                    log.info("DNS: Using servers \(dnsServers.maskedDescription)")
-                    dnsSettings = NEDNSSettings(servers: dnsServers)
-                } else {
-//                    log.warning("DNS: No servers provided, using fall-back servers: \(fallbackDNSServers.maskedDescription)")
-//                    dnsSettings = NEDNSSettings(servers: fallbackDNSServers)
-                    if isGateway {
-                        log.warning("DNS: No settings provided, using current network settings")
-                    } else {
-                        log.warning("DNS: No settings provided")
-                    }
-                }
-            }
-
-            // "hack" for split DNS (i.e. use VPN only for DNS)
-            if !isGateway {
-                dnsSettings?.matchDomains = [""]
-            }
-            
-            if let searchDomains = pullDNS ? options.searchDomains : localOptions.searchDomains {
-                log.info("DNS: Using search domains \(searchDomains.maskedDescription)")
-                dnsSettings?.domainName = searchDomains.first
-                dnsSettings?.searchDomains = searchDomains
-                if !isGateway {
-                    dnsSettings?.matchDomains = dnsSettings?.searchDomains
-                }
-            }
-            
-            // add direct routes to DNS servers
-            if !isGateway {
-                for server in dnsServers {
-                    if server.contains(":") {
-                        ipv6Settings?.includedRoutes?.insert(NEIPv6Route(destinationAddress: server, networkPrefixLength: 128), at: 0)
-                    } else {
-                        ipv4Settings?.includedRoutes?.insert(NEIPv4Route(destinationAddress: server, subnetMask: "255.255.255.255"), at: 0)
-                    }
-                }
-            }
-        }
-        
-        var proxySettings: NEProxySettings?
-        if localOptions.isProxyEnabled ?? true {
-            if let httpsProxy = pullProxy ? options.httpsProxy : localOptions.httpsProxy {
-                proxySettings = NEProxySettings()
-                proxySettings?.httpsServer = httpsProxy.neProxy()
-                proxySettings?.httpsEnabled = true
-                log.info("Routing: Setting HTTPS proxy \(httpsProxy.address.maskedDescription):\(httpsProxy.port)")
-            }
-            if let httpProxy = pullProxy ? options.httpProxy : localOptions.httpProxy {
-                if proxySettings == nil {
-                    proxySettings = NEProxySettings()
-                }
-                proxySettings?.httpServer = httpProxy.neProxy()
-                proxySettings?.httpEnabled = true
-                log.info("Routing: Setting HTTP proxy \(httpProxy.address.maskedDescription):\(httpProxy.port)")
-            }
-            if let pacURL = pullProxy ? options.proxyAutoConfigurationURL : localOptions.proxyAutoConfigurationURL {
-                if proxySettings == nil {
-                    proxySettings = NEProxySettings()
-                }
-                proxySettings?.proxyAutoConfigurationURL = pacURL
-                proxySettings?.autoProxyConfigurationEnabled = true
-                log.info("Routing: Setting PAC \(pacURL.maskedDescription)")
-            }
-
-            // only set if there is a proxy (proxySettings set to non-nil above)
-            if let bypass = pullProxy ? options.proxyBypassDomains : localOptions.proxyBypassDomains {
-                proxySettings?.exceptionList = bypass
-                log.info("Routing: Setting proxy by-pass list: \(bypass.maskedDescription)")
-            }
-        }
-
-        // block LAN if desired
-        if routingPolicies?.contains(.blockLocal) ?? false {
-            let table = RoutingTable()
-            if isIPv4Gateway,
-                let gateway = table.defaultGateway4()?.gateway(),
-                let route = table.broadestRoute4(matchingDestination: gateway) {
-
-                route.partitioned()?.forEach {
-                    let destination = $0.network()
-                    guard let netmask = $0.networkMask() else {
-                        return
-                    }
-                    
-                    log.info("Block local: Suppressing IPv4 route \(destination)/\($0.prefix())")
-                    
-                    let included = NEIPv4Route(destinationAddress: destination, subnetMask: netmask)
-                    included.gatewayAddress = options.ipv4?.defaultGateway
-                    ipv4Settings?.includedRoutes?.append(included)
-                }
-            }
-            if isIPv6Gateway,
-                let gateway = table.defaultGateway6()?.gateway(),
-                let route = table.broadestRoute6(matchingDestination: gateway) {
-
-                route.partitioned()?.forEach {
-                    let destination = $0.network()
-                    let prefix = $0.prefix()
-                    
-                    log.info("Block local: Suppressing IPv6 route \(destination)/\($0.prefix())")
-
-                    let included = NEIPv6Route(destinationAddress: destination, networkPrefixLength: prefix as NSNumber)
-                    included.gatewayAddress = options.ipv6?.defaultGateway
-                    ipv6Settings?.includedRoutes?.append(included)
-                }
-            }
-        }
-        
-        let newSettings = NEPacketTunnelNetworkSettings(tunnelRemoteAddress: remoteAddress)
-        newSettings.ipv4Settings = ipv4Settings
-        newSettings.ipv6Settings = ipv6Settings
-        newSettings.dnsSettings = dnsSettings
-        newSettings.proxySettings = proxySettings
-        if let mtu = localOptions.mtu, mtu > 0 {
-            newSettings.mtu = NSNumber(value: mtu)
-        }
-
-        setTunnelNetworkSettings(newSettings, completionHandler: completionHandler)
+        setTunnelNetworkSettings(newSettings.build(), completionHandler: completionHandler)
     }
 }
 
@@ -945,12 +731,6 @@ extension OpenVPNTunnelProvider {
             }
         }
         return error as? OpenVPNProviderError ?? .linkError
-    }
-}
-
-private extension Proxy {
-    func neProxy() -> NEProxyServer {
-        return NEProxyServer(address: address, port: Int(port))
     }
 }
 

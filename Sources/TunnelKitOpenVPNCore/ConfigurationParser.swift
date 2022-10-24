@@ -732,6 +732,28 @@ extension OpenVPN {
                 }
             }
             
+            // MARK: Post-processing
+            
+            // prepend search domains with main domain (if set)
+            if let domain = optDomain {
+                if optSearchDomains == nil {
+                    optSearchDomains = [domain]
+                } else {
+                    optSearchDomains?.insert(domain, at: 0)
+                }
+            }
+            
+            // ensure that non-nil network settings also imply non-empty
+            if let array = optDNSServers {
+                assert(!array.isEmpty)
+            }
+            if let array = optSearchDomains {
+                assert(!array.isEmpty)
+            }
+            if let array = optProxyBypass {
+                assert(!array.isEmpty)
+            }
+
             //
             
             var sessionBuilder = ConfigurationBuilder()
@@ -887,15 +909,6 @@ extension OpenVPN {
                 )
             }
             
-            // prepend search domains with main domain (if set)
-            if let domain = optDomain {
-                if optSearchDomains == nil {
-                    optSearchDomains = [domain]
-                } else {
-                    optSearchDomains?.insert(domain, at: 0)
-                }
-            }
-
             sessionBuilder.dnsServers = optDNSServers
             sessionBuilder.searchDomains = optSearchDomains
             sessionBuilder.httpProxy = optHTTPProxy

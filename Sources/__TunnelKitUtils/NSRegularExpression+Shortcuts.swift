@@ -44,8 +44,10 @@ extension NSRegularExpression {
         }
         return results
     }
+}
 
-    public func enumerateComponents(in string: String, using block: ([String]) -> Void) {
+extension NSRegularExpression {
+    public func enumerateSpacedComponents(in string: String, using block: ([String]) -> Void) {
         enumerateMatches(in: string, options: [], range: NSMakeRange(0, string.count)) { result, flags, stop in
             guard let range = result?.range else {
                 return
@@ -56,8 +58,8 @@ extension NSRegularExpression {
         }
     }
     
-    public func enumerateArguments(in string: String, using block: ([String]) -> Void) {
-        enumerateComponents(in: string) { (tokens) in
+    public func enumerateSpacedArguments(in string: String, using block: ([String]) -> Void) {
+        enumerateSpacedComponents(in: string) { (tokens) in
             var args = tokens
             args.removeFirst()
             block(args)

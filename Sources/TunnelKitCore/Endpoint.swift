@@ -24,9 +24,14 @@
 //
 
 import Foundation
+import __TunnelKitUtils
 
 /// Represents an endpoint.
 public struct Endpoint: RawRepresentable, Codable, Equatable, CustomStringConvertible {
+
+    // XXX: simplistic match
+    private static let rx = NSRegularExpression("^([0-9A-Fa-f\\.:]+):(UDP[46]?|TCP[46]?):(\\d+)$")
+
     public let address: String
     
     public let proto: EndpointProtocol
@@ -68,7 +73,7 @@ public struct Endpoint: RawRepresentable, Codable, Equatable, CustomStringConver
     // MARK: RawRepresentable
     
     public init?(rawValue: String) {
-        let components = rawValue.components(separatedBy: ":")
+        let components = Self.rx.groups(in: rawValue)
         guard components.count == 3 else {
             return nil
         }

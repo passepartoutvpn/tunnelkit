@@ -74,7 +74,7 @@ extension OpenVPN {
         /// Mask private data in debug log (default is `true`).
         public var masksPrivateData = true
         
-                public init(_ title: String, appGroup: String, configuration: OpenVPN.Configuration) {
+        public init(_ title: String, appGroup: String, configuration: OpenVPN.Configuration) {
             self.title = title
             self.appGroup = appGroup
             self.configuration = configuration
@@ -84,9 +84,9 @@ extension OpenVPN {
             if let versionIdentifier = versionIdentifier {
                 log.info("Tunnel version: \(versionIdentifier)")
             }
-            configuration.print()
             log.info("Debug: \(shouldDebug)")
             log.info("Masks private data: \(masksPrivateData)")
+            configuration.print(isLocal: true)
         }
     }
 }

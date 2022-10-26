@@ -487,40 +487,10 @@ extension OpenVPNTunnelProvider: OpenVPNSessionDelegate {
             log.info("\tProtocol: \(proto)")
         }
 
-        log.info("Returned ifconfig parameters:")
-        log.info("\tIPv4: \(options.ipv4?.description ?? "not configured")")
-        log.info("\tIPv6: \(options.ipv6?.description ?? "not configured")")
-        if let routingPolicies = options.routingPolicies {
-            log.info("\tGateway: \(routingPolicies.map { $0.rawValue })")
-        } else {
-            log.info("\tGateway: not configured")
-        }
-        if let dnsServers = options.dnsServers, !dnsServers.isEmpty {
-            log.info("\tDNS: \(dnsServers.map { $0.maskedDescription })")
-        } else {
-            log.info("\tDNS: not configured")
-        }
-        if let searchDomains = options.searchDomains, !searchDomains.isEmpty {
-            log.info("\tSearch domains: \(searchDomains.maskedDescription)")
-        } else {
-            log.info("\tSearch domains: not configured")
-        }
-
-        if options.httpProxy != nil || options.httpsProxy != nil || options.proxyAutoConfigurationURL != nil {
-            log.info("\tProxy:")
-            if let proxy = options.httpProxy {
-                log.info("\t\tHTTP: \(proxy.maskedDescription)")
-            }
-            if let proxy = options.httpsProxy {
-                log.info("\t\tHTTPS: \(proxy.maskedDescription)")
-            }
-            if let pacURL = options.proxyAutoConfigurationURL {
-                log.info("\t\tPAC: \(pacURL)")
-            }
-            if let bypass = options.proxyBypassDomains {
-                log.info("\t\tBypass domains: \(bypass.maskedDescription)")
-            }
-        }
+        log.info("Local options:")
+        cfg.configuration.print(isLocal: true)
+        log.info("Remote options:")
+        options.print(isLocal: false)
 
         cfg._appexSetServerConfiguration(session.serverConfiguration() as? OpenVPN.Configuration)
 

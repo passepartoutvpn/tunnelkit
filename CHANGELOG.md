@@ -20,7 +20,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
-- OpenVPN: Prioritize server configuration over client (standard behavior).
+- OpenVPN: Deal with remote options properly. [#297](https://github.com/passepartoutvpn/tunnelkit/pull/297)
 - IPv6 endpoints are parsed improperly. [#293](https://github.com/passepartoutvpn/tunnelkit/issues/293)
 - Fix abandoned MockVPN. [#285](https://github.com/passepartoutvpn/tunnelkit/pull/285)
 

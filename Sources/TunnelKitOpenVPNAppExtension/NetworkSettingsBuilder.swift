@@ -104,19 +104,17 @@ extension NetworkSettingsBuilder {
         routingPolicies?.contains(.IPv6) ?? false
     }
     
-    // FIXME: local routes are empty, localOptions.ipv4 is always nil (#278)
     private var allRoutes4: [IPv4Settings.Route] {
-        var routes = localOptions.ipv4?.routes ?? []
-        if pullRoutes, let remoteRoutes = remoteOptions.ipv4?.routes {
+        var routes = localOptions.routes4 ?? []
+        if pullRoutes, let remoteRoutes = remoteOptions.routes4 {
             routes.append(contentsOf: remoteRoutes)
         }
         return routes
     }
     
-    // FIXME: local routes are empty, localOptions.ipv6 is always nil (#278)
     private var allRoutes6: [IPv6Settings.Route] {
-        var routes = localOptions.ipv6?.routes ?? []
-        if pullRoutes, let remoteRoutes = remoteOptions.ipv6?.routes {
+        var routes = localOptions.routes6 ?? []
+        if pullRoutes, let remoteRoutes = remoteOptions.routes6 {
             routes.append(contentsOf: remoteRoutes)
         }
         return routes

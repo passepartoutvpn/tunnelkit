@@ -63,8 +63,17 @@ public struct IPv4Settings: Codable, Equatable, CustomStringConvertible {
     public let defaultGateway: String
     
     /// The additional routes.
+    @available(*, deprecated, message: "Store routes separately")
     public let routes: [Route]
     
+    public init(address: String, addressMask: String, defaultGateway: String) {
+        self.address = address
+        self.addressMask = addressMask
+        self.defaultGateway = defaultGateway
+        self.routes = []
+    }
+
+    @available(*, deprecated, message: "Store routes separately")
     public init(address: String, addressMask: String, defaultGateway: String, routes: [Route]) {
         self.address = address
         self.addressMask = addressMask
@@ -75,6 +84,6 @@ public struct IPv4Settings: Codable, Equatable, CustomStringConvertible {
     // MARK: CustomStringConvertible
     
     public var description: String {
-        "addr \(address.maskedDescription) netmask \(addressMask) gw \(defaultGateway.maskedDescription) routes \(routes.map(\.maskedDescription))"
+        "addr \(address.maskedDescription) netmask \(addressMask) gw \(defaultGateway.maskedDescription)"
     }
 }

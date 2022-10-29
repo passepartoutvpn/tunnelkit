@@ -104,7 +104,7 @@ extension NetworkSettingsBuilder {
         routingPolicies?.contains(.IPv6) ?? false
     }
     
-    // FIXME: this is ineffective until #278 is fixed (localOptions.ipv6 is always nil)
+    // FIXME: local routes are empty, localOptions.ipv4 is always nil (#278)
     private var allRoutes4: [IPv4Settings.Route] {
         var routes = localOptions.ipv4?.routes ?? []
         if pullRoutes, let remoteRoutes = remoteOptions.ipv4?.routes {
@@ -113,7 +113,7 @@ extension NetworkSettingsBuilder {
         return routes
     }
     
-    // FIXME: this is ineffective until #278 is fixed (localOptions.ipv6 is always nil)
+    // FIXME: local routes are empty, localOptions.ipv6 is always nil (#278)
     private var allRoutes6: [IPv6Settings.Route] {
         var routes = localOptions.ipv6?.routes ?? []
         if pullRoutes, let remoteRoutes = remoteOptions.ipv6?.routes {
@@ -151,8 +151,6 @@ extension NetworkSettingsBuilder {
 
     // IPv4/6 address/mask MUST come from server options
     // routes, instead, can both come from server and local options
-    //
-    // FIXME: routes from local options are ignored (#278)
 
     private var computedIPv4Settings: NEIPv4Settings? {
         guard let ipv4 = remoteOptions.ipv4 else {
@@ -169,7 +167,6 @@ extension NetworkSettingsBuilder {
             log.info("Routing.IPv4: Setting default gateway to \(ipv4.defaultGateway)")
         }
         
-        // FIXME: this is ineffective until #278 is fixed (localOptions.ipv4 is always nil)
         for r in allRoutes4 {
             let ipv4Route = NEIPv4Route(destinationAddress: r.destination, subnetMask: r.mask)
             ipv4Route.gatewayAddress = r.gateway

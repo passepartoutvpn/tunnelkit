@@ -858,7 +858,7 @@ extension OpenVPN {
                     defaultGateway4 = ifconfig4Arguments[1]
                 }
                 let routes4 = optRoutes4.map {
-                    IPv4Settings.Route($0.0, $0.1, $0.2 ?? defaultGateway4)
+                    IPv4Settings.Route($0.0, $0.1, $0.2)
                 }
 
                 sessionBuilder.ipv4 = IPv4Settings(
@@ -884,7 +884,7 @@ extension OpenVPN {
                 let address6 = address6Components[0]
                 let defaultGateway6 = ifconfig6Arguments[1]
                 let routes6 = optRoutes6.map {
-                    IPv6Settings.Route($0.0, $0.1, $0.2 ?? defaultGateway6)
+                    IPv6Settings.Route($0.0, $0.1, $0.2)
                 }
                 
                 sessionBuilder.ipv6 = IPv6Settings(

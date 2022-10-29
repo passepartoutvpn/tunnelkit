@@ -37,10 +37,10 @@ public struct IPv4Settings: Codable, Equatable, CustomStringConvertible {
         /// The address mask.
         public let mask: String
         
-        /// The address of the gateway (uses default gateway if not set).
-        public let gateway: String
+        /// The address of the gateway (falls back to global gateway).
+        public let gateway: String?
         
-        public init(_ destination: String, _ mask: String?, _ gateway: String) {
+        public init(_ destination: String, _ mask: String?, _ gateway: String?) {
             self.destination = destination
             self.mask = mask ?? "255.255.255.255"
             self.gateway = gateway
@@ -49,7 +49,7 @@ public struct IPv4Settings: Codable, Equatable, CustomStringConvertible {
         // MARK: CustomStringConvertible
         
         public var description: String {
-            "{\(destination.maskedDescription)/\(mask) \(gateway.maskedDescription)}"
+            "{\(destination.maskedDescription)/\(mask) \(gateway?.maskedDescription ?? "*")}"
         }
     }
     

@@ -169,9 +169,10 @@ extension NetworkSettingsBuilder {
         
         for r in allRoutes4 {
             let ipv4Route = NEIPv4Route(destinationAddress: r.destination, subnetMask: r.mask)
-            ipv4Route.gatewayAddress = r.gateway
+            let gw = r.gateway ?? ipv4.defaultGateway
+            ipv4Route.gatewayAddress = gw
             neRoutes.append(ipv4Route)
-            log.info("Routing.IPv4: Adding route \(r.destination)/\(r.mask) -> \(r.gateway)")
+            log.info("Routing.IPv4: Adding route \(r.destination)/\(r.mask) -> \(gw)")
         }
 
         ipv4Settings.includedRoutes = neRoutes
@@ -196,9 +197,10 @@ extension NetworkSettingsBuilder {
         
         for r in allRoutes6 {
             let ipv6Route = NEIPv6Route(destinationAddress: r.destination, networkPrefixLength: r.prefixLength as NSNumber)
-            ipv6Route.gatewayAddress = r.gateway
+            let gw = r.gateway ?? ipv6.defaultGateway
+            ipv6Route.gatewayAddress = gw
             neRoutes.append(ipv6Route)
-            log.info("Routing.IPv6: Adding route \(r.destination)/\(r.prefixLength) -> \(r.gateway)")
+            log.info("Routing.IPv6: Adding route \(r.destination)/\(r.prefixLength) -> \(gw)")
         }
 
         ipv6Settings.includedRoutes = neRoutes

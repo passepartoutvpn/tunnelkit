@@ -37,10 +37,10 @@ public struct IPv6Settings: Codable, Equatable, CustomStringConvertible {
         /// The address prefix length.
         public let prefixLength: UInt8
         
-        /// The address of the gateway (uses default gateway if not set).
-        public let gateway: String
+        /// The address of the gateway (falls back to global gateway).
+        public let gateway: String?
         
-        public init(_ destination: String, _ prefixLength: UInt8?, _ gateway: String) {
+        public init(_ destination: String, _ prefixLength: UInt8?, _ gateway: String?) {
             self.destination = destination
             self.prefixLength = prefixLength ?? 3
             self.gateway = gateway
@@ -49,7 +49,7 @@ public struct IPv6Settings: Codable, Equatable, CustomStringConvertible {
         // MARK: CustomStringConvertible
         
         public var description: String {
-            "{\(destination.maskedDescription)/\(prefixLength) \(gateway.maskedDescription)}"
+            "{\(destination.maskedDescription)/\(prefixLength) \(gateway?.maskedDescription ?? "*")}"
         }
     }
     

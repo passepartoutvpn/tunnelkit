@@ -49,6 +49,8 @@ extension WireGuard {
 
         public let configuration: WireGuard.Configuration
 
+        public var killSwitch: Bool?
+
         public var shouldDebug = false
 
         public var debugLogPath: String? = nil
@@ -83,8 +85,8 @@ extension WireGuard.ProviderConfiguration: NetworkExtensionConfiguration {
         protocolConfiguration.passwordReference = extra?.passwordReference
         protocolConfiguration.disconnectOnSleep = extra?.disconnectsOnSleep ?? false
         protocolConfiguration.providerConfiguration = try asDictionary()
-        if #available(iOS 14, *) {
-            protocolConfiguration.includeAllNetworks = true
+        if #available(iOS 14, *), let killSwitch = killSwitch {
+            protocolConfiguration.includeAllNetworks = killSwitch
         }
         return protocolConfiguration
     }

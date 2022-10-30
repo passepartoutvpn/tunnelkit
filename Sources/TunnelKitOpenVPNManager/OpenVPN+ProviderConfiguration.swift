@@ -59,6 +59,9 @@ extension OpenVPN {
         /// The client configuration.
         public let configuration: OpenVPN.Configuration
         
+        /// Enables kill switch.
+        public var killSwitch: Bool?
+
         /// The optional username.
         public var username: String?
         
@@ -112,8 +115,8 @@ extension OpenVPN.ProviderConfiguration: NetworkExtensionConfiguration {
         }
         protocolConfiguration.disconnectOnSleep = extra?.disconnectsOnSleep ?? false
         protocolConfiguration.providerConfiguration = try asDictionary()
-        if #available(iOS 14, *) {
-            protocolConfiguration.includeAllNetworks = true
+        if #available(iOS 14, *), let killSwitch = killSwitch {
+            protocolConfiguration.includeAllNetworks = killSwitch
         }
         return protocolConfiguration
     }

@@ -73,7 +73,7 @@ extension WireGuard {
 
 extension WireGuard.ProviderConfiguration: NetworkExtensionConfiguration {
 
-        public func asTunnelProtocol(
+    public func asTunnelProtocol(
         withBundleIdentifier tunnelBundleIdentifier: String,
         extra: NetworkExtensionExtra?
     ) throws -> NETunnelProviderProtocol {
@@ -83,6 +83,9 @@ extension WireGuard.ProviderConfiguration: NetworkExtensionConfiguration {
         protocolConfiguration.passwordReference = extra?.passwordReference
         protocolConfiguration.disconnectOnSleep = extra?.disconnectsOnSleep ?? false
         protocolConfiguration.providerConfiguration = try asDictionary()
+        if #available(iOS 14, *) {
+            protocolConfiguration.includeAllNetworks = true
+        }
         return protocolConfiguration
     }
 }

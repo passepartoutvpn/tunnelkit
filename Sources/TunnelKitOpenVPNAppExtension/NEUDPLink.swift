@@ -48,9 +48,16 @@ class NEUDPLink: LinkInterface {
     let isReliable: Bool = false
     
     var remoteAddress: String? {
-        return (impl.resolvedEndpoint as? NWHostEndpoint)?.hostname
+        (impl.resolvedEndpoint as? NWHostEndpoint)?.hostname
     }
     
+    var remoteProtocol: String? {
+        guard let remote = impl.resolvedEndpoint as? NWHostEndpoint else {
+            return nil
+        }
+        return "UDP:\(remote.port)"
+    }
+
     var packetBufferSize: Int {
         return maxDatagrams
     }

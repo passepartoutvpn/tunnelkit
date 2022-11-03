@@ -49,9 +49,16 @@ class NETCPLink: LinkInterface {
     let isReliable: Bool = true
     
     var remoteAddress: String? {
-        return (impl.remoteAddress as? NWHostEndpoint)?.hostname
+        (impl.remoteAddress as? NWHostEndpoint)?.hostname
     }
     
+    var remoteProtocol: String? {
+        guard let remote = impl.remoteAddress as? NWHostEndpoint else {
+            return nil
+        }
+        return "TCP:\(remote.port)"
+    }
+
     var packetBufferSize: Int {
         return maxPacketSize
     }

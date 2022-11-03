@@ -25,7 +25,7 @@
 
 import Foundation
 
-/// :nodoc:
+/// Helps expressing integers in bytes, kB, MB, GB.
 public enum DataUnit: UInt, CustomStringConvertible {
     case byte = 1
     
@@ -68,8 +68,14 @@ public enum DataUnit: UInt, CustomStringConvertible {
     }
 }
 
-/// :nodoc:
-extension UInt {
+/// Supports being represented in data unit.
+public protocol DataUnitRepresentable {
+
+    /// Returns self expressed in bytes, kB, MB, GB.
+    var descriptionAsDataUnit: String { get }
+}
+
+extension UInt: DataUnitRepresentable {
     private static let allUnits: [DataUnit] = [
         .gigabyte,
         .megabyte,
@@ -94,8 +100,7 @@ extension UInt {
     }
 }
 
-/// :nodoc:
-extension Int {
+extension Int: DataUnitRepresentable {
     public var descriptionAsDataUnit: String {
         return UInt(self).descriptionAsDataUnit
     }

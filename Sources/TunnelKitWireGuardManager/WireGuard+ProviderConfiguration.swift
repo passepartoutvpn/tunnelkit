@@ -28,8 +28,8 @@ import NetworkExtension
 import TunnelKitManager
 import TunnelKitWireGuardCore
 import WireGuardKit
-import __TunnelKitUtils
 import SwiftyBeaver
+import __TunnelKitUtils
 
 private let log = SwiftyBeaver.self
 
@@ -37,11 +37,9 @@ extension WireGuard {
 
     /// Specific configuration for WireGuard.
     public struct ProviderConfiguration: Codable {
-        fileprivate enum Filenames: String {
-            case debugLog = "WireGuard.Tunnel.log"
-        }
-
         fileprivate enum Keys: String {
+            case logPath = "WireGuard.LogPath"
+
             case lastError = "WireGuard.LastError"
         }
         
@@ -51,7 +49,11 @@ extension WireGuard {
 
         public let configuration: WireGuard.Configuration
 
+        public var killSwitch: Bool?
+
         public var shouldDebug = false
+
+        public var debugLogPath: String? = nil
 
         public var debugLogFormat: String? = nil
 
@@ -73,7 +75,6 @@ extension WireGuard {
 
 extension WireGuard.ProviderConfiguration: NetworkExtensionConfiguration {
 
-    /// :nodoc:
     public func asTunnelProtocol(
         withBundleIdentifier tunnelBundleIdentifier: String,
         extra: NetworkExtensionExtra?
@@ -84,6 +85,9 @@ extension WireGuard.ProviderConfiguration: NetworkExtensionConfiguration {
         protocolConfiguration.passwordReference = extra?.passwordReference
         protocolConfiguration.disconnectOnSleep = extra?.disconnectsOnSleep ?? false
         protocolConfiguration.providerConfiguration = try asDictionary()
+        if #available(iOS 14, *), let killSwitch = killSwitch {
+            protocolConfiguration.includeAllNetworks = killSwitch
+        }
         return protocolConfiguration
     }
 }
@@ -92,30 +96,47 @@ extension WireGuard.ProviderConfiguration: NetworkExtensionConfiguration {
 
 extension WireGuard.ProviderConfiguration {
     public var lastError: WireGuardProviderError? {
-        get {
-            return defaults?.wireGuardLastError
-        }
-        set {
-            defaults?.wireGuardLastError = newValue
-        }
+        return defaults?.wireGuardLastError
+    }
+    
+
+    public var urlForDebugLog: URL? {
+        return defaults?.wireGuardURLForDebugLog(appGroup: appGroup)
     }
 
     private var defaults: UserDefaults? {
         return UserDefaults(suiteName: appGroup)
     }
+}
 
-    public var urlForDebugLog: URL? {
-        return FileManager.default.wireGuardURLForDebugLog(appGroup: appGroup)
+extension WireGuard.ProviderConfiguration {
+    public func _appexSetLastError(_ newValue: WireGuardProviderError?) {
+        defaults?.wireGuardLastError = newValue
     }
 
-    public var debugLog: String? {
-        return FileManager.default.wireGuardDebugLog(appGroup: appGroup)
+    public var _appexDebugLogURL: URL? {
+        guard let path = debugLogPath else {
+            return nil
+        }
+        return FileManager.default.containerURL(forSecurityApplicationGroupIdentifier: appGroup)?
+            .appendingPathComponent(path)
+    }
+
+    public func _appexSetDebugLogPath() {
+        defaults?.setValue(debugLogPath, forKey: WireGuard.ProviderConfiguration.Keys.logPath.rawValue)
     }
 }
 
-/// :nodoc:
 extension UserDefaults {
-    public var wireGuardLastError: WireGuardProviderError? {
+    public func wireGuardURLForDebugLog(appGroup: String) -> URL? {
+        guard let path = string(forKey: WireGuard.ProviderConfiguration.Keys.logPath.rawValue) else {
+            return nil
+        }
+        return FileManager.default.containerURL(forSecurityApplicationGroupIdentifier: appGroup)?
+            .appendingPathComponent(path)
+    }
+
+    public fileprivate(set) var wireGuardLastError: WireGuardProviderError? {
         get {
             guard let rawValue = string(forKey: WireGuard.ProviderConfiguration.Keys.lastError.rawValue) else {
                 return nil
@@ -129,29 +150,5 @@ extension UserDefaults {
             }
             set(newValue.rawValue, forKey: WireGuard.ProviderConfiguration.Keys.lastError.rawValue)
         }
-    }
-}
-
-/// :nodoc:
-extension FileManager {
-    public func wireGuardURLForDebugLog(appGroup: String) -> URL? {
-        return documentsURL(appGroup: appGroup)?
-            .appendingPathComponent(WireGuard.ProviderConfiguration.Filenames.debugLog.rawValue)
-    }
-
-    public func wireGuardDebugLog(appGroup: String) -> String? {
-        guard let url = wireGuardURLForDebugLog(appGroup: appGroup) else {
-            return nil
-        }
-        do {
-            return try String(contentsOf: url)
-        } catch {
-            log.error("Unable to access debug log: \(error)")
-            return nil
-        }
-    }
-
-    private func documentsURL(appGroup: String) -> URL? {
-        return containerURL(forSecurityApplicationGroupIdentifier: appGroup)
     }
 }

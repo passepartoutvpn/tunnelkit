@@ -160,7 +160,7 @@ extension OpenVPN {
             // peer info
             var extra: [String: String] = [:]
             if let dataCiphers = options.dataCiphers {
-                extra["IV_CIPHERS"] = dataCiphers.map { $0.rawValue }.joined(separator: ":")
+                extra["IV_CIPHERS"] = dataCiphers.map(\.rawValue).joined(separator: ":")
             }
             raw.appendSized(Z(CoreConfiguration.OpenVPN.peerInfo(extra: extra), nullTerminated: true))
 

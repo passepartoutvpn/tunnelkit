@@ -24,23 +24,56 @@
 //
 
 import Foundation
+import __TunnelKitUtils
 
 /// Represents an endpoint.
 public struct Endpoint: RawRepresentable, Codable, Equatable, CustomStringConvertible {
+
+    // XXX: simplistic match
+    private static let rx = NSRegularExpression("^([^\\s]+):(UDP[46]?|TCP[46]?):(\\d+)$")
+
     public let address: String
     
     public let proto: EndpointProtocol
 
-    /// :nodoc:
     public init(_ address: String, _ proto: EndpointProtocol) {
         self.address = address
         self.proto = proto
+    }
+
+    public var isIPv4: Bool {
+        var addr = in_addr()
+        let result = address.withCString {
+            inet_pton(AF_INET, $0, &addr)
+        }
+        return result > 0
+    }
+
+    public var isIPv6: Bool {
+        var addr = in_addr()
+        let result = address.withCString {
+            inet_pton(AF_INET6, $0, &addr)
+        }
+        return result > 0
+    }
+
+    public var isHostname: Bool {
+        !isIPv4 && !isIPv6
+    }
+    
+    public func withRandomPrefixLength(_ length: Int) throws -> Endpoint {
+        guard isHostname else {
+            return self
+        }
+        let prefix = try SecureRandom.data(length: length)
+        let prefixedAddress = "\(prefix.toHex()).\(address)"
+        return Endpoint(prefixedAddress, proto)
     }
     
     // MARK: RawRepresentable
     
     public init?(rawValue: String) {
-        let components = rawValue.components(separatedBy: ":")
+        let components = Self.rx.groups(in: rawValue)
         guard components.count == 3 else {
             return nil
         }
@@ -55,13 +88,13 @@ public struct Endpoint: RawRepresentable, Codable, Equatable, CustomStringConver
     }
 
     public var rawValue: String {
-        return "\(address):\(proto.socketType.rawValue):\(proto.port)"
+        "\(address):\(proto.socketType.rawValue):\(proto.port)"
     }
     
     // MARK: CustomStringConvertible
     
     public var description: String {
-        return "\(address.maskedDescription):\(proto.rawValue)"
+        "\(address.maskedDescription):\(proto.rawValue)"
     }
 }
 
@@ -74,7 +107,6 @@ public struct EndpointProtocol: RawRepresentable, Equatable, CustomStringConvert
     /// The remote port.
     public let port: UInt16
 
-    /// :nodoc:
     public init(_ socketType: SocketType, _ port: UInt16) {
         self.socketType = socketType
         self.port = port
@@ -97,13 +129,13 @@ public struct EndpointProtocol: RawRepresentable, Equatable, CustomStringConvert
     }
     
     public var rawValue: String {
-        return "\(socketType.rawValue):\(port)"
+        "\(socketType.rawValue):\(port)"
     }
     
     // MARK: CustomStringConvertible
     
     public var description: String {
-        return rawValue
+        rawValue
     }
 }
 

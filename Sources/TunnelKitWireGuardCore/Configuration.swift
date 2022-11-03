@@ -176,6 +176,18 @@ extension WireGuard {
                 $0 == Self.defaultGateway6
             }
         }
+        
+        public mutating func removeDefaultGateways(fromPeer peerIndex: Int) {
+            peers[peerIndex].allowedIPs.removeAll {
+                $0 == Self.defaultGateway4 || $0 == Self.defaultGateway6
+            }
+        }
+
+        public mutating func removeAllDefaultGateways() {
+            peers.indices.forEach {
+                removeDefaultGateways(fromPeer: $0)
+            }
+        }
 
         public mutating func addAllowedIP(_ allowedIP: String, toPeer peerIndex: Int) {
             guard let addr = IPAddressRange(from: allowedIP) else {

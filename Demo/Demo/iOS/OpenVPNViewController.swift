@@ -60,9 +60,9 @@ class OpenVPNViewController: UIViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         
-        textServer.text = "es"
-        textDomain.text = "lazerpenguin.com"
-        textPort.text = "443"
+        textServer.text = "nl-free-50"
+        textDomain.text = "protonvpn.net"
+        textPort.text = "80"
         switchTCP.isOn = false
         textUsername.text = ""
         textPassword.text = ""
@@ -147,7 +147,10 @@ class OpenVPNViewController: UIViewController {
         guard let cfg = cfg else {
             return
         }
-        textLog.text = cfg.debugLog
+        guard let url = cfg.urlForDebugLog else {
+            return
+        }
+        textLog.text = try? String(contentsOf: url)
     }
     
     func updateButton() {

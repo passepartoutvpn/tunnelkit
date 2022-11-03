@@ -9,16 +9,44 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- OpenVPN: Parse authentication requirement from `--auth-user-pass`.
-- OpenVPN: Handle multiple `--remote` options correctly.
-- OpenVPN: Explicitly enable/disable DNS/proxy settings.
+- OpenVPN: Support for `--route-nopull`. [#280](https://github.com/passepartoutvpn/tunnelkit/pull/280)
+- OpenVPN: Support for `--remote-random-hostname`. [#286](https://github.com/passepartoutvpn/tunnelkit/pull/286)
+- Use .includeAllNetworks for best-effort kill switch. [#300](https://github.com/passepartoutvpn/tunnelkit/pull/300)
 
 ### Changed
 
-- Manager package completely rewritten with Swift Concurrency.
+- Upgrade OpenSSL to 1.1.1q.
+- Use natively async methods from NetworkExtension. [#284](https://github.com/passepartoutvpn/tunnelkit/pull/284)
+- OpenVPN: Unmask PUSH_REPLY and network settings in logs.
+
+### Fixed
+
+- OpenVPN: Deal with remote options properly. [#297](https://github.com/passepartoutvpn/tunnelkit/pull/297)
+- OpenVPN: Routes from configuration file are ignored. [#278](https://github.com/passepartoutvpn/tunnelkit/issues/278)
+- IPv6 endpoints are parsed improperly. [#293](https://github.com/passepartoutvpn/tunnelkit/issues/293)
+- Fix abandoned MockVPN. [#285](https://github.com/passepartoutvpn/tunnelkit/pull/285)
+
+## 5.0.0 (2022-09-23)
+
+### Added
+
+- OpenVPN: Parse authentication requirement from `--auth-user-pass`.
+- OpenVPN: Handle multiple `--remote` options correctly.
+- OpenVPN: Explicitly enable/disable DNS/proxy settings.
+- Reconnect with current manager and configuration.
+- Customize tunnel log path.
+
+### Changed
+
+- Rewrite Manager package with Swift Concurrency.
 - WireGuard: Use entities from WireGuardKit directly.
 - Only enable on-demand if at least one rule is provided.
-- Dropped incomplete support for IPSec/IKEv2.
+- Drop incomplete support for IPSec/IKEv2.
+- Upgrade OpenSSL to 1.1.1o.
+
+### Fixed
+
+- OpenVPN: Bug in StaticKey equality comparison.
 
 ## 4.1.0 (2022-02-09)
 

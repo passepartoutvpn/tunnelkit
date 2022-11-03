@@ -328,8 +328,7 @@ public class Keychain {
     
     // MARK: Helpers
     
-    /// :nodoc:
-    public func setScope(query: inout [String: Any], context: String, userDefined: String?) {
+        public func setScope(query: inout [String: Any], context: String, userDefined: String?) {
         if let accessGroup = accessGroup {
             query[kSecAttrAccessGroup as String] = accessGroup
             #if os(macOS)

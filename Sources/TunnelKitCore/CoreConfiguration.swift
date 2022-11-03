@@ -36,9 +36,13 @@
 
 import Foundation
 
+/// Global library settings.
 public class CoreConfiguration {
+
+    /// Unique identifier of the library.
     public static let identifier = "com.algoritmico.TunnelKit"
     
+    /// Library version as seen in `Info.plist`.
     public static let version: String = {
         let bundle = Bundle(for: CoreConfiguration.self)
         guard let info = bundle.infoDictionary else {
@@ -54,15 +58,19 @@ public class CoreConfiguration {
         return info["CFBundleShortVersionString"] as? String ?? ""
     }()
 
-    // configurable
+    /// Masks private data in logs.
     public static var masksPrivateData = true
 
+    /// String representing library version.
     public static var versionIdentifier: String?
     
+    /// Enables logging of sensitive data (hardcoded to false).
     public static let logsSensitiveData = false
 }
 
 extension CustomStringConvertible {
+
+    /// Returns a masked version of `description` in case `CoreConfiguration.masksPrivateData` is `true`.
     public var maskedDescription: String {
         guard CoreConfiguration.masksPrivateData else {
             return description

@@ -39,11 +39,16 @@ import Security.SecRandom
 import CTunnelKitCore
 import __TunnelKitUtils
 
+/// Errors returned by `SecureRandom`.
 public enum SecureRandomError: Error {
+
+    /// RNG could not be initialized.
     case randomGenerator
 }
 
+/// Generates random data in a secure fashion.
 public class SecureRandom {
+
     @available(*, deprecated)
     static func uint32FromBuffer() throws -> UInt32 {
         var randomBuffer = [UInt8](repeating: 0, count: 4)

@@ -51,7 +51,6 @@ extension OpenVPN {
         /// The password.
         public let password: String
         
-        /// :nodoc
         public init(_ username: String, _ password: String) {
             self.username = username
             self.password = password
@@ -153,21 +152,35 @@ extension OpenVPN {
         case blockLocal
     }
     
-    /// XOR method
+    /// Settings that can be pulled from server.
+    public enum PullMask: String, Codable, CaseIterable {
+
+        /// Routes and gateways.
+        case routes
+        
+        /// DNS settings.
+        case dns
+        
+        /// Proxy settings.
+        case proxy
+    }
+
+    /// XOR method for obfuscation.
     public enum XORMethod: Int, Codable {
-        /// No XOR specified
+
+        /// No XOR specified.
         case none = 0
         
-        /// XOR the bytes in each buffer with the given xormask
+        /// XOR the bytes in each buffer with the given xormask.
         case xormask = 1
         
-        /// XOR each byte with its position in the packet
+        /// XOR each byte with its position in the packet.
         case xorptrpos = 2
         
-        /// Reverse the order of bytes in each buffer except for the first (abcde becomes aedcb)
+        /// Reverse the order of bytes in each buffer except for the first (abcde becomes aedcb).
         case reverse = 3
         
-        /// Performs several of the above steps (xormask -> xorptrpos -> reverse -> xorptrpos)
+        /// Performs several of the above steps (xormask -> xorptrpos -> reverse -> xorptrpos).
         case obfuscate = 4
     }
     
@@ -238,6 +251,9 @@ extension OpenVPN {
         /// Picks endpoint from `remotes` randomly.
         public var randomizeEndpoint: Bool?
         
+        /// Prepend hostnames with a number of random bytes defined in `Configuration.randomHostnamePrefixLength`.
+        public var randomizeHostnames: Bool?
+        
         /// Server is patched for the PIA VPN provider.
         public var usesPIAPatches: Bool?
         
@@ -263,6 +279,12 @@ extension OpenVPN {
         /// The settings for IPv6. `OpenVPNSession` only evaluates this server-side.
         public var ipv6: IPv6Settings?
         
+        /// The IPv4 routes if `ipv4` is nil.
+        public var routes4: [IPv4Settings.Route]?
+
+        /// The IPv6 routes if `ipv6` is nil.
+        public var routes6: [IPv6Settings.Route]?
+
         /// Set false to ignore DNS settings, even when pushed.
         public var isDNSEnabled: Bool?
         
@@ -311,6 +333,9 @@ extension OpenVPN {
         /// Policies for redirecting traffic through the VPN gateway.
         public var routingPolicies: [RoutingPolicy]?
         
+        /// Server settings that must not be pulled.
+        public var noPullMask: [PullMask]?
+
         /**
          Creates a `ConfigurationBuilder`.
          
@@ -352,6 +377,7 @@ extension OpenVPN {
                 checksSANHost: checksSANHost,
                 sanHost: sanHost,
                 randomizeEndpoint: randomizeEndpoint,
+                randomizeHostnames: randomizeHostnames,
                 usesPIAPatches: usesPIAPatches,
                 mtu: mtu,
                 authUserPass: authUserPass,
@@ -359,6 +385,8 @@ extension OpenVPN {
                 peerId: peerId,
                 ipv4: ipv4,
                 ipv6: ipv6,
+                routes4: routes4,
+                routes6: routes6,
                 isDNSEnabled: isDNSEnabled,
                 dnsProtocol: dnsProtocol,
                 dnsServers: dnsServers,
@@ -370,24 +398,25 @@ extension OpenVPN {
                 httpsProxy: httpsProxy,
                 proxyAutoConfigurationURL: proxyAutoConfigurationURL,
                 proxyBypassDomains: proxyBypassDomains,
-                routingPolicies: routingPolicies
+                routingPolicies: routingPolicies,
+                noPullMask: noPullMask
             )
         }
     }
     
     /// The immutable configuration for `OpenVPNSession`.
     public struct Configuration: Codable, Equatable {
-
-        /// :nodoc:
-        public struct Fallback {
-            public static let cipher: Cipher = .aes128cbc
+        struct Fallback {
+            static let cipher: Cipher = .aes128cbc
             
-            public static let digest: Digest = .sha1
+            static let digest: Digest = .sha1
             
-            public static let compressionFraming: CompressionFraming = .disabled
+            static let compressionFraming: CompressionFraming = .disabled
             
-            public static let compressionAlgorithm: CompressionAlgorithm = .disabled
+            static let compressionAlgorithm: CompressionAlgorithm = .disabled
         }
+        
+        private static let randomHostnamePrefixLength = 6
         
         /// - Seealso: `ConfigurationBuilder.cipher`
         public let cipher: Cipher?
@@ -449,6 +478,9 @@ extension OpenVPN {
         /// - Seealso: `ConfigurationBuilder.randomizeEndpoint`
         public let randomizeEndpoint: Bool?
         
+        /// - Seealso: `ConfigurationBuilder.randomizeHostnames`
+        public var randomizeHostnames: Bool?
+
         /// - Seealso: `ConfigurationBuilder.usesPIAPatches`
         public let usesPIAPatches: Bool?
         
@@ -469,6 +501,12 @@ extension OpenVPN {
 
         /// - Seealso: `ConfigurationBuilder.ipv6`
         public let ipv6: IPv6Settings?
+
+        /// - Seealso: `ConfigurationBuilder.routes4`
+        public let routes4: [IPv4Settings.Route]?
+
+        /// - Seealso: `ConfigurationBuilder.routes6`
+        public let routes6: [IPv6Settings.Route]?
 
         /// - Seealso: `ConfigurationBuilder.isDNSEnabled`
         public let isDNSEnabled: Bool?
@@ -506,6 +544,9 @@ extension OpenVPN {
         /// - Seealso: `ConfigurationBuilder.routingPolicies`
         public let routingPolicies: [RoutingPolicy]?
         
+        /// - Seealso: `ConfigurationBuilder.noPullMask`
+        public let noPullMask: [PullMask]?
+        
         // MARK: Shortcuts
         
         public var fallbackCipher: Cipher {
@@ -518,6 +559,41 @@ extension OpenVPN {
 
         public var fallbackCompressionFraming: CompressionFraming {
             return compressionFraming ?? Fallback.compressionFraming
+        }
+
+        public var fallbackCompressionAlgorithm: CompressionAlgorithm {
+            return compressionAlgorithm ?? Fallback.compressionAlgorithm
+        }
+
+        public var pullMask: [PullMask]? {
+            let all = PullMask.allCases
+            guard let notPulled = noPullMask else {
+                return all
+            }
+            let pulled = Array(Set(all).subtracting(notPulled))
+            return !pulled.isEmpty ? pulled : nil
+        }
+        
+        // MARK: Computed
+        
+        public var processedRemotes: [Endpoint]? {
+            guard var processedRemotes = remotes else {
+                return nil
+            }
+            if randomizeEndpoint ?? false {
+                processedRemotes.shuffle()
+            }
+            if let randomPrefixLength = (randomizeHostnames ?? false) ? Self.randomHostnamePrefixLength : nil {
+                processedRemotes = processedRemotes.compactMap {
+                    do {
+                        return try $0.withRandomPrefixLength(randomPrefixLength)
+                    } catch {
+                        log.warning("Could not prepend random prefix: \(error)")
+                        return nil
+                    }
+                }
+            }
+            return processedRemotes
         }
     }
 }
@@ -547,11 +623,13 @@ extension OpenVPN.Configuration {
         builder.keepAliveInterval = keepAliveInterval
         builder.keepAliveTimeout = keepAliveTimeout
         builder.renegotiatesAfter = renegotiatesAfter
+        builder.xorMask = xorMask
         builder.remotes = remotes
         builder.checksEKU = checksEKU
         builder.checksSANHost = checksSANHost
         builder.sanHost = sanHost
         builder.randomizeEndpoint = randomizeEndpoint
+        builder.randomizeHostnames = randomizeHostnames
         builder.usesPIAPatches = usesPIAPatches
         builder.mtu = mtu
         builder.authUserPass = authUserPass
@@ -559,6 +637,8 @@ extension OpenVPN.Configuration {
         builder.peerId = peerId
         builder.ipv4 = ipv4
         builder.ipv6 = ipv6
+        builder.routes4 = routes4
+        builder.routes6 = routes6
         builder.isDNSEnabled = isDNSEnabled
         builder.dnsProtocol = dnsProtocol
         builder.dnsServers = dnsServers
@@ -571,6 +651,7 @@ extension OpenVPN.Configuration {
         builder.proxyAutoConfigurationURL = proxyAutoConfigurationURL
         builder.proxyBypassDomains = proxyBypassDomains
         builder.routingPolicies = routingPolicies
+        builder.noPullMask = noPullMask
         builder.xorMask = xorMask
         builder.xorMethod = xorMethod
         return builder
@@ -580,93 +661,130 @@ extension OpenVPN.Configuration {
 // MARK: Encoding
 
 extension OpenVPN.Configuration {
-    public func print() {
-        guard let remotes = remotes else {
-            fatalError("No sessionConfiguration.remotes set")
+    public func print(isLocal: Bool) {
+        if isLocal {
+            guard let remotes = remotes else {
+                fatalError("No remotes set")
+            }
+            log.info("\tRemotes: \(remotes)")
         }
-        log.info("\tRemotes: \(remotes)")
-        log.info("\tCipher: \(fallbackCipher)")
-        log.info("\tDigest: \(fallbackDigest)")
-        log.info("\tCompression framing: \(fallbackCompressionFraming)")
-        log.info("\tUsername authentication: \(authUserPass ?? false)")
-        if let compressionAlgorithm = compressionAlgorithm, compressionAlgorithm != .disabled {
+
+        if !isLocal {
+            log.info("\tIPv4: \(ipv4?.description ?? "not configured")")
+            log.info("\tIPv6: \(ipv6?.description ?? "not configured")")
+        }
+        if let routes = routes4 {
+            log.info("\tRoutes (IPv4): \(routes)")
+        }
+        if let routes = routes6 {
+            log.info("\tRoutes (IPv6): \(routes)")
+        }
+
+        if let cipher = cipher {
+            log.info("\tCipher: \(cipher)")
+        } else if isLocal {
+            log.info("\tCipher: \(fallbackCipher)")
+        }
+        if let digest = digest {
+            log.info("\tDigest: \(digest)")
+        } else if isLocal {
+            log.info("\tDigest: \(fallbackDigest)")
+        }
+        if let compressionFraming = compressionFraming {
+            log.info("\tCompression framing: \(compressionFraming)")
+        } else if isLocal {
+            log.info("\tCompression framing: \(fallbackCompressionFraming)")
+        }
+        if let compressionAlgorithm = compressionAlgorithm {
             log.info("\tCompression algorithm: \(compressionAlgorithm)")
-        } else {
-            log.info("\tCompression algorithm: disabled")
+        } else if isLocal {
+            log.info("\tCompression algorithm: \(fallbackCompressionAlgorithm)")
         }
-        if let _ = clientCertificate {
-            log.info("\tClient verification: enabled")
-        } else {
-            log.info("\tClient verification: disabled")
+
+        if isLocal {
+            log.info("\tUsername authentication: \(authUserPass ?? false)")
+            if let _ = clientCertificate {
+                log.info("\tClient verification: enabled")
+            } else {
+                log.info("\tClient verification: disabled")
+            }
+            if let tlsWrap = tlsWrap {
+                log.info("\tTLS wrapping: \(tlsWrap.strategy)")
+            } else {
+                log.info("\tTLS wrapping: disabled")
+            }
+            if let tlsSecurityLevel = tlsSecurityLevel {
+                log.info("\tTLS security level: \(tlsSecurityLevel)")
+            } else {
+                log.info("\tTLS security level: default")
+            }
         }
-        if let tlsWrap = tlsWrap {
-            log.info("\tTLS wrapping: \(tlsWrap.strategy)")
-        } else {
-            log.info("\tTLS wrapping: disabled")
-        }
-        if let tlsSecurityLevel = tlsSecurityLevel {
-            log.info("\tTLS security level: \(tlsSecurityLevel)")
-        } else {
-            log.info("\tTLS security level: default")
-        }
+        
         if let keepAliveSeconds = keepAliveInterval, keepAliveSeconds > 0 {
             log.info("\tKeep-alive interval: \(keepAliveSeconds.asTimeString)")
-        } else {
+        } else if isLocal {
             log.info("\tKeep-alive interval: never")
         }
         if let keepAliveTimeoutSeconds = keepAliveTimeout, keepAliveTimeoutSeconds > 0 {
             log.info("\tKeep-alive timeout: \(keepAliveTimeoutSeconds.asTimeString)")
-        } else {
+        } else if isLocal {
             log.info("\tKeep-alive timeout: never")
         }
         if let renegotiatesAfterSeconds = renegotiatesAfter, renegotiatesAfterSeconds > 0 {
             log.info("\tRenegotiation: \(renegotiatesAfterSeconds.asTimeString)")
-        } else {
+        } else if isLocal {
             log.info("\tRenegotiation: never")
         }
         if checksEKU ?? false {
             log.info("\tServer EKU verification: enabled")
-        } else {
+        } else if isLocal {
             log.info("\tServer EKU verification: disabled")
         }
         if checksSANHost ?? false {
             log.info("\tHost SAN verification: enabled (\(sanHost ?? "-"))")
-        } else {
+        } else if isLocal {
             log.info("\tHost SAN verification: disabled")
         }
+
         if randomizeEndpoint ?? false {
             log.info("\tRandomize endpoint: true")
         }
+        if randomizeHostnames ?? false {
+            log.info("\tRandomize hostnames: true")
+        }
+
         if let routingPolicies = routingPolicies {
-            log.info("\tGateway: \(routingPolicies.map { $0.rawValue })")
-        } else {
+            log.info("\tGateway: \(routingPolicies.map(\.rawValue))")
+        } else if isLocal {
             log.info("\tGateway: not configured")
         }
+
         switch dnsProtocol {
         case .https:
             if let dnsHTTPSURL = dnsHTTPSURL {
                 log.info("\tDNS over HTTPS: \(dnsHTTPSURL.maskedDescription)")
-            } else {
+            } else if isLocal {
                 log.info("\tDNS: not configured")
             }
 
         case .tls:
             if let dnsTLSServerName = dnsTLSServerName {
                 log.info("\tDNS over TLS: \(dnsTLSServerName.maskedDescription)")
-            } else {
+            } else if isLocal {
                 log.info("\tDNS: not configured")
             }
 
         default:
             if let dnsServers = dnsServers, !dnsServers.isEmpty {
                 log.info("\tDNS: \(dnsServers.maskedDescription)")
-            } else {
+            } else if isLocal {
                 log.info("\tDNS: not configured")
             }
         }
         if let searchDomains = searchDomains, !searchDomains.isEmpty {
             log.info("\tSearch domains: \(searchDomains.maskedDescription)")
         }
+
         if let httpProxy = httpProxy {
             log.info("\tHTTP proxy: \(httpProxy.maskedDescription)")
         }
@@ -679,10 +797,15 @@ extension OpenVPN.Configuration {
         if let proxyBypassDomains = proxyBypassDomains {
             log.info("\tProxy bypass domains: \(proxyBypassDomains.maskedDescription)")
         }
+
         if let mtu = mtu {
             log.info("\tMTU: \(mtu)")
-        } else {
+        } else if isLocal {
             log.info("\tMTU: default")
+        }
+
+        if isLocal, let noPullMask = noPullMask {
+            log.info("\tNot pulled: \(noPullMask.map(\.rawValue))")
         }
     }
 }

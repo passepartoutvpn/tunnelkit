@@ -91,7 +91,7 @@ class ResolvedRemote: CustomStringConvertible {
     // MARK: CustomStringConvertible
     
     var description: String {
-        return "{\(originalEndpoint.maskedDescription), resolved: \(resolvedEndpoints.maskedDescription)}"
+        "{\(originalEndpoint.maskedDescription), resolved: \(resolvedEndpoints.maskedDescription)}"
     }
 }
 

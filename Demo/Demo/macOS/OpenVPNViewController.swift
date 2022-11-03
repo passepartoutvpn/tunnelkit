@@ -56,9 +56,9 @@ class OpenVPNViewController: NSViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         
-        textServer.stringValue = "es"
-        textDomain.stringValue = "lazerpenguin.com"
-        textPort.stringValue = "443"
+        textServer.stringValue = "nl-free-50"
+        textDomain.stringValue = "protonvpn.net"
+        textPort.stringValue = "80"
         textUsername.stringValue = ""
         textPassword.stringValue = ""
         

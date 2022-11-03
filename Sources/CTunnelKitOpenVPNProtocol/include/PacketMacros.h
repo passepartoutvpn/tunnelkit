@@ -115,8 +115,7 @@ static inline void PacketSwap(uint8_t *ptr, NSInteger len1, NSInteger len2)
 
 static inline void PacketSwapCopy(uint8_t *dst, NSData *src, NSInteger len1, NSInteger len2)
 {
-    // XXX: this line segfaults Xcode 13.3 on Archive
-//    NSCAssert(src.length >= len1 + len2, @"src is smaller than expected");
+    NSCAssert(src.length >= len1 + len2, @"src is smaller than expected");
     memcpy(dst, src.bytes + len1, len2);
     memcpy(dst + len2, src.bytes, len1);
     const NSInteger preambleLength = len1 + len2;

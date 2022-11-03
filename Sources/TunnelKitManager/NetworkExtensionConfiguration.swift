@@ -26,12 +26,16 @@
 import Foundation
 import NetworkExtension
 
-/// :nodoc:
+/// Extra configuration parameters to attach optionally to a `NetworkExtensionConfiguration`.
 public struct NetworkExtensionExtra {
+
+    /// A password reference to the keychain.
     public var passwordReference: Data?
 
+    /// A set of on-demand rules.
     public var onDemandRules: [NEOnDemandRule] = []
 
+    /// Disconnects on sleep if `true`.
     public var disconnectsOnSleep = false
     
     public init() {

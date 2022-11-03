@@ -37,10 +37,10 @@ public struct IPv4Settings: Codable, Equatable, CustomStringConvertible {
         /// The address mask.
         public let mask: String
         
-        /// The address of the gateway (uses default gateway if not set).
-        public let gateway: String
+        /// The address of the gateway (falls back to global gateway).
+        public let gateway: String?
         
-        public init(_ destination: String, _ mask: String?, _ gateway: String) {
+        public init(_ destination: String, _ mask: String?, _ gateway: String?) {
             self.destination = destination
             self.mask = mask ?? "255.255.255.255"
             self.gateway = gateway
@@ -49,7 +49,7 @@ public struct IPv4Settings: Codable, Equatable, CustomStringConvertible {
         // MARK: CustomStringConvertible
         
         public var description: String {
-            return "{\(destination.maskedDescription)/\(mask) \(gateway.maskedDescription)}"
+            "{\(destination)/\(mask) \(gateway?.description ?? "*")}"
         }
     }
     
@@ -63,8 +63,17 @@ public struct IPv4Settings: Codable, Equatable, CustomStringConvertible {
     public let defaultGateway: String
     
     /// The additional routes.
+    @available(*, deprecated, message: "Store routes separately")
     public let routes: [Route]
     
+    public init(address: String, addressMask: String, defaultGateway: String) {
+        self.address = address
+        self.addressMask = addressMask
+        self.defaultGateway = defaultGateway
+        self.routes = []
+    }
+
+    @available(*, deprecated, message: "Store routes separately")
     public init(address: String, addressMask: String, defaultGateway: String, routes: [Route]) {
         self.address = address
         self.addressMask = addressMask
@@ -75,6 +84,6 @@ public struct IPv4Settings: Codable, Equatable, CustomStringConvertible {
     // MARK: CustomStringConvertible
     
     public var description: String {
-        return "addr \(address.maskedDescription) netmask \(addressMask) gw \(defaultGateway.maskedDescription) routes \(routes.map { $0.maskedDescription })"
+        "addr \(address) netmask \(addressMask) gw \(defaultGateway)"
     }
 }

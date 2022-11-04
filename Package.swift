@@ -161,6 +161,11 @@ let package = Package(
             name: "TunnelKitCoreTests",
             dependencies: [
                 "TunnelKitCore"
+            ],
+            exclude: [
+                "RandomTests.swift",
+                "RawPerformanceTests.swift",
+                "RoutingTests.swift"
             ]),
         .testTarget(
             name: "TunnelKitOpenVPNTests",
@@ -168,6 +173,10 @@ let package = Package(
                 "TunnelKitOpenVPNCore",
                 "TunnelKitOpenVPNAppExtension",
                 "TunnelKitLZO"
+            ],
+            exclude: [
+                "DataPathPerformanceTests.swift",
+                "EncryptionPerformanceTests.swift"
             ],
             resources: [
                 .process("Resources")

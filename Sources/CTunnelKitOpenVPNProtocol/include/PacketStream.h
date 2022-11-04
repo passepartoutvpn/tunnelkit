@@ -24,14 +24,24 @@
 //
 
 #import <Foundation/Foundation.h>
+#import "XORMethodNative.h"
 
 NS_ASSUME_NONNULL_BEGIN
 
 @interface PacketStream : NSObject
 
-+ (NSArray<NSData *> *)packetsFromStream:(NSData *)stream until:(NSInteger *)until xorMask:(NSData *)xorMask xorMethod:(int)xorMethod mode:(int)mode;
-+ (NSData *)streamFromPacket:(NSData *)packet xorMask:(NSData *)xorMask xorMethod:(int)xorMethod mode:(int)mode;
-+ (NSData *)streamFromPackets:(NSArray<NSData *> *)packets xorMask:(NSData *)xorMask xorMethod:(int)xorMethod mode:(int)mode;
++ (NSArray<NSData *> *)packetsFromInboundStream:(NSData *)stream
+                                          until:(NSInteger *)until
+                                      xorMethod:(XORMethodNative)xorMethod
+                                        xorMask:(nullable NSData *)xorMask;
+
++ (NSData *)outboundStreamFromPacket:(NSData *)packet
+                           xorMethod:(XORMethodNative)xorMethod
+                             xorMask:(nullable NSData *)xorMask;
+
++ (NSData *)outboundStreamFromPackets:(NSArray<NSData *> *)packets
+                            xorMethod:(XORMethodNative)xorMethod
+                              xorMask:(nullable NSData *)xorMask;
 
 @end
 

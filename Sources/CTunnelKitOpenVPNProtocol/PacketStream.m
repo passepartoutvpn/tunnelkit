@@ -24,82 +24,16 @@
 //
 
 #import "PacketStream.h"
+#import "XOR.h"
 
 static const NSInteger PacketStreamHeaderLength = sizeof(uint16_t);
 
 @implementation PacketStream
 
-+ (void)xormask:(uint8_t *)dst src:(uint8_t *)src xorMask:(NSData *)xorMask length:(int)length
-{
-    if (xorMask.length > 0) {
-        for (int i = 0; i < length; ++i) {
-            dst[i] = src[i] ^ ((uint8_t *)(xorMask.bytes))[i % xorMask.length];
-        }
-        return;
-    }
-    memcpy(dst, src, length);
-}
-
-+ (void)xorptrpos:(uint8_t *)dst src:(uint8_t *)src length:(int)length
-{
-    for (int i = 0; i < length; ++i) {
-        dst[i] = src[i] ^ (i + 1);
-    }
-}
-
-+ (void)reverse:(uint8_t *)dst src:(uint8_t *)src length:(int)length
-{
-    int start = 1;
-    int end = length - 1;
-    uint8_t temp = 0;
-    dst[0] = src[0];
-    while (start < end) {
-        temp = src[start];
-        dst[start] = src[end];
-        dst[end] = temp;
-        start++;
-        end--;
-    }
-    if (start == end) {
-        dst[start] = src[start];
-    }
-}
-
-+ (void)memcpyXor:(uint8_t *)dst src:(NSData *)src xorMask:(NSData *)xorMask xorMethod:(int)xorMethod mode:(int)mode
-{
-    uint8_t *source = (uint8_t *) src.bytes;
-    switch (xorMethod) {
-        case 0:
-            memcpy(dst, source, src.length);
-            break;
-        case 1:
-            [PacketStream xormask:dst src:source xorMask:xorMask length:src.length];
-            break;
-        case 2:
-            [PacketStream xorptrpos:dst src:source length:src.length];
-            break;
-        case 3:
-            [PacketStream reverse:dst src:source length:src.length];
-            break;
-        case 4:
-            // 0 = read; 1 = write
-            if (mode == 0) {
-                [PacketStream xormask:dst src:source xorMask:xorMask length:src.length];
-                [PacketStream xorptrpos:dst src:dst length:src.length];
-                [PacketStream reverse:dst src:dst length:src.length];
-                [PacketStream xorptrpos:dst src:dst length:src.length];
-            } else {
-                [PacketStream xorptrpos:dst src:source length:src.length];
-                [PacketStream reverse:dst src:dst length:src.length];
-                [PacketStream xorptrpos:dst src:dst length:src.length];
-                [PacketStream xormask:dst src:dst xorMask:xorMask length:src.length];
-            }
-        default:
-            break;
-    }
-}
-
-+ (NSArray<NSData *> *)packetsFromStream:(NSData *)stream until:(NSInteger *)until xorMask:(NSData *)xorMask xorMethod:(int)xorMethod mode:(int)mode
++ (NSArray<NSData *> *)packetsFromInboundStream:(NSData *)stream
+                                          until:(NSInteger *)until
+                                      xorMethod:(XORMethodNative)xorMethod
+                                        xorMask:(NSData *)xorMask
 {
     NSInteger ni = 0;
     NSMutableArray<NSData *> *parsed = [[NSMutableArray alloc] init];
@@ -113,7 +47,7 @@ static const NSInteger PacketStreamHeaderLength = sizeof(uint16_t);
         }
         NSData *packet = [stream subdataWithRange:NSMakeRange(start, packlen)];
         uint8_t* packetBytes = (uint8_t*) packet.bytes;
-        [PacketStream memcpyXor:packetBytes src:packet xorMask:xorMask xorMethod:xorMethod mode:mode];
+        xor_memcpy(packetBytes, packet, xorMethod, xorMask, false);
         [parsed addObject:packet];
         ni = end;
     }
@@ -123,19 +57,23 @@ static const NSInteger PacketStreamHeaderLength = sizeof(uint16_t);
     return parsed;
 }
 
-+ (NSData *)streamFromPacket:(NSData *)packet xorMask:(NSData *)xorMask xorMethod:(int)xorMethod mode:(int)mode
++ (NSData *)outboundStreamFromPacket:(NSData *)packet
+                           xorMethod:(XORMethodNative)xorMethod
+                             xorMask:(NSData *)xorMask
 {
     NSMutableData *raw = [[NSMutableData alloc] initWithLength:(PacketStreamHeaderLength + packet.length)];
 
     uint8_t *ptr = raw.mutableBytes;
     *(uint16_t *)ptr = CFSwapInt16HostToBig(packet.length);
     ptr += PacketStreamHeaderLength;
-    [PacketStream memcpyXor:ptr src:packet xorMask:xorMask xorMethod:xorMethod mode:mode];
+    xor_memcpy(ptr, packet, xorMethod, xorMask, true);
     
     return raw;
 }
 
-+ (NSData *)streamFromPackets:(NSArray<NSData *> *)packets xorMask:(NSData *)xorMask xorMethod:(int)xorMethod mode:(int)mode
++ (NSData *)outboundStreamFromPackets:(NSArray<NSData *> *)packets
+                            xorMethod:(XORMethodNative)xorMethod
+                              xorMask:(NSData *)xorMask
 {
     NSInteger streamLength = 0;
     for (NSData *p in packets) {
@@ -147,7 +85,7 @@ static const NSInteger PacketStreamHeaderLength = sizeof(uint16_t);
     for (NSData *packet in packets) {
         *(uint16_t *)ptr = CFSwapInt16HostToBig(packet.length);
         ptr += PacketStreamHeaderLength;
-        [PacketStream memcpyXor:ptr src:packet xorMask:xorMask xorMethod:xorMethod mode:mode];
+        xor_memcpy(ptr, packet, xorMethod, xorMask, true);
         ptr += packet.length;
     }
     return raw;

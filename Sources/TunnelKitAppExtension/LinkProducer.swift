@@ -32,7 +32,8 @@ public protocol LinkProducer {
     /**
      Returns a `LinkInterface`.
  
-     - Parameter xorMask: The XOR mask.
+     - Parameter userObject: Optional user data.
+     - Returns: A  generic `LinkInterface`.
      **/
-    func link(xorMask: Data?, xorMethod: Int?) -> LinkInterface
+    func link(userObject: Any?) -> LinkInterface
 }

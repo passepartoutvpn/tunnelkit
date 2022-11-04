@@ -65,8 +65,6 @@ extension OpenVPN {
             
             static let renegSec = NSRegularExpression("^reneg-sec +\\d+")
             
-            static let xorInfo = NSRegularExpression("^scramble +(xormask|xorptrpos|reverse|obfuscate)[\\s]?([^\\s]+)?")
-            
             static let blockBegin = NSRegularExpression("^<[\\w\\-]+>")
             
             static let blockEnd = NSRegularExpression("^<\\/[\\w\\-]+>")
@@ -120,7 +118,11 @@ extension OpenVPN {
             static let redirectGateway = NSRegularExpression("^redirect-gateway.*")
 
             static let routeNoPull = NSRegularExpression("^route-nopull")
+            
+            // MARK: Extra
 
+            static let xorInfo = NSRegularExpression("^scramble +(xormask|xorptrpos|reverse|obfuscate)[\\s]?([^\\s]+)?")
+            
             // MARK: Unsupported
             
 //            static let fragment = NSRegularExpression("^fragment +\\d+")
@@ -266,8 +268,6 @@ extension OpenVPN {
             var optKeepAliveSeconds: TimeInterval?
             var optKeepAliveTimeoutSeconds: TimeInterval?
             var optRenegotiateAfterSeconds: TimeInterval?
-            var optXorMethod: XORMethod?
-            var optXorMask: Data?
             //
             var optDefaultProto: SocketType?
             var optDefaultPort: UInt16?
@@ -295,6 +295,8 @@ extension OpenVPN {
             var optProxyBypass: [String]?
             var optRedirectGateway: Set<RedirectGateway>?
             var optRouteNoPull: Bool?
+            //
+            var optXorMethod: XORMethod?
 
             log.verbose("Configuration file:")
             for line in lines {
@@ -519,31 +521,6 @@ extension OpenVPN {
                     }
                     optRenegotiateAfterSeconds = TimeInterval(arg)
                 }
-                Regex.xorInfo.enumerateSpacedArguments(in: line) {
-                    isHandled = true
-                    if $0.count >= 1 {
-                        switch $0[0] {
-                        case "xormask":
-                            optXorMethod = .xormask
-
-                        case "reverse":
-                            optXorMethod = .reverse
-
-                        case "xorptrpos":
-                            optXorMethod = .xorptrpos
-
-                        case "obfuscate":
-                            optXorMethod = .obfuscate
-
-                        default:
-                            optXorMethod = OpenVPN.XORMethod.none
-                        }
-                    }
-                    if $0.count != 2 {
-                        return
-                    }
-                    optXorMask = $0[1].data(using: .utf8)
-                }
                 
                 // MARK: Client
                 
@@ -731,7 +708,37 @@ extension OpenVPN {
                 Regex.routeNoPull.enumerateSpacedComponents(in: line) { _ in
                     optRouteNoPull = true
                 }
+                
+                // MARK: Extra
 
+                Regex.xorInfo.enumerateSpacedArguments(in: line) {
+                    isHandled = true
+                    guard !$0.isEmpty else {
+                        return
+                    }
+
+                    switch $0[0] {
+                    case "xormask":
+                        if $0.count > 1, let mask = $0[1].data(using: .utf8) {
+                            optXorMethod = .xormask(mask: mask)
+                        }
+
+                    case "xorptrpos":
+                        optXorMethod = .xorptrpos
+
+                    case "reverse":
+                        optXorMethod = .reverse
+
+                    case "obfuscate":
+                        if $0.count > 1, let mask = $0[1].data(using: .utf8) {
+                            optXorMethod = .obfuscate(mask: mask)
+                        }
+
+                    default:
+                        return
+                    }
+                }
+                
                 //
                 
                 if let error = unsupportedError {
@@ -840,8 +847,6 @@ extension OpenVPN {
             sessionBuilder.randomizeEndpoint = optRandomizeEndpoint
             sessionBuilder.randomizeHostnames = optRandomizeHostnames
             sessionBuilder.mtu = optMTU
-            sessionBuilder.xorMethod = optXorMethod
-            sessionBuilder.xorMask = optXorMask
             
             // MARK: Server
             
@@ -958,6 +963,10 @@ extension OpenVPN {
                 }
                 sessionBuilder.routingPolicies = [RoutingPolicy](policies)
             }
+            
+            // MARK: Extra
+            
+            sessionBuilder.xorMethod = optXorMethod
 
             //
             

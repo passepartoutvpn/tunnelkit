@@ -1,8 +1,8 @@
 //
-//  NEUDPLink.swift
+//  XORMethodNative.h
 //  TunnelKit
 //
-//  Created by Tejas Mehta on 5/24/22.
+//  Created by Davide De Rosa on 11/4/22.
 //  Copyright (c) 2022 Davide De Rosa. All rights reserved.
 //
 //  https://github.com/passepartoutvpn
@@ -23,10 +23,12 @@
 //  along with TunnelKit.  If not, see <http://www.gnu.org/licenses/>.
 //
 
-import Foundation
+#import <Foundation/Foundation.h>
 
-/// Represents whether an operation is reading or writing
-enum Mode: Int {
-    case read = 0
-    case write = 1
-}
+typedef NS_ENUM(NSInteger, XORMethodNative) {
+    XORMethodNativeNone,
+    XORMethodNativeMask,
+    XORMethodNativePtrPos,
+    XORMethodNativeReverse,
+    XORMethodNativeObfuscate
+};

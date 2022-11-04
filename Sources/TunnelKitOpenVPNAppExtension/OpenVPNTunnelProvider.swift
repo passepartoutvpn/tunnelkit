@@ -408,10 +408,10 @@ extension OpenVPNTunnelProvider: GenericSocketDelegate {
             return
         }
         if session.canRebindLink() {
-            session.rebindLink(producer.link(xorMask: cfg.configuration.xorMask, xorMethod: cfg.configuration.xorMethod?.rawValue))
+            session.rebindLink(producer.link(userObject: cfg.configuration.xorMethod))
             reasserting = false
         } else {
-            session.setLink(producer.link(xorMask: cfg.configuration.xorMask, xorMethod: cfg.configuration.xorMethod?.rawValue))
+            session.setLink(producer.link(userObject: cfg.configuration.xorMethod))
         }
     }
     

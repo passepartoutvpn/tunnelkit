@@ -26,6 +26,7 @@
 import XCTest
 import TunnelKitCore
 import TunnelKitOpenVPNProtocol
+import CTunnelKitOpenVPNProtocol
 
 final class XORTests: XCTestCase {
     private let mask = Data(hex: "f76dab30")
@@ -58,6 +59,14 @@ final class XORTests: XCTestCase {
         processor.assertReversible(try SecureRandom.data(length: 1000))
     }
 
+    func testPacketStream() throws {
+        let data = try SecureRandom.data(length: 10000)
+        PacketStream.assertReversible(data, method: .mask, mask: mask)
+        PacketStream.assertReversible(data, method: .ptrPos)
+        PacketStream.assertReversible(data, method: .reverse)
+        PacketStream.assertReversible(data, method: .obfuscate, mask: mask)
+    }
+    
     func testPerformanceExample() throws {
         // This is an example of a performance test case.
         self.measure {
@@ -71,5 +80,15 @@ private extension XORProcessor {
     func assertReversible(_ data: Data) {
         let xored = processPacket(data, outbound: true)
         XCTAssertEqual(processPacket(xored, outbound: false), data)
+    }
+}
+
+private extension PacketStream {
+    static func assertReversible(_ data: Data, method: XORMethodNative, mask: Data? = nil) {
+        var until = 0
+        let outStream = PacketStream.outboundStream(fromPacket: data, xorMethod: method, xorMask: mask)
+        let inStream = PacketStream.packets(fromInboundStream: outStream, until: &until, xorMethod: method, xorMask: mask)
+        let originalData = Data(inStream.joined())
+        XCTAssertEqual(data.toHex(), originalData.toHex())
     }
 }

@@ -66,14 +66,6 @@ final class XORTests: XCTestCase {
         PacketStream.assertReversible(data, method: .reverse)
         PacketStream.assertReversible(data, method: .obfuscate, mask: mask)
     }
-    
-    func testPerformanceExample() throws {
-        // This is an example of a performance test case.
-        self.measure {
-            // Put the code you want to measure the time of here.
-        }
-    }
-
 }
 
 private extension XORProcessor {

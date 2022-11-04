@@ -6,6 +6,8 @@ on:
       - "master"
     paths-ignore:
       - "*.md"
+  pull_request:
+    types: [ opened, synchronize ]
 
 jobs:
   run_tests:

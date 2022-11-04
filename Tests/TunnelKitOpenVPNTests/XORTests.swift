@@ -61,6 +61,7 @@ final class XORTests: XCTestCase {
 
     func testPacketStream() throws {
         let data = try SecureRandom.data(length: 10000)
+        PacketStream.assertReversible(data, method: .none)
         PacketStream.assertReversible(data, method: .mask, mask: mask)
         PacketStream.assertReversible(data, method: .ptrPos)
         PacketStream.assertReversible(data, method: .reverse)

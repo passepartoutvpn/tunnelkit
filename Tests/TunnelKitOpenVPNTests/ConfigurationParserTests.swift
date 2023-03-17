@@ -64,6 +64,8 @@ class ConfigurationParserTests: XCTestCase {
         let lines = [
             "dhcp-option DNS 8.8.8.8",
             "dhcp-option DNS6 ffff::1",
+            "dhcp-option DOMAIN first-domain.net",
+            "dhcp-option DOMAIN second-domain.org",
             "dhcp-option DOMAIN-SEARCH fake-main.net",
             "dhcp-option DOMAIN-SEARCH main.net",
             "dhcp-option DOMAIN-SEARCH one.com",
@@ -77,6 +79,7 @@ class ConfigurationParserTests: XCTestCase {
         
         let parsed = try! OpenVPN.ConfigurationParser.parsed(fromLines: lines).configuration
         XCTAssertEqual(parsed.dnsServers, ["8.8.8.8", "ffff::1"])
+        XCTAssertEqual(parsed.dnsDomain, "second-domain.org")
         XCTAssertEqual(parsed.searchDomains, ["fake-main.net", "main.net", "one.com", "two.com"])
         XCTAssertEqual(parsed.httpProxy?.address, "1.2.3.4")
         XCTAssertEqual(parsed.httpProxy?.port, 8081)

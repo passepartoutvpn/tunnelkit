@@ -331,6 +331,13 @@ open class OpenVPNTunnelProvider: NEPacketTunnelProvider {
     }
     
     private func disposeTunnel(error: Error?) {
+        log.info("Dispose tunnel in \(reconnectionDelay) milliseconds...")
+        tunnelQueue.asyncAfter(deadline: .now() + .milliseconds(reconnectionDelay)) { [weak self] in
+            self?.reallyDisposeTunnel(error: error)
+        }
+    }
+
+    private func reallyDisposeTunnel(error: Error?) {
         flushLog()
 
         // failed to start

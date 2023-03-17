@@ -275,6 +275,9 @@ extension OpenVPN {
         /// The server name if `dnsProtocol = .tls`.
         public var dnsTLSServerName: String?
 
+        /// The main domain name.
+        public var dnsDomain: String?
+
         /// The search domain.
         @available(*, deprecated, message: "Use searchDomains instead")
         public var searchDomain: String? {
@@ -287,7 +290,7 @@ extension OpenVPN {
             }
         }
 
-        /// The search domains. The first one is interpreted as the main domain name.
+        /// The search domains.
         public var searchDomains: [String]?
 
         /// The Proxy Auto-Configuration (PAC) url.
@@ -370,6 +373,7 @@ extension OpenVPN {
                 dnsServers: dnsServers,
                 dnsHTTPSURL: dnsHTTPSURL,
                 dnsTLSServerName: dnsTLSServerName,
+                dnsDomain: dnsDomain,
                 searchDomains: searchDomains,
                 isProxyEnabled: isProxyEnabled,
                 httpProxy: httpProxy,
@@ -496,6 +500,9 @@ extension OpenVPN {
         /// - Seealso: `ConfigurationBuilder.dnsTLSServerName`
         public let dnsTLSServerName: String?
         
+        /// - Seealso: `ConfigurationBuilder.dnsDomain`
+        public let dnsDomain: String?
+
         /// - Seealso: `ConfigurationBuilder.searchDomains`
         public let searchDomains: [String]?
 
@@ -619,6 +626,7 @@ extension OpenVPN.Configuration {
         builder.dnsServers = dnsServers
         builder.dnsHTTPSURL = dnsHTTPSURL
         builder.dnsTLSServerName = dnsTLSServerName
+        builder.dnsDomain = dnsDomain
         builder.searchDomains = searchDomains
         builder.isProxyEnabled = isProxyEnabled
         builder.httpProxy = httpProxy
@@ -754,6 +762,9 @@ extension OpenVPN.Configuration {
             } else if isLocal {
                 log.info("\tDNS: not configured")
             }
+        }
+        if let dnsDomain = dnsDomain, !dnsDomain.isEmpty {
+            log.info("\tDNS domain: \(dnsDomain.maskedDescription)")
         }
         if let searchDomains = searchDomains, !searchDomains.isEmpty {
             log.info("\tSearch domains: \(searchDomains.maskedDescription)")

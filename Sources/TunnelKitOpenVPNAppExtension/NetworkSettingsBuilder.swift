@@ -128,6 +128,14 @@ extension NetworkSettingsBuilder {
         return servers
     }
     
+    private var dnsDomain: String? {
+        var domain = localOptions.dnsDomain
+        if pullDNS, let remoteDomain = remoteOptions.dnsDomain {
+            domain = remoteDomain
+        }
+        return domain
+    }
+
     private var allDNSSearchDomains: [String] {
         var searchDomains = localOptions.searchDomains ?? []
         if pullDNS, let remoteSearchDomains = remoteOptions.searchDomains {
@@ -275,10 +283,14 @@ extension NetworkSettingsBuilder {
             dnsSettings?.matchDomains = [""]
         }
 
+        if let domain = dnsDomain {
+            log.info("DNS: Using domain: \(domain)")
+            dnsSettings?.domainName = domain
+        }
+
         let searchDomains = allDNSSearchDomains
         if !searchDomains.isEmpty {
-            log.info("DNS: Using search domains \(searchDomains)")
-            dnsSettings?.domainName = searchDomains.first
+            log.info("DNS: Using search domains: \(searchDomains)")
             dnsSettings?.searchDomains = searchDomains
             if !isGateway {
                 dnsSettings?.matchDomains = dnsSettings?.searchDomains

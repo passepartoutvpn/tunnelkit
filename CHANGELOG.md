@@ -24,6 +24,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - OpenVPN: Deal with remote options properly. [#297](https://github.com/passepartoutvpn/tunnelkit/pull/297)
 - OpenVPN: Routes from configuration file are ignored. [#278](https://github.com/passepartoutvpn/tunnelkit/issues/278)
+- OpenVPN: Split DNS domain and search domains. [#313](https://github.com/passepartoutvpn/tunnelkit/pulls/313)
 - IPv6 endpoints are parsed improperly. [#293](https://github.com/passepartoutvpn/tunnelkit/issues/293)
 - Fix abandoned MockVPN. [#285](https://github.com/passepartoutvpn/tunnelkit/pull/285)
 

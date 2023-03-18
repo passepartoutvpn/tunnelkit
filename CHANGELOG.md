@@ -9,7 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- OpenVPN: Full implementation of Tunnelblick XOR patch (tmthecoder). [#255][https://github.com/passepartoutvpn/tunnelkit/pull/255]
+- WireGuard: DoH/DoT options. [#314](https://github.com/passepartoutvpn/tunnelkit/pull/314)
+- OpenVPN: Full implementation of Tunnelblick XOR patch (tmthecoder). [#255](https://github.com/passepartoutvpn/tunnelkit/pull/255)
 - OpenVPN: Support for `--route-nopull`. [#280](https://github.com/passepartoutvpn/tunnelkit/pull/280)
 - OpenVPN: Support for `--remote-random-hostname`. [#286](https://github.com/passepartoutvpn/tunnelkit/pull/286)
 - Use .includeAllNetworks for best-effort kill switch. [#300](https://github.com/passepartoutvpn/tunnelkit/pull/300)

@@ -24,8 +24,8 @@
         "repositoryURL": "https://github.com/passepartoutvpn/wireguard-apple",
         "state": {
           "branch": null,
-          "revision": "d3b8f1ac6f3361d69bd3daf8aee3c43012c6ec0b",
-          "version": "1.0.16"
+          "revision": "cbcbf4369e1852fdf3398f9fbb49a26cfff4c97f",
+          "version": null
         }
       }
     ]

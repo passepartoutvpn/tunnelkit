@@ -26,17 +26,9 @@
 import Foundation
 import WireGuardKit
 
-public struct ConfigurationError: Error {
-    let parseError: TunnelConfiguration.ParseError
-}
-
 extension WireGuard.Configuration {
     public init(wgQuickConfig: String) throws {
-        do {
-            tunnelConfiguration = try TunnelConfiguration(fromWgQuickConfig: wgQuickConfig)
-        } catch let parseError as TunnelConfiguration.ParseError {
-            throw ConfigurationError(parseError: parseError)
-        }
+        tunnelConfiguration = try TunnelConfiguration(fromWgQuickConfig: wgQuickConfig)
     }
 
     public func asWgQuickConfig() -> String {

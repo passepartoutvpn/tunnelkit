@@ -24,9 +24,8 @@
 //
 
 import Foundation
+import WireGuardKit
 
 extension WireGuard {
-    public enum ConfigurationError: Error {
-        case invalidKey
-    }
+    public typealias ConfigurationError = TunnelConfiguration.ParseError
 }

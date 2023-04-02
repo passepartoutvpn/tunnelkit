@@ -77,7 +77,7 @@ extension WireGuard {
 
         public init(_ base64PrivateKey: String) throws {
             guard let privateKey = PrivateKey(base64Key: base64PrivateKey) else {
-                throw WireGuard.ConfigurationError.invalidKey
+                throw WireGuard.ConfigurationError.interfaceHasInvalidPrivateKey(base64PrivateKey)
             }
             self.init(privateKey)
         }
@@ -164,7 +164,7 @@ extension WireGuard {
 
         public mutating func addPeer(_ base64PublicKey: String, endpoint: String, allowedIPs: [String] = []) throws {
             guard let publicKey = PublicKey(base64Key: base64PublicKey) else {
-                throw WireGuard.ConfigurationError.invalidKey
+                throw WireGuard.ConfigurationError.peerHasInvalidPublicKey(base64PublicKey)
             }
             var peer = PeerConfiguration(publicKey: publicKey)
             peer.endpoint = Endpoint(from: endpoint)
@@ -174,7 +174,7 @@ extension WireGuard {
 
         public mutating func setPreSharedKey(_ base64Key: String, ofPeer peerIndex: Int) throws {
             guard let preSharedKey = PreSharedKey(base64Key: base64Key) else {
-                throw WireGuard.ConfigurationError.invalidKey
+                throw WireGuard.ConfigurationError.peerHasInvalidPreSharedKey(base64Key)
             }
             peers[peerIndex].preSharedKey = preSharedKey
         }

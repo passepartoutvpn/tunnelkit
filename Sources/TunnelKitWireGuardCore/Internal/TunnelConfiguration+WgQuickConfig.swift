@@ -13,7 +13,7 @@ extension TunnelConfiguration {
         case notInASection
     }
 
-    enum ParseError: Error {
+    public enum ParseError: Error {
         case invalidLine(String.SubSequence)
         case noInterface
         case multipleInterfaces

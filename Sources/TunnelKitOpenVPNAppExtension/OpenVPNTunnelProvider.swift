@@ -391,7 +391,7 @@ open class OpenVPNTunnelProvider: NEPacketTunnelProvider {
         self.setDataCount(dataCount)
     }
     
-    func setDataCount(_ dataCount: DataCount?) {
+    open func setDataCount(_ dataCount: DataCount?) {
         cfg._appexSetDataCount(dataCount)
     }
     

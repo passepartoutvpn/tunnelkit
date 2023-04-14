@@ -26,7 +26,7 @@
 import Foundation
 
 /// A pair of received/sent bytes count.
-public struct DataCount: Equatable {
+public struct DataCount: Equatable, Codable {
 
     /// Received bytes count.
     public let received: UInt
@@ -38,4 +38,10 @@ public struct DataCount: Equatable {
         self.received = received
         self.sent = sent
     }
+    
+    enum CodingKeys: CodingKey {
+        case received
+        case sent
+    }
+    
 }

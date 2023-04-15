@@ -63,6 +63,10 @@ public protocol OpenVPNSessionDelegate: AnyObject {
      - Seealso: `OpenVPNSession.reconnect(...)`
      */
     func sessionDidStop(_: OpenVPNSession, withError error: Error?, shouldReconnect: Bool)
+    
+    func didDataReceived(_ count: Int)
+    func didDataSent(_ count: Int)
+    
 }
 
 /// Provides methods to set up and maintain an OpenVPN session.
@@ -1130,7 +1134,7 @@ public class OpenVPNSession: Session {
 
     // Ruby: handle_data_pkt
     private func handleDataPackets(_ packets: [Data], key: OpenVPN.SessionKey) {
-        controlChannel.addReceivedDataCount(packets.flatCount)
+        addReceivedDataCount(packets.flatCount)
         do {
             guard let decryptedPackets = try key.decrypt(packets: packets) else {
                 log.warning("Could not decrypt packets, is SessionKey properly configured (dataPath, peerId)?")
@@ -1165,7 +1169,7 @@ public class OpenVPNSession: Session {
             }
             
             // WARNING: runs in Network.framework queue
-            controlChannel.addSentDataCount(encryptedPackets.flatCount)
+            addSentDataCount(encryptedPackets.flatCount)
             let writeLink = link
             link?.writePackets(encryptedPackets) { [weak self] (error) in
                 self?.queue.sync {
@@ -1188,6 +1192,14 @@ public class OpenVPNSession: Session {
             }
             deferStop(.reconnect, e)
         }
+    }
+    
+    private func addReceivedDataCount(_ count: Int) {
+        controlChannel.addReceivedDataCount(count)
+    }
+
+    private func addSentDataCount(_ count: Int) {
+        controlChannel.addSentDataCount(count)
     }
     
     // MARK: Acks

@@ -395,11 +395,11 @@ open class OpenVPNTunnelProvider: NEPacketTunnelProvider {
         cfg._appexSetDataCount(dataCount)
     }
     
-    public func didDataReceived(_ count: Int) {
+    open func didDataReceived(_ count: Int) {
         
     }
     
-    public func didDataSent(_ count: Int) {
+    open func didDataSent(_ count: Int) {
         
     }
     

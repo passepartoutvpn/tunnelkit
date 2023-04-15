@@ -395,6 +395,14 @@ open class OpenVPNTunnelProvider: NEPacketTunnelProvider {
         cfg._appexSetDataCount(dataCount)
     }
     
+    public func didDataReceived(_ count: Int) {
+        
+    }
+    
+    public func didDataSent(_ count: Int) {
+        
+    }
+    
 }
 
 extension OpenVPNTunnelProvider: GenericSocketDelegate {
@@ -490,13 +498,7 @@ extension OpenVPNTunnelProvider: GenericSocketDelegate {
 
 extension OpenVPNTunnelProvider: OpenVPNSessionDelegate {
     
-    public func didDataReceived(_ count: Int) {
-        
-    }
     
-    public func didDataSent(_ count: Int) {
-        
-    }
     
     // MARK: OpenVPNSessionDelegate (tunnel queue)
     

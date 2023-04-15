@@ -1196,10 +1196,12 @@ public class OpenVPNSession: Session {
     
     private func addReceivedDataCount(_ count: Int) {
         controlChannel.addReceivedDataCount(count)
+        delegate?.didDataReceived(count)
     }
 
     private func addSentDataCount(_ count: Int) {
         controlChannel.addSentDataCount(count)
+        delegate?.didDataSent(count)
     }
     
     // MARK: Acks

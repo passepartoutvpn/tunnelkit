@@ -332,9 +332,7 @@ public class Keychain {
         if let accessGroup = accessGroup {
             query[kSecAttrAccessGroup as String] = accessGroup
             #if os(macOS)
-            if #available(macOS 10.15, *) {
-                query[kSecUseDataProtectionKeychain as String] = true
-            }
+            query[kSecUseDataProtectionKeychain as String] = true
             #endif
         }
         query[kSecAttrService as String] = context

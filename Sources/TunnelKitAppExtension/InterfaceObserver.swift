@@ -113,27 +113,8 @@ public class InterfaceObserver: NSObject {
      **/
     public static func fetchCurrentSSID(completionHandler: @escaping (String?) -> Void) {
         #if os(iOS)
-        if #available(iOS 14, macCatalyst 14, *) {
-            NEHotspotNetwork.fetchCurrent {
-                completionHandler($0?.ssid)
-            }
-        } else if #available(macCatalyst 14, *) {
-            guard let interfaceNames = CNCopySupportedInterfaces() as? [CFString] else {
-                completionHandler(nil)
-                return
-            }
-            for name in interfaceNames {
-                guard let iface = CNCopyCurrentNetworkInfo(name) as? [String: Any] else {
-                    continue
-                }
-                if let ssid = iface["SSID"] as? String {
-                    completionHandler(ssid)
-                    return
-                }
-            }
-            completionHandler(nil)
-        } else {
-            completionHandler(nil)
+        NEHotspotNetwork.fetchCurrent {
+            completionHandler($0?.ssid)
         }
         #else
         let client = CWWiFiClient.shared()

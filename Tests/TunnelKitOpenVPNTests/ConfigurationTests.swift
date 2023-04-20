@@ -30,15 +30,15 @@ import TunnelKitOpenVPNCore
 class ConfigurationTests: XCTestCase {
     override func setUp() {
         super.setUp()
-        
+
         CoreConfiguration.masksPrivateData = false
     }
-    
+
     override func tearDown() {
         // Put teardown code here. This method is called after the invocation of each test method in the class.
         super.tearDown()
     }
-    
+
     func testRandomizeHostnames() {
         var builder = OpenVPN.ConfigurationBuilder()
         let hostname = "my.host.name"
@@ -49,7 +49,7 @@ class ConfigurationTests: XCTestCase {
         ]
         builder.randomizeHostnames = true
         let cfg = builder.build()
-        
+
         cfg.processedRemotes?.forEach {
             let comps = $0.address.components(separatedBy: ".")
             guard let first = comps.first else {

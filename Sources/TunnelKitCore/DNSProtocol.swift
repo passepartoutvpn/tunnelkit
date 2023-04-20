@@ -33,10 +33,10 @@ public enum DNSProtocol: String, Codable {
 
     /// Standard plaintext DNS (port 53).
     case plain
-    
+
     /// DNS over HTTPS.
     case https
-    
+
     /// DNS over TLS (port 853).
     case tls
 }

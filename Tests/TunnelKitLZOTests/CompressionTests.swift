@@ -40,7 +40,7 @@ class CompressionTests: XCTestCase {
     }
 
     func testSymmetric() {
-        XCTAssertTrue(LZOFactory.isSupported());
+        XCTAssertTrue(LZOFactory.isSupported())
         let lzo = LZOFactory.create()
         let src = Data([UInt8](repeating: 6, count: 100))
         guard let dst = try? lzo.compressedData(with: src) else {

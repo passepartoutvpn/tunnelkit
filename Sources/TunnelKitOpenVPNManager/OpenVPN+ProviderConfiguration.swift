@@ -46,34 +46,34 @@ extension OpenVPN {
 
             case lastError = "OpenVPN.LastError"
         }
-        
+
         /// Optional version identifier about the client pushed to server in peer-info as `IV_UI_VER`.
         public var versionIdentifier: String?
 
         /// The configuration title.
         public let title: String
-        
+
         /// The access group for shared data.
         public let appGroup: String
 
         /// The client configuration.
         public let configuration: OpenVPN.Configuration
-        
+
         /// The optional username.
         public var username: String?
-        
+
         /// Enables debugging.
         public var shouldDebug = false
-        
+
         /// Debug log path.
-        public var debugLogPath: String? = nil
+        public var debugLogPath: String?
 
         /// Optional debug log format (SwiftyBeaver format).
-        public var debugLogFormat: String? = nil
-        
+        public var debugLogFormat: String?
+
         /// Mask private data in debug log (default is `true`).
         public var masksPrivateData = true
-        
+
         public init(_ title: String, appGroup: String, configuration: OpenVPN.Configuration) {
             self.title = title
             self.appGroup = appGroup
@@ -144,7 +144,7 @@ extension OpenVPN.ProviderConfiguration {
     public var lastError: OpenVPNProviderError? {
         return defaults?.openVPNLastError
     }
-    
+
     /**
      The URL of the latest debug log.
      */
@@ -210,7 +210,7 @@ extension UserDefaults {
             openVPNDataCountArray = [newValue.received, newValue.sent]
         }
     }
-    
+
     @objc private var openVPNDataCountArray: [UInt]? {
         get {
             return array(forKey: OpenVPN.ProviderConfiguration.Keys.dataCount.rawValue) as? [UInt]
@@ -219,7 +219,7 @@ extension UserDefaults {
             set(newValue, forKey: OpenVPN.ProviderConfiguration.Keys.dataCount.rawValue)
         }
     }
-    
+
     private func openVPNRemoveDataCountArray() {
         removeObject(forKey: OpenVPN.ProviderConfiguration.Keys.dataCount.rawValue)
     }
@@ -251,7 +251,7 @@ extension UserDefaults {
             }
         }
     }
-    
+
     public fileprivate(set) var openVPNLastError: OpenVPNProviderError? {
         get {
             guard let rawValue = string(forKey: OpenVPN.ProviderConfiguration.Keys.lastError.rawValue) else {

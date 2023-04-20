@@ -33,24 +33,24 @@ private let tunnelIdentifier = "com.algoritmico.macos.TunnelKit.Demo.WireGuard.T
 
 class WireGuardViewController: NSViewController {
     @IBOutlet var textClientPrivateKey: NSTextField!
-    
+
     @IBOutlet var textAddress: NSTextField!
-    
+
     @IBOutlet var textServerPublicKey: NSTextField!
-    
+
     @IBOutlet var textServerAddress: NSTextField!
-    
+
     @IBOutlet var textServerPort: NSTextField!
-    
+
     @IBOutlet var buttonConnection: NSButton!
-    
+
     private let vpn = NetworkExtensionVPN()
 
     private var vpnStatus: VPNStatus = .disconnected
 
     override func viewDidLoad() {
         super.viewDidLoad()
-        
+
         textClientPrivateKey.placeholderString = "client private key"
         textAddress.placeholderString = "client address"
         textServerPublicKey.placeholderString = "server public key"
@@ -81,7 +81,7 @@ class WireGuardViewController: NSViewController {
         switch vpnStatus {
         case .disconnected:
             connect()
-            
+
         case .connected, .connecting, .disconnecting:
             disconnect()
         }
@@ -116,7 +116,7 @@ class WireGuardViewController: NSViewController {
             )
         }
     }
-    
+
     func disconnect() {
         Task {
             await vpn.disconnect()
@@ -127,15 +127,15 @@ class WireGuardViewController: NSViewController {
         switch vpnStatus {
         case .connected, .connecting:
             buttonConnection.title = "Disconnect"
-            
+
         case .disconnected:
             buttonConnection.title = "Connect"
-            
+
         case .disconnecting:
             buttonConnection.title = "Disconnecting"
         }
     }
-    
+
     @objc private func VPNStatusDidChange(notification: Notification) {
         vpnStatus = notification.vpnStatus
         print("VPNStatusDidChange: \(vpnStatus)")

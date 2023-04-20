@@ -46,13 +46,13 @@ public enum KeychainError: Error {
 
     /// Unable to add.
     case add
-    
+
     /// Item not found.
     case notFound
-    
+
     /// Operation cancelled or unauthorized.
     case userCancelled
-    
+
 //    /// Unexpected item type returned.
 //    case typeMismatch
 }
@@ -70,9 +70,9 @@ public class Keychain {
     public init(group: String?) {
         accessGroup = group
     }
-    
+
     // MARK: Password
-    
+
     /**
      Sets a password.
 
@@ -118,7 +118,7 @@ public class Keychain {
         }
         return refData
     }
-    
+
     /**
      Removes a password.
 
@@ -153,12 +153,12 @@ public class Keychain {
         query[kSecAttrAccount as String] = username
         query[kSecMatchLimit as String] = kSecMatchLimitOne
         query[kSecReturnData as String] = true
-        
+
         var result: AnyObject?
         switch SecItemCopyMatching(query as CFDictionary, &result) {
         case errSecSuccess:
             break
-            
+
         case errSecUserCanceled:
             throw KeychainError.userCancelled
 
@@ -190,12 +190,12 @@ public class Keychain {
         query[kSecAttrAccount as String] = username
         query[kSecMatchLimit as String] = kSecMatchLimitOne
         query[kSecReturnPersistentRef as String] = true
-        
+
         var result: AnyObject?
         switch SecItemCopyMatching(query as CFDictionary, &result) {
         case errSecSuccess:
             break
-            
+
         case errSecUserCanceled:
             throw KeychainError.userCancelled
 
@@ -207,7 +207,7 @@ public class Keychain {
         }
         return data
     }
-    
+
     /**
      Gets a password associated with a password reference.
 
@@ -219,12 +219,12 @@ public class Keychain {
         var query = [String: Any]()
         query[kSecValuePersistentRef as String] = reference
         query[kSecReturnData as String] = true
-        
+
         var result: AnyObject?
         switch SecItemCopyMatching(query as CFDictionary, &result) {
         case errSecSuccess:
             break
-            
+
         case errSecUserCanceled:
             throw KeychainError.userCancelled
 
@@ -239,11 +239,11 @@ public class Keychain {
         }
         return password
     }
-    
+
     // MARK: Key
-    
+
     // https://forums.developer.apple.com/thread/13748
-    
+
     /**
      Adds a public key.
 
@@ -269,7 +269,7 @@ public class Keychain {
         }
         return try publicKey(withIdentifier: identifier)
     }
-    
+
     /**
      Gets a public key.
 
@@ -292,7 +292,7 @@ public class Keychain {
         switch SecItemCopyMatching(query as CFDictionary, &result) {
         case errSecSuccess:
             break
-            
+
         case errSecUserCanceled:
             throw KeychainError.userCancelled
 
@@ -305,7 +305,7 @@ public class Keychain {
 //        return key
         return result as! SecKey
     }
-    
+
     /**
      Removes a public key.
 
@@ -325,9 +325,9 @@ public class Keychain {
         let status = SecItemDelete(query as CFDictionary)
         return status == errSecSuccess
     }
-    
+
     // MARK: Helpers
-    
+
         public func setScope(query: inout [String: Any], context: String, userDefined: String?) {
         if let accessGroup = accessGroup {
             query[kSecAttrAccessGroup as String] = accessGroup

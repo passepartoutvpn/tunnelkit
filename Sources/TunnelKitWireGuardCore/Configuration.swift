@@ -29,15 +29,15 @@ import NetworkExtension
 
 public protocol WireGuardConfigurationProviding {
     var interface: InterfaceConfiguration { get }
-    
+
     var peers: [PeerConfiguration] { get }
-    
+
     var privateKey: String { get }
 
     var publicKey: String { get }
 
     var addresses: [String] { get }
-    
+
     var dnsServers: [String] { get }
 
     var dnsSearchDomains: [String] { get }
@@ -64,13 +64,13 @@ public protocol WireGuardConfigurationProviding {
 extension WireGuard {
     public struct ConfigurationBuilder: WireGuardConfigurationProviding {
         private static let defaultGateway4 = IPAddressRange(from: "0.0.0.0/0")!
-        
+
         private static let defaultGateway6 = IPAddressRange(from: "::/0")!
-        
+
         public private(set) var interface: InterfaceConfiguration
 
         public private(set) var peers: [PeerConfiguration]
-        
+
         public init() {
             self.init(PrivateKey())
         }
@@ -81,19 +81,19 @@ extension WireGuard {
             }
             self.init(privateKey)
         }
-        
+
         private init(_ privateKey: PrivateKey) {
             interface = InterfaceConfiguration(privateKey: privateKey)
             peers = []
         }
-        
+
         public init(_ tunnelConfiguration: TunnelConfiguration) {
             interface = tunnelConfiguration.interface
             peers = tunnelConfiguration.peers
         }
-        
+
         // MARK: WireGuardConfigurationProviding
-        
+
         public var privateKey: String {
             get {
                 interface.privateKey.base64Key
@@ -114,7 +114,7 @@ extension WireGuard {
                 interface.addresses = newValue.compactMap(IPAddressRange.init)
             }
         }
-        
+
         public var dnsServers: [String] {
             get {
                 interface.dns.map(\.stringRepresentation)
@@ -159,7 +159,7 @@ extension WireGuard {
                 interface.mtu = newValue
             }
         }
-        
+
         // MARK: Modification
 
         public mutating func addPeer(_ base64PublicKey: String, endpoint: String, allowedIPs: [String] = []) throws {
@@ -198,7 +198,7 @@ extension WireGuard {
                 $0 == Self.defaultGateway6
             }
         }
-        
+
         public mutating func removeDefaultGateways(fromPeer peerIndex: Int) {
             peers[peerIndex].allowedIPs.removeAll {
                 $0 == Self.defaultGateway4 || $0 == Self.defaultGateway6
@@ -230,7 +230,7 @@ extension WireGuard {
         public mutating func setKeepAlive(_ keepAlive: UInt16, forPeer peerIndex: Int) {
             peers[peerIndex].persistentKeepAlive = keepAlive
         }
-        
+
         public func build() -> Configuration {
             let tunnelConfiguration = TunnelConfiguration(name: nil, interface: interface, peers: peers)
             return Configuration(tunnelConfiguration: tunnelConfiguration)
@@ -239,25 +239,25 @@ extension WireGuard {
 
     public struct Configuration: Codable, Equatable, WireGuardConfigurationProviding {
         public let tunnelConfiguration: TunnelConfiguration
-        
+
         public var interface: InterfaceConfiguration {
             tunnelConfiguration.interface
         }
-        
+
         public var peers: [PeerConfiguration] {
             tunnelConfiguration.peers
         }
-        
+
         public init(tunnelConfiguration: TunnelConfiguration) {
             self.tunnelConfiguration = tunnelConfiguration
         }
-        
+
         public func builder() -> WireGuard.ConfigurationBuilder {
             WireGuard.ConfigurationBuilder(tunnelConfiguration)
         }
 
         // MARK: WireGuardConfigurationProviding
-        
+
         public var privateKey: String {
             interface.privateKey.base64Key
         }
@@ -269,7 +269,7 @@ extension WireGuard {
         public var addresses: [String] {
             interface.addresses.map(\.stringRepresentation)
         }
-        
+
         public var dnsServers: [String] {
             interface.dns.map(\.stringRepresentation)
         }
@@ -291,14 +291,14 @@ extension WireGuard {
         }
 
         // MARK: Codable
-        
+
         public init(from decoder: Decoder) throws {
             let container = try decoder.singleValueContainer()
             let wg = try container.decode(String.self)
             let cfg = try TunnelConfiguration(fromWgQuickConfig: wg, called: nil)
             self.init(tunnelConfiguration: cfg)
         }
-        
+
         public func encode(to encoder: Encoder) throws {
             let wg = tunnelConfiguration.asWgQuickConfig()
             var container = encoder.singleValueContainer()
@@ -315,7 +315,7 @@ extension WireGuardConfigurationProviding {
     public var peersCount: Int {
         peers.count
     }
-    
+
     public func publicKey(ofPeer peerIndex: Int) -> String {
         peers[peerIndex].publicKey.base64Key
     }

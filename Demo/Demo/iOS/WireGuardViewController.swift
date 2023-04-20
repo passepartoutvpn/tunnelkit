@@ -33,24 +33,24 @@ private let tunnelIdentifier = "com.algoritmico.ios.TunnelKit.Demo.WireGuard.Tun
 
 class WireGuardViewController: UIViewController {
     @IBOutlet var textClientPrivateKey: UITextField!
-    
+
     @IBOutlet var textAddress: UITextField!
-    
+
     @IBOutlet var textServerPublicKey: UITextField!
-    
+
     @IBOutlet var textServerAddress: UITextField!
-    
+
     @IBOutlet var textServerPort: UITextField!
-    
+
     @IBOutlet var buttonConnection: UIButton!
-    
+
     private let vpn = NetworkExtensionVPN()
-    
+
     private var vpnStatus: VPNStatus = .disconnected
 
     override func viewDidLoad() {
         super.viewDidLoad()
-        
+
         textClientPrivateKey.placeholder = "client private key"
         textAddress.placeholder = "client address"
         textServerPublicKey.placeholder = "server public key"
@@ -81,7 +81,7 @@ class WireGuardViewController: UIViewController {
         switch vpnStatus {
         case .disconnected:
             connect()
-            
+
         case .connected, .connecting, .disconnecting:
             disconnect()
         }
@@ -116,7 +116,7 @@ class WireGuardViewController: UIViewController {
             )
         }
     }
-    
+
     func disconnect() {
         Task {
             await vpn.disconnect()
@@ -127,15 +127,15 @@ class WireGuardViewController: UIViewController {
         switch vpnStatus {
         case .connected, .connecting:
             buttonConnection.setTitle("Disconnect", for: .normal)
-            
+
         case .disconnected:
             buttonConnection.setTitle("Connect", for: .normal)
-            
+
         case .disconnecting:
             buttonConnection.setTitle("Disconnecting", for: .normal)
         }
     }
-    
+
     @objc private func VPNStatusDidChange(notification: Notification) {
         vpnStatus = notification.vpnStatus
         print("VPNStatusDidChange: \(notification.vpnStatus)")

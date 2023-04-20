@@ -34,7 +34,7 @@ private let log = SwiftyBeaver.self
 
 protocol ControlChannelSerializer {
     func reset()
-    
+
     func serialize(packet: ControlPacket) throws -> Data
 
     func deserialize(data: Data, start: Int, end: Int?) throws -> ControlPacket
@@ -44,15 +44,15 @@ extension OpenVPN.ControlChannel {
     class PlainSerializer: ControlChannelSerializer {
         func reset() {
         }
-        
+
         func serialize(packet: ControlPacket) throws -> Data {
             return packet.serialized()
         }
-        
+
         func deserialize(data packet: Data, start: Int, end: Int?) throws -> ControlPacket {
             var offset = start
             let end = end ?? packet.count
-            
+
             guard end >= offset + PacketOpcodeLength else {
                 throw OpenVPN.ControlChannelError("Missing opcode")
             }
@@ -64,7 +64,7 @@ extension OpenVPN.ControlChannel {
             offset += PacketOpcodeLength
 
             log.debug("Control: Try read packet with code \(code) and key \(key)")
-            
+
             guard end >= offset + PacketSessionIdLength else {
                 throw OpenVPN.ControlChannelError("Missing sessionId")
             }
@@ -134,23 +134,23 @@ extension OpenVPN.ControlChannel {
 extension OpenVPN.ControlChannel {
     class AuthSerializer: ControlChannelSerializer {
         private let encrypter: Encrypter
-        
+
         private let decrypter: Decrypter
-        
+
         private let prefixLength: Int
-        
+
         private let hmacLength: Int
-        
+
         private let authLength: Int
-        
+
         private let preambleLength: Int
-        
+
         private var currentReplayId: BidirectionalState<UInt32>
-        
+
         private let timestamp: UInt32
-        
+
         private let plain: PlainSerializer
-        
+
         init(withKey key: OpenVPN.StaticKey, digest: OpenVPN.Digest) throws {
             let crypto = CryptoBox(cipherAlgorithm: nil, digestAlgorithm: digest.rawValue)
             try crypto.configure(
@@ -161,40 +161,40 @@ extension OpenVPN.ControlChannel {
             )
             encrypter = crypto.encrypter()
             decrypter = crypto.decrypter()
-            
+
             prefixLength = PacketOpcodeLength + PacketSessionIdLength
             hmacLength = crypto.digestLength()
             authLength = hmacLength + PacketReplayIdLength + PacketReplayTimestampLength
             preambleLength = prefixLength + authLength
-            
+
             currentReplayId = BidirectionalState(withResetValue: 1)
             timestamp = UInt32(Date().timeIntervalSince1970)
             plain = PlainSerializer()
         }
-        
+
         func reset() {
             currentReplayId.reset()
         }
-        
+
         func serialize(packet: ControlPacket) throws -> Data {
             return try serialize(packet: packet, timestamp: timestamp)
         }
-        
+
         func serialize(packet: ControlPacket, timestamp: UInt32) throws -> Data {
             let data = try packet.serialized(withAuthenticator: encrypter, replayId: currentReplayId.outbound, timestamp: timestamp)
             currentReplayId.outbound += 1
             return data
         }
-        
+
         // XXX: start/end are ignored, parses whole packet
         func deserialize(data packet: Data, start: Int, end: Int?) throws -> ControlPacket {
             let end = packet.count
-            
+
             // data starts with (prefix=(header + sessionId) + auth=(hmac + replayId))
             guard end >= preambleLength else {
                 throw OpenVPN.ControlChannelError("Missing HMAC")
             }
-            
+
             // needs a copy for swapping
             var authPacket = packet
             let authCount = authPacket.count
@@ -203,9 +203,9 @@ extension OpenVPN.ControlChannel {
                 PacketSwapCopy(ptr, packet, prefixLength, authLength)
                 try decrypter.verifyBytes(ptr, length: authCount, flags: nil)
             }
-            
+
             // TODO: validate replay packet id
-            
+
             return try plain.deserialize(data: authPacket, start: authLength, end: nil)
         }
     }
@@ -214,19 +214,19 @@ extension OpenVPN.ControlChannel {
 extension OpenVPN.ControlChannel {
     class CryptSerializer: ControlChannelSerializer {
         private let encrypter: Encrypter
-        
+
         private let decrypter: Decrypter
-        
+
         private let headerLength: Int
-        
+
         private var adLength: Int
-        
+
         private let tagLength: Int
-        
+
         private var currentReplayId: BidirectionalState<UInt32>
-        
+
         private let timestamp: UInt32
-        
+
         private let plain: PlainSerializer
 
         init(withKey key: OpenVPN.StaticKey) throws {
@@ -239,7 +239,7 @@ extension OpenVPN.ControlChannel {
             )
             encrypter = crypto.encrypter()
             decrypter = crypto.decrypter()
-            
+
             headerLength = PacketOpcodeLength + PacketSessionIdLength
             adLength = headerLength + PacketReplayIdLength + PacketReplayTimestampLength
             tagLength = crypto.tagLength()
@@ -248,30 +248,30 @@ extension OpenVPN.ControlChannel {
             timestamp = UInt32(Date().timeIntervalSince1970)
             plain = PlainSerializer()
         }
-        
+
         func reset() {
             currentReplayId.reset()
         }
-        
+
         func serialize(packet: ControlPacket) throws -> Data {
             return try serialize(packet: packet, timestamp: timestamp)
         }
-        
+
         func serialize(packet: ControlPacket, timestamp: UInt32) throws -> Data {
             let data = try packet.serialized(with: encrypter, replayId: currentReplayId.outbound, timestamp: timestamp, adLength: adLength)
             currentReplayId.outbound += 1
             return data
         }
-        
+
         // XXX: start/end are ignored, parses whole packet
         func deserialize(data packet: Data, start: Int, end: Int?) throws -> ControlPacket {
             let end = end ?? packet.count
-            
+
             // data starts with (ad=(header + sessionId + replayId) + tag)
             guard end >= start + adLength + tagLength else {
                 throw OpenVPN.ControlChannelError("Missing AD+TAG")
             }
-            
+
             let encryptedCount = packet.count - adLength
             var decryptedPacket = Data(count: decrypter.encryptionCapacity(withLength: encryptedCount))
             var decryptedCount = 0
@@ -285,9 +285,9 @@ extension OpenVPN.ControlChannel {
                 }
             }
             decryptedPacket.count = headerLength + decryptedCount
-            
+
             // TODO: validate replay packet id
-            
+
             return try plain.deserialize(data: decryptedPacket, start: 0, end: nil)
         }
     }

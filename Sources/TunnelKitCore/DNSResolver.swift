@@ -54,7 +54,7 @@ public struct DNSRecord {
 /// Errors coming from `DNSResolver`.
 public enum DNSError: Error {
     case failure
-    
+
     case timeout
 }
 
@@ -95,14 +95,14 @@ public class DNSResolver {
             pendingHandler = nil
         }
     }
-    
+
     private static func didResolve(host: CFHost, completionHandler: @escaping (Result<[DNSRecord], DNSError>) -> Void) {
         var success: DarwinBoolean = false
         guard let rawAddresses = CFHostGetAddressing(host, &success)?.takeUnretainedValue() as Array? else {
             completionHandler(.failure(.failure))
             return
         }
-        
+
         var records: [DNSRecord] = []
         for case let rawAddress as Data in rawAddresses {
             var ipAddress = [CChar](repeating: 0, count: Int(NI_MAXHOST))
@@ -152,7 +152,7 @@ public class DNSResolver {
         }
         return groups.map { "\($0)" }.joined(separator: ".")
     }
-    
+
     /**
      Returns a numeric representation from an IPv4 address.
      

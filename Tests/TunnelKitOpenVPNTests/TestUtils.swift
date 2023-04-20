@@ -41,9 +41,9 @@ import CTunnelKitOpenVPNProtocol
 
 public class TestUtils {
     public static func uniqArray(_ v: [Int]) -> [Int] {
-        return v.reduce([]){ $0.contains($1) ? $0 : $0 + [$1] }
+        return v.reduce([]) { $0.contains($1) ? $0 : $0 + [$1] }
     }
-    
+
     public static func generateDataSuite(_ size: Int, _ count: Int) -> [Data] {
         var suite = [Data]()
         for _ in 0..<count {
@@ -51,7 +51,7 @@ public class TestUtils {
         }
         return suite
     }
-    
+
     private init() {
     }
 }
@@ -80,7 +80,7 @@ extension Decrypter {
         dest.removeSubrange(destLength..<dest.count)
         return Data(dest)
     }
-    
+
     func verifyData(_ data: Data, flags: UnsafePointer<CryptoFlags>?) throws {
         let srcLength = data.count
         try data.withUnsafeBytes {

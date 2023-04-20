@@ -7,10 +7,10 @@ extension OSLogType {
         switch self {
         case .debug:
             return .debug
-            
+
         case .info:
             return .info
-            
+
         case .error, .fault:
             return .error
 

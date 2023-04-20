@@ -37,136 +37,136 @@ extension OpenVPN {
     public class ConfigurationParser {
 
         // XXX: parsing is very optimistic
-        
+
         /// Regexes used to parse OpenVPN options.
         public struct Regex {
-            
+
             // MARK: General
-            
+
             static let cipher = NSRegularExpression("^cipher +[^,\\s]+")
-            
+
             static let dataCiphers = NSRegularExpression("^(data-ciphers|ncp-ciphers) +[^,\\s]+(:[^,\\s]+)*")
-            
+
             static let dataCiphersFallback = NSRegularExpression("^data-ciphers-fallback +[^,\\s]+")
-            
+
             static let auth = NSRegularExpression("^auth +[\\w\\-]+")
-            
+
             static let compLZO = NSRegularExpression("^comp-lzo.*")
-            
+
             static let compress = NSRegularExpression("^compress.*")
-            
+
             static let keyDirection = NSRegularExpression("^key-direction +\\d")
-            
+
             static let ping = NSRegularExpression("^ping +\\d+")
-            
+
             static let pingRestart = NSRegularExpression("^ping-restart +\\d+")
-            
+
             static let keepAlive = NSRegularExpression("^keepalive +\\d+ ++\\d+")
-            
+
             static let renegSec = NSRegularExpression("^reneg-sec +\\d+")
-            
+
             static let blockBegin = NSRegularExpression("^<[\\w\\-]+>")
-            
+
             static let blockEnd = NSRegularExpression("^<\\/[\\w\\-]+>")
-            
+
             // MARK: Client
-            
+
             static let proto = NSRegularExpression("^proto +(udp[46]?|tcp[46]?)")
-            
+
             static let port = NSRegularExpression("^port +\\d+")
-            
+
             static let remote = NSRegularExpression("^remote +[^ ]+( +\\d+)?( +(udp[46]?|tcp[46]?))?")
-            
+
             static let authUserPass = NSRegularExpression("^auth-user-pass")
-            
+
             static let eku = NSRegularExpression("^remote-cert-tls +server")
-            
+
             static let remoteRandom = NSRegularExpression("^remote-random")
-            
+
             static let remoteRandomHostname = NSRegularExpression("^remote-random-hostname")
-            
+
             static let mtu = NSRegularExpression("^tun-mtu +\\d+")
-            
+
             // MARK: Server
-            
+
             public static let authToken = NSRegularExpression("^auth-token +[a-zA-Z0-9/=+]+")
-            
+
             static let peerId = NSRegularExpression("^peer-id +[0-9]+")
-            
+
             // MARK: Routing
-            
+
             static let topology = NSRegularExpression("^topology +(net30|p2p|subnet)")
-            
+
             static let ifconfig = NSRegularExpression("^ifconfig +[\\d\\.]+ [\\d\\.]+")
-            
+
             static let ifconfig6 = NSRegularExpression("^ifconfig-ipv6 +[\\da-fA-F:]+/\\d+ [\\da-fA-F:]+")
-            
+
             static let route = NSRegularExpression("^route +[\\d\\.]+( +[\\d\\.]+){0,2}")
-            
+
             static let route6 = NSRegularExpression("^route-ipv6 +[\\da-fA-F:]+/\\d+( +[\\da-fA-F:]+){0,2}")
-            
+
             static let gateway = NSRegularExpression("^route-gateway +[\\d\\.]+")
-            
+
             static let dns = NSRegularExpression("^dhcp-option +DNS6? +[\\d\\.a-fA-F:]+")
-            
+
             static let domain = NSRegularExpression("^dhcp-option +DOMAIN +[^ ]+")
-            
+
             static let domainSearch = NSRegularExpression("^dhcp-option +DOMAIN-SEARCH +[^ ]+")
 
             static let proxy = NSRegularExpression("^dhcp-option +PROXY_(HTTPS? +[^ ]+ +\\d+|AUTO_CONFIG_URL +[^ ]+)")
-            
+
             static let proxyBypass = NSRegularExpression("^dhcp-option +PROXY_BYPASS +.+")
-            
+
             static let redirectGateway = NSRegularExpression("^redirect-gateway.*")
 
             static let routeNoPull = NSRegularExpression("^route-nopull")
-            
+
             // MARK: Extra
 
             static let xorInfo = NSRegularExpression("^scramble +(xormask|xorptrpos|reverse|obfuscate)[\\s]?([^\\s]+)?")
-            
+
             // MARK: Unsupported
-            
+
 //            static let fragment = NSRegularExpression("^fragment +\\d+")
             static let fragment = NSRegularExpression("^fragment")
-            
+
             static let connectionProxy = NSRegularExpression("^\\w+-proxy")
-            
+
             static let externalFiles = NSRegularExpression("^(ca|cert|key|tls-auth|tls-crypt) ")
-            
+
             static let connection = NSRegularExpression("^<connection>")
-            
+
             // MARK: Continuation
-            
+
             static let continuation = NSRegularExpression("^push-continuation [12]")
         }
-        
+
         private enum Topology: String {
             case net30
-            
+
             case p2p
-            
+
             case subnet
         }
-        
+
         private enum RedirectGateway: String {
             case def1 // default
 
             case noIPv4 = "!ipv4"
-            
+
             case ipv6
 
             case local
-            
+
             case autolocal
-            
+
             case blockLocal = "block-local"
 
             case bypassDHCP = "bypass-dhcp"
-            
+
             case bypassDNS = "bypass-dns"
         }
-        
+
         /// Result of the parser.
         public struct Result {
 
@@ -181,11 +181,11 @@ extension OpenVPN {
             ///
             /// - Seealso: `ConfigurationParser.parsed(...)`
             public let strippedLines: [String]?
-            
+
             /// Holds an optional `ConfigurationError` that didn't block the parser, but it would be worth taking care of.
             public let warning: ConfigurationError?
         }
-        
+
         /**
          Parses a configuration from a .ovpn file.
          
@@ -254,7 +254,7 @@ extension OpenVPN {
             var unsupportedError: ConfigurationError?
             var currentBlockName: String?
             var currentBlock: [String] = []
-            
+
             var optDataCiphers: [Cipher]?
             var optDataCiphersFallback: Cipher?
             var optCipher: Cipher?
@@ -304,7 +304,7 @@ extension OpenVPN {
             log.verbose("Configuration file:")
             for line in lines {
                 log.verbose(line)
-                
+
                 var isHandled = false
                 var strippedLine = line
                 defer {
@@ -312,9 +312,9 @@ extension OpenVPN {
                         optStrippedLines?.append(strippedLine)
                     }
                 }
-                
+
                 // MARK: Unsupported
-                
+
                 // check blocks first
                 Regex.connection.enumerateSpacedComponents(in: line) { (_) in
                     unsupportedError = ConfigurationError.unsupportedConfiguration(option: "<connection> blocks")
@@ -331,7 +331,7 @@ extension OpenVPN {
                 if line.contains("mtu") || line.contains("mssfix") {
                     isHandled = true
                 }
-                
+
                 // MARK: Continuation
 
                 var isContinuation = false
@@ -343,7 +343,7 @@ extension OpenVPN {
                 }
 
                 // MARK: Inline content
-                
+
                 if unsupportedError == nil {
                     if currentBlockName == nil {
                         Regex.blockBegin.enumerateSpacedComponents(in: line) {
@@ -351,7 +351,7 @@ extension OpenVPN {
                             let tag = $0.first!
                             let from = tag.index(after: tag.startIndex)
                             let to = tag.index(before: tag.endIndex)
-                            
+
                             currentBlockName = String(tag[from..<to])
                             currentBlock = []
                         }
@@ -361,33 +361,33 @@ extension OpenVPN {
                         let tag = $0.first!
                         let from = tag.index(tag.startIndex, offsetBy: 2)
                         let to = tag.index(before: tag.endIndex)
-                        
+
                         let blockName = String(tag[from..<to])
                         guard blockName == currentBlockName else {
                             return
                         }
-                        
+
                         // first is opening tag
                         currentBlock.removeFirst()
                         switch blockName {
                         case "ca":
                             optCA = CryptoContainer(pem: currentBlock.joined(separator: "\n"))
-                            
+
                         case "cert":
                             optClientCertificate = CryptoContainer(pem: currentBlock.joined(separator: "\n"))
-                            
+
                         case "key":
                             ConfigurationParser.normalizeEncryptedPEMBlock(block: &currentBlock)
                             optClientKey = CryptoContainer(pem: currentBlock.joined(separator: "\n"))
-                            
+
                         case "tls-auth":
                             optTLSKeyLines = currentBlock.map(Substring.init(_:))
                             optTLSStrategy = .auth
-                            
+
                         case "tls-crypt":
                             optTLSKeyLines = currentBlock.map(Substring.init(_:))
                             optTLSStrategy = .crypt
-                            
+
                         default:
                             break
                         }
@@ -399,9 +399,9 @@ extension OpenVPN {
                     currentBlock.append(line)
                     continue
                 }
-                
+
                 // MARK: General
-                
+
                 Regex.cipher.enumerateSpacedArguments(in: line) {
                     isHandled = true
                     guard let rawValue = $0.first else {
@@ -443,7 +443,7 @@ extension OpenVPN {
                 Regex.compLZO.enumerateSpacedArguments(in: line) {
                     isHandled = true
                     optCompressionFraming = .compLZO
-                    
+
                     if !LZOFactory.isSupported() {
                         guard let arg = $0.first else {
                             optWarning = optWarning ?? .unsupportedConfiguration(option: line)
@@ -461,7 +461,7 @@ extension OpenVPN {
                 Regex.compress.enumerateSpacedArguments(in: line) {
                     isHandled = true
                     optCompressionFraming = .compress
-                    
+
                     if !LZOFactory.isSupported() {
                         guard $0.isEmpty else {
                             unsupportedError = .unsupportedConfiguration(option: line)
@@ -472,10 +472,10 @@ extension OpenVPN {
                             switch arg {
                             case "lzo":
                                 optCompressionAlgorithm = .LZO
-                                
+
                             case "stub":
                                 optCompressionAlgorithm = .disabled
-                                
+
                             case "stub-v2":
                                 optCompressionFraming = .compressV2
                                 optCompressionAlgorithm = .disabled
@@ -524,9 +524,9 @@ extension OpenVPN {
                     }
                     optRenegotiateAfterSeconds = TimeInterval(arg)
                 }
-                
+
                 // MARK: Client
-                
+
                 Regex.proto.enumerateSpacedArguments(in: line) {
                     isHandled = true
                     guard let str = $0.first else {
@@ -561,7 +561,7 @@ extension OpenVPN {
                         strippedComponents.append($0[2])
                     }
                     optRemotes.append((hostname, port, proto))
-                    
+
                     // replace private data
                     strippedLine = strippedComponents.joined(separator: " ")
                 }
@@ -588,18 +588,18 @@ extension OpenVPN {
                     isHandled = true
                     authUserPass = true
                 }
-                
+
                 // MARK: Server
-                
+
                 Regex.authToken.enumerateSpacedArguments(in: line) {
                     optAuthToken = $0[0]
                 }
                 Regex.peerId.enumerateSpacedArguments(in: line) {
                     optPeerId = UInt32($0[0])
                 }
-                
+
                 // MARK: Routing
-                
+
                 Regex.topology.enumerateSpacedArguments(in: line) {
                     optTopology = $0.first
                 }
@@ -611,7 +611,7 @@ extension OpenVPN {
                 }
                 Regex.route.enumerateSpacedArguments(in: line) {
                     let routeEntryArguments = $0
-                    
+
                     let address = routeEntryArguments[0]
                     let mask = (routeEntryArguments.count > 1) ? routeEntryArguments[1] : "255.255.255.255"
                     var gateway = (routeEntryArguments.count > 2) ? routeEntryArguments[2] : nil // defaultGateway4
@@ -625,7 +625,7 @@ extension OpenVPN {
                 }
                 Regex.route6.enumerateSpacedArguments(in: line) {
                     let routeEntryArguments = $0
-                    
+
                     let destinationComponents = routeEntryArguments[0].components(separatedBy: "/")
                     guard destinationComponents.count == 2 else {
                         return
@@ -633,7 +633,7 @@ extension OpenVPN {
                     guard let prefix = UInt8(destinationComponents[1]) else {
                         return
                     }
-                    
+
                     let destination = destinationComponents[0]
                     var gateway = (routeEntryArguments.count > 1) ? routeEntryArguments[1] : nil // defaultGateway6
                     if gateway == "vpn_gateway" {
@@ -687,7 +687,7 @@ extension OpenVPN {
                     switch $0[0] {
                     case "PROXY_HTTPS":
                         optHTTPSProxy = Proxy($0[1], port)
-                        
+
                     case "PROXY_HTTP":
                         optHTTPProxy = Proxy($0[1], port)
 
@@ -717,7 +717,7 @@ extension OpenVPN {
                 Regex.routeNoPull.enumerateSpacedComponents(in: line) { _ in
                     optRouteNoPull = true
                 }
-                
+
                 // MARK: Extra
 
                 Regex.xorInfo.enumerateSpacedArguments(in: line) {
@@ -747,14 +747,14 @@ extension OpenVPN {
                         return
                     }
                 }
-                
+
                 //
-                
+
                 if let error = unsupportedError {
                     throw error
                 }
             }
-            
+
             if isClient {
                 guard let _ = optCA else {
                     throw ConfigurationError.missingConfiguration(option: "ca")
@@ -763,9 +763,9 @@ extension OpenVPN {
                     throw ConfigurationError.missingConfiguration(option: "cipher or data-ciphers")
                 }
             }
-            
+
             // MARK: Post-processing
-            
+
             // ensure that non-nil network settings also imply non-empty
             if let array = optRoutes4 {
                 assert(!array.isEmpty)
@@ -784,11 +784,11 @@ extension OpenVPN {
             }
 
             //
-            
+
             var sessionBuilder = ConfigurationBuilder()
-            
+
             // MARK: General
-            
+
             sessionBuilder.cipher = optDataCiphersFallback ?? optCipher
             sessionBuilder.dataCiphers = optDataCiphers
             sessionBuilder.digest = optDigest
@@ -797,7 +797,7 @@ extension OpenVPN {
             sessionBuilder.ca = optCA
             sessionBuilder.clientCertificate = optClientCertificate
             sessionBuilder.authUserPass = authUserPass
-            
+
             if let clientKey = optClientKey, clientKey.isEncrypted {
                 // FIXME: remove dependency on TLSBox
                 guard let passphrase = passphrase, !passphrase.isEmpty else {
@@ -811,13 +811,13 @@ extension OpenVPN {
             } else {
                 sessionBuilder.clientKey = optClientKey
             }
-            
+
             if let keyLines = optTLSKeyLines, let strategy = optTLSStrategy {
                 let optKey: StaticKey?
                 switch strategy {
                 case .auth:
                     optKey = StaticKey(lines: keyLines, direction: optKeyDirection)
-                    
+
                 case .crypt:
                     optKey = StaticKey(lines: keyLines, direction: .client)
                 }
@@ -825,13 +825,13 @@ extension OpenVPN {
                     sessionBuilder.tlsWrap = TLSWrap(strategy: strategy, key: key)
                 }
             }
-            
+
             sessionBuilder.keepAliveInterval = optKeepAliveSeconds
             sessionBuilder.keepAliveTimeout = optKeepAliveTimeoutSeconds
             sessionBuilder.renegotiatesAfter = optRenegotiateAfterSeconds
-            
+
             // MARK: Client
-            
+
             optDefaultProto = optDefaultProto ?? .udp
             optDefaultPort = optDefaultPort ?? 1194
             if !optRemotes.isEmpty {
@@ -850,20 +850,20 @@ extension OpenVPN {
                     Endpoint($0.0, .init($0.2, $0.1))
                 }
             }
-            
+
             sessionBuilder.authUserPass = authUserPass
             sessionBuilder.checksEKU = optChecksEKU
             sessionBuilder.randomizeEndpoint = optRandomizeEndpoint
             sessionBuilder.randomizeHostnames = optRandomizeHostnames
             sessionBuilder.mtu = optMTU
-            
+
             // MARK: Server
-            
+
             sessionBuilder.authToken = optAuthToken
             sessionBuilder.peerId = optPeerId
-            
+
             // MARK: Routing
-            
+
             //
             // excerpts from OpenVPN manpage
             //
@@ -881,15 +881,15 @@ extension OpenVPN {
                 guard ifconfig4Arguments.count == 2 else {
                     throw ConfigurationError.malformed(option: "ifconfig takes 2 arguments")
                 }
-                
+
                 let address4: String
                 let addressMask4: String
                 let defaultGateway4: String
-                
+
                 let topology = Topology(rawValue: optTopology ?? "") ?? .net30
                 switch topology {
                 case .subnet:
-                    
+
                     // default gateway required when topology is subnet
                     guard let gateway4Arguments = optGateway4Arguments, gateway4Arguments.count == 1 else {
                         throw ConfigurationError.malformed(option: "route-gateway takes 1 argument")
@@ -897,7 +897,7 @@ extension OpenVPN {
                     address4 = ifconfig4Arguments[0]
                     addressMask4 = ifconfig4Arguments[1]
                     defaultGateway4 = gateway4Arguments[0]
-                    
+
                 default:
                     address4 = ifconfig4Arguments[0]
                     addressMask4 = "255.255.255.255"
@@ -913,7 +913,7 @@ extension OpenVPN {
             sessionBuilder.routes4 = optRoutes4?.map {
                 IPv4Settings.Route($0.0, $0.1, $0.2)
             }
-            
+
             if let ifconfig6Arguments = optIfconfig6Arguments {
                 guard ifconfig6Arguments.count == 2 else {
                     throw ConfigurationError.malformed(option: "ifconfig-ipv6 takes 2 arguments")
@@ -925,10 +925,10 @@ extension OpenVPN {
                 guard let addressPrefix6 = UInt8(address6Components[1]) else {
                     throw ConfigurationError.malformed(option: "ifconfig-ipv6 address prefix must be a 8-bit number")
                 }
-                
+
                 let address6 = address6Components[0]
                 let defaultGateway6 = ifconfig6Arguments[1]
-                
+
                 sessionBuilder.ipv6 = IPv6Settings(
                     address: address6,
                     addressPrefixLength: addressPrefix6,
@@ -938,7 +938,7 @@ extension OpenVPN {
             sessionBuilder.routes6 = optRoutes6?.map {
                 IPv6Settings.Route($0.0, $0.1, $0.2)
             }
-            
+
             sessionBuilder.dnsServers = optDNSServers
             sessionBuilder.dnsDomain = optDomain
             sessionBuilder.searchDomains = optSearchDomains
@@ -956,10 +956,10 @@ extension OpenVPN {
                     switch opt {
                     case .def1:
                         policies.insert(.IPv4)
-                        
+
                     case .ipv6:
                         policies.insert(.IPv6)
-                        
+
                     case .blockLocal:
                         policies.insert(.blockLocal)
 
@@ -973,13 +973,13 @@ extension OpenVPN {
                 }
                 sessionBuilder.routingPolicies = [RoutingPolicy](policies)
             }
-            
+
             // MARK: Extra
-            
+
             sessionBuilder.xorMethod = optXorMethod
 
             //
-            
+
             return Result(
                 url: originalURL,
                 configuration: sessionBuilder.build(),
@@ -992,7 +992,7 @@ extension OpenVPN {
     //        if block.count >= 1 && block[0].contains("ENCRYPTED") {
     //            return true
     //        }
-            
+
             // XXX: restore blank line after encryption header (easier than tweaking trimmedLines)
             if block.count >= 3 && block[1].contains("Proc-Type") {
                 block.insert("", at: 3)

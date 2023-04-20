@@ -44,12 +44,12 @@ import TunnelKitManager
 import TunnelKitOpenVPNManager
 
 class AppExtensionTests: XCTestCase {
-    
+
     override func setUp() {
         super.setUp()
         // Put setup code here. This method is called before the invocation of each test method in the class.
     }
-    
+
     override func tearDown() {
         // Put teardown code here. This method is called after the invocation of each test method in the class.
         super.tearDown()
@@ -80,7 +80,7 @@ class AppExtensionTests: XCTestCase {
             XCTFail(error.localizedDescription)
             return
         }
-        
+
         XCTAssertEqual(proto.providerBundleIdentifier, bundleIdentifier)
         XCTAssertEqual(proto.serverAddress, serverAddress)
         XCTAssertEqual(proto.username, credentials.username)
@@ -99,7 +99,7 @@ class AppExtensionTests: XCTestCase {
         XCTAssertEqual(ovpn?["mtu"] as? Int, cfg.configuration.mtu)
         XCTAssertEqual(ovpn?["renegotiatesAfter"] as? TimeInterval, cfg.configuration.renegotiatesAfter)
     }
-    
+
     func testDNSResolver() {
         let exp = expectation(description: "DNS")
         DNSResolver.resolve("www.google.com", timeout: 1000, queue: .main) {
@@ -116,7 +116,7 @@ class AppExtensionTests: XCTestCase {
         }
         waitForExpectations(timeout: 5.0, handler: nil)
     }
-    
+
     func testDNSAddressConversion() {
         let testStrings = [
             "0.0.0.0",
@@ -148,7 +148,7 @@ class AppExtensionTests: XCTestCase {
             .init(hostname, .init(.udp4, 3333))
         ]
         let strategy = ConnectionStrategy(configuration: builder.build())
-        
+
         let expected = [
             "italy.privateinternetaccess.com:TCP6:2222",
             "italy.privateinternetaccess.com:UDP:1111",

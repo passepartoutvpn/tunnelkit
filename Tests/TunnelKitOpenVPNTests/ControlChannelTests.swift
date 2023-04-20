@@ -39,7 +39,7 @@ class ControlChannelTests: XCTestCase {
         super.setUp()
         // Put setup code here. This method is called before the invocation of each test method in the class.
     }
-    
+
     override func tearDown() {
         // Put teardown code here. This method is called after the invocation of each test method in the class.
         super.tearDown()
@@ -55,16 +55,16 @@ class ControlChannelTests: XCTestCase {
         let key = OpenVPN.StaticKey(biData: Data(hex: hex))
         let server = CryptoBox(cipherAlgorithm: nil, digestAlgorithm: OpenVPN.Digest.sha1.rawValue)
         XCTAssertNoThrow(try server.configure(withCipherEncKey: nil, cipherDecKey: nil, hmacEncKey: key.hmacReceiveKey, hmacDecKey: key.hmacSendKey))
-        
+
 //        let original = Data(hex: "38858fe14742fdae40e67c9137933a412a711c0d0514aca6db6476d17d000000015b96c9470000000000")
         let hmac = Data(hex: "e67c9137933a412a711c0d0514aca6db6476d17d")
         let subject = Data(hex: "000000015b96c94738858fe14742fdae400000000000")
         let data = hmac + subject
         print(data.toHex())
-        
+
         XCTAssertNoThrow(try server.decrypter().verifyData(data, flags: nil))
     }
-    
+
 //    38 // HARD_RESET
 //    bccfd171ce22e085 // session_id
 //    e01a3454c354f3c3093b00fc8d6228a8b69ef503d56f6a572ebd26a800711b4cd4df2b9daf06cb90f82379e7815e39fb73be4ac5461752db4f35120474af82b2 // hmac
@@ -74,11 +74,11 @@ class ControlChannelTests: XCTestCase {
     func testAuth() {
         let client = try! OpenVPN.ControlChannel.AuthSerializer(withKey: OpenVPN.StaticKey(data: Data(hex: hex), direction: .client), digest: .sha512)
         let server = try! OpenVPN.ControlChannel.AuthSerializer(withKey: OpenVPN.StaticKey(data: Data(hex: hex), direction: .server), digest: .sha512)
-        
+
 //        let original = Data(hex: "38bccfd1")
         let original = Data(hex: "38bccfd171ce22e085e01a3454c354f3c3093b00fc8d6228a8b69ef503d56f6a572ebd26a800711b4cd4df2b9daf06cb90f82379e7815e39fb73be4ac5461752db4f35120474af82b2000000015b93b65d0000000000")
         let timestamp = UInt32(0x5b93b65d)
-        
+
         let packet: ControlPacket
         do {
             packet = try client.deserialize(data: original, start: 0, end: nil)
@@ -90,7 +90,7 @@ class ControlChannelTests: XCTestCase {
         XCTAssertEqual(packet.sessionId, Data(hex: "bccfd171ce22e085"))
         XCTAssertNil(packet.ackIds)
         XCTAssertEqual(packet.packetId, 0)
-        
+
         let raw: Data
         do {
             raw = try server.serialize(packet: packet, timestamp: timestamp)
@@ -109,7 +109,7 @@ class ControlChannelTests: XCTestCase {
 
         let original = Data(hex: "407bf3d6a260e6476d000000015ba4155887940856ddb70e01693980c5c955cb5506ecf9fd3e0bcee0c802ec269427d43bf1cda1837ffbf30c83cacff852cd0b7f4c")
         let timestamp = UInt32(0x5ba41558)
-        
+
         let packet: ControlPacket
         do {
             packet = try client.deserialize(data: original, start: 0, end: nil)

@@ -31,8 +31,6 @@ private let log = SwiftyBeaver.self
 @NSApplicationMain
 class AppDelegate: NSObject, NSApplicationDelegate {
 
-
-
     func applicationDidFinishLaunching(_ aNotification: Notification) {
         let logDestination = ConsoleDestination()
         logDestination.minLevel = .debug
@@ -46,6 +44,4 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         // Insert code here to tear down your application
     }
 
-
 }
-

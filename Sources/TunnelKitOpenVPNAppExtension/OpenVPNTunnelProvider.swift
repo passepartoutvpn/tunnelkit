@@ -57,39 +57,39 @@ private let log = SwiftyBeaver.self
  Packet Tunnel Provider extension both on iOS and macOS.
  */
 open class OpenVPNTunnelProvider: NEPacketTunnelProvider {
-    
+
     // MARK: Tweaks
-    
+
     /// An optional string describing host app version on tunnel start.
     public var appVersion: String?
 
     /// The log separator between sessions.
     public var logSeparator = "--- EOF ---"
-    
+
     /// The maximum size of the log.
     public var maxLogSize = 20000
-    
+
     /// The log level when `OpenVPNTunnelProvider.Configuration.shouldDebug` is enabled.
     public var debugLogLevel: SwiftyBeaver.Level = .debug
-    
+
     /// The number of milliseconds after which a DNS resolution fails.
     public var dnsTimeout = 3000
-    
+
     /// The number of milliseconds after which the tunnel gives up on a connection attempt.
     public var socketTimeout = 5000
-    
+
     /// The number of milliseconds after which the tunnel is shut down forcibly.
     public var shutdownTimeout = 2000
-    
+
     /// The number of milliseconds after which a reconnection attempt is issued.
     public var reconnectionDelay = 1000
-    
+
     /// The number of link failures after which the tunnel is expected to die.
     public var maxLinkFailures = 3
 
     /// The number of milliseconds between data count updates. Set to 0 to disable updates (default).
     public var dataCountInterval = 0
-    
+
     /// A list of public DNS servers to use as fallback when none are provided (defaults to CloudFlare).
     public var fallbackDNSServers = [
         "1.1.1.1",
@@ -97,13 +97,13 @@ open class OpenVPNTunnelProvider: NEPacketTunnelProvider {
         "2606:4700:4700::1111",
         "2606:4700:4700::1001"
     ]
-    
+
     // MARK: Constants
-    
+
     private let tunnelQueue = DispatchQueue(label: OpenVPNTunnelProvider.description(), qos: .utility)
-    
+
     private let prngSeedLength = 64
-    
+
     private var cachesURL: URL {
         let appGroup = cfg.appGroup
         guard let containerURL = FileManager.default.containerURL(forSecurityApplicationGroupIdentifier: appGroup) else {
@@ -115,32 +115,32 @@ open class OpenVPNTunnelProvider: NEPacketTunnelProvider {
     // MARK: Tunnel configuration
 
     private var cfg: OpenVPN.ProviderConfiguration!
-    
+
     private var strategy: ConnectionStrategy!
-    
+
     // MARK: Internal state
 
     private var session: OpenVPNSession?
-    
+
     private var socket: GenericSocket?
 
     private var pendingStartHandler: ((Error?) -> Void)?
-    
+
     private var pendingStopHandler: (() -> Void)?
-    
+
     private var isCountingData = false
-    
+
     private var shouldReconnect = false
 
     // MARK: NEPacketTunnelProvider (XPC queue)
-    
+
     open override var reasserting: Bool {
         didSet {
             log.debug("Reasserting flag \(reasserting ? "set" : "cleared")")
         }
     }
-    
-    open override func startTunnel(options: [String : NSObject]? = nil, completionHandler: @escaping (Error?) -> Void) {
+
+    open override func startTunnel(options: [String: NSObject]? = nil, completionHandler: @escaping (Error?) -> Void) {
 
         // required configuration
         do {
@@ -160,7 +160,7 @@ open class OpenVPNTunnelProvider: NEPacketTunnelProvider {
                 switch te {
                 case .parameter(let name):
                     message = "Tunnel configuration incomplete: \(name)"
-                    
+
                 default:
                     break
                 }
@@ -198,7 +198,7 @@ open class OpenVPNTunnelProvider: NEPacketTunnelProvider {
 
         log.info("Starting tunnel...")
         cfg._appexSetLastError(nil)
-        
+
         guard OpenVPN.prepareRandomNumberGenerator(seedLength: prngSeedLength) else {
             completionHandler(OpenVPNProviderConfigurationError.prngInitialization)
             return
@@ -231,7 +231,7 @@ open class OpenVPNTunnelProvider: NEPacketTunnelProvider {
             self.connectTunnel()
         }
     }
-    
+
     open override func stopTunnel(with reason: NEProviderStopReason, completionHandler: @escaping () -> Void) {
         pendingStartHandler = nil
         log.info("Stopping tunnel...")
@@ -261,35 +261,35 @@ open class OpenVPNTunnelProvider: NEPacketTunnelProvider {
             session.shutdown(error: nil)
         }
     }
-    
+
     // MARK: Wake/Sleep (debugging placeholders)
 
     open override func wake() {
         log.verbose("Wake signal received")
     }
-    
+
     open override func sleep(completionHandler: @escaping () -> Void) {
         log.verbose("Sleep signal received")
         completionHandler()
     }
-    
+
     // MARK: Connection (tunnel queue)
-    
+
     private func connectTunnel(upgradedSocket: GenericSocket? = nil) {
         log.info("Creating link session")
-        
+
         // reuse upgraded socket
         if let upgradedSocket = upgradedSocket, !upgradedSocket.isShutdown {
             log.debug("Socket follows a path upgrade")
             connectTunnel(via: upgradedSocket)
             return
         }
-        
+
         strategy.createSocket(from: self, timeout: dnsTimeout, queue: tunnelQueue) {
             switch $0 {
             case .success(let socket):
                 self.connectTunnel(via: socket)
-                
+
             case .failure(let error):
                 if case .dnsFailure = error {
                     self.tunnelQueue.async {
@@ -302,7 +302,7 @@ open class OpenVPNTunnelProvider: NEPacketTunnelProvider {
             }
         }
     }
-    
+
     private func connectTunnel(via socket: GenericSocket) {
         log.info("Will connect to \(socket)")
         cfg._appexSetLastError(nil)
@@ -312,16 +312,16 @@ open class OpenVPNTunnelProvider: NEPacketTunnelProvider {
         self.socket?.delegate = self
         self.socket?.observe(queue: tunnelQueue, activeTimeout: socketTimeout)
     }
-    
+
     private func finishTunnelDisconnection(error: Error?) {
         if let session = session, !(shouldReconnect && session.canRebindLink()) {
             session.cleanup()
         }
-        
+
         socket?.delegate = nil
         socket?.unobserve()
         socket = nil
-        
+
         if let error = error {
             log.error("Tunnel did stop (error: \(error))")
             setErrorStatus(with: error)
@@ -329,7 +329,7 @@ open class OpenVPNTunnelProvider: NEPacketTunnelProvider {
             log.info("Tunnel did stop on request")
         }
     }
-    
+
     private func disposeTunnel(error: Error?) {
         log.info("Dispose tunnel in \(reconnectionDelay) milliseconds...")
         tunnelQueue.asyncAfter(deadline: .now() + .milliseconds(reconnectionDelay)) { [weak self] in
@@ -342,7 +342,7 @@ open class OpenVPNTunnelProvider: NEPacketTunnelProvider {
 
         // failed to start
         if pendingStartHandler != nil {
-            
+
             //
             // CAUTION
             //
@@ -374,7 +374,7 @@ open class OpenVPNTunnelProvider: NEPacketTunnelProvider {
             forceExitOnMac()
         }
     }
-    
+
     // MARK: Data counter (tunnel queue)
 
     private func refreshDataCount() {
@@ -393,9 +393,9 @@ open class OpenVPNTunnelProvider: NEPacketTunnelProvider {
 }
 
 extension OpenVPNTunnelProvider: GenericSocketDelegate {
-    
+
     // MARK: GenericSocketDelegate (tunnel queue)
-    
+
     public func socketDidTimeout(_ socket: GenericSocket) {
         log.debug("Socket timed out waiting for activity, cancelling...")
         shouldReconnect = true
@@ -409,7 +409,7 @@ extension OpenVPNTunnelProvider: GenericSocketDelegate {
             }
         }
     }
-    
+
     public func socketDidBecomeActive(_ socket: GenericSocket) {
         guard let session = session, let producer = socket as? LinkProducer else {
             return
@@ -421,12 +421,12 @@ extension OpenVPNTunnelProvider: GenericSocketDelegate {
             session.setLink(producer.link(userObject: cfg.configuration.xorMethod))
         }
     }
-    
+
     public func socket(_ socket: GenericSocket, didShutdownWithFailure failure: Bool) {
         guard let session = session else {
             return
         }
-        
+
         var shutdownError: Error?
         let didTimeoutNegotiation: Bool
         var upgradedSocket: GenericSocket?
@@ -437,7 +437,7 @@ extension OpenVPNTunnelProvider: GenericSocketDelegate {
             shutdownError = OpenVPNProviderError.linkError
         }
         didTimeoutNegotiation = (shutdownError as? OpenVPNError == .negotiationTimeout)
-        
+
         // only try upgrade on network errors
         if shutdownError as? OpenVPNError == nil {
             upgradedSocket = socket.upgraded()
@@ -475,7 +475,7 @@ extension OpenVPNTunnelProvider: GenericSocketDelegate {
         // shut down
         disposeTunnel(error: shutdownError)
     }
-    
+
     public func socketHasBetterPath(_ socket: GenericSocket) {
         log.debug("Stopping tunnel due to a new better path")
         logCurrentSSID()
@@ -484,9 +484,9 @@ extension OpenVPNTunnelProvider: GenericSocketDelegate {
 }
 
 extension OpenVPNTunnelProvider: OpenVPNSessionDelegate {
-    
+
     // MARK: OpenVPNSessionDelegate (tunnel queue)
-    
+
     public func sessionDidStart(_ session: OpenVPNSession, remoteAddress: String, remoteProtocol: String?, options: OpenVPN.Configuration) {
         log.info("Session did start")
         log.info("\tAddress: \(remoteAddress.maskedDescription)")
@@ -504,18 +504,18 @@ extension OpenVPNTunnelProvider: OpenVPNSessionDelegate {
         bringNetworkUp(remoteAddress: remoteAddress, localOptions: session.configuration, remoteOptions: options) { (error) in
 
             // FIXME: XPC queue
-            
+
             self.reasserting = false
-            
+
             if let error = error {
                 log.error("Failed to configure tunnel: \(error)")
                 self.pendingStartHandler?(error)
                 self.pendingStartHandler = nil
                 return
             }
-            
+
             log.info("Tunnel interface is now UP")
-            
+
             session.setTunnel(tunnel: NETunnelInterface(impl: self.packetFlow))
 
             self.pendingStartHandler?(nil)
@@ -525,7 +525,7 @@ extension OpenVPNTunnelProvider: OpenVPNSessionDelegate {
         isCountingData = true
         refreshDataCount()
     }
-    
+
     public func sessionDidStop(_: OpenVPNSession, withError error: Error?, shouldReconnect: Bool) {
         cfg._appexSetServerConfiguration(nil)
 
@@ -541,7 +541,7 @@ extension OpenVPNTunnelProvider: OpenVPNSessionDelegate {
         self.shouldReconnect = shouldReconnect
         socket?.shutdown()
     }
-    
+
     private func bringNetworkUp(remoteAddress: String, localOptions: OpenVPN.Configuration, remoteOptions: OpenVPN.Configuration, completionHandler: @escaping (Error?) -> Void) {
         let newSettings = NetworkSettingsBuilder(remoteAddress: remoteAddress, localOptions: localOptions, remoteOptions: remoteOptions)
 
@@ -599,13 +599,13 @@ extension OpenVPNTunnelProvider {
         }
         return true
     }
-    
+
     // MARK: Logging
-    
+
     private func configureLogging() {
         let logLevel: SwiftyBeaver.Level = (cfg.shouldDebug ? debugLogLevel : .info)
         let logFormat = cfg.debugLogFormat ?? "$Dyyyy-MM-dd HH:mm:ss.SSS$d $L $N.$F:$l - $M"
-        
+
         if cfg.shouldDebug {
             let console = ConsoleDestination()
             console.useNSLog = true
@@ -623,7 +623,7 @@ extension OpenVPNTunnelProvider {
         // store path for clients
         cfg._appexSetDebugLogPath()
     }
-    
+
     private func flushLog() {
         log.debug("Flushing log...")
 
@@ -649,37 +649,37 @@ extension OpenVPNTunnelProvider {
 //    }
 
     // MARK: Errors
-    
+
     private func setErrorStatus(with error: Error) {
         cfg._appexSetLastError(unifiedError(from: error))
     }
-    
+
     private func unifiedError(from error: Error) -> OpenVPNProviderError {
         if let te = error.openVPNErrorCode() {
             switch te {
             case .cryptoRandomGenerator, .cryptoAlgorithm:
                 return .encryptionInitialization
-                
+
             case .cryptoEncryption, .cryptoHMAC:
                 return .encryptionData
-                
+
             case .tlscaRead, .tlscaUse, .tlscaPeerVerification,
                     .tlsClientCertificateRead, .tlsClientCertificateUse,
                     .tlsClientKeyRead, .tlsClientKeyUse:
                 return .tlsInitialization
-                
+
             case .tlsServerCertificate, .tlsServerEKU, .tlsServerHost:
                 return .tlsServerVerification
-                
+
             case .tlsHandshake:
                 return .tlsHandshake
-                
+
             case .dataPathOverflow, .dataPathPeerIdMismatch:
                 return .unexpectedReply
-                
+
             case .dataPathCompression:
                 return .serverCompression
-                
+
             default:
                 break
             }
@@ -687,19 +687,19 @@ extension OpenVPNTunnelProvider {
             switch se {
             case .negotiationTimeout, .pingTimeout, .staleSession:
                 return .timeout
-                
+
             case .badCredentials:
                 return .authentication
-                
+
             case .serverCompression:
                 return .serverCompression
-                
+
             case .failedLinkWrite:
                 return .linkError
-                
+
             case .noRouting:
                 return .routing
-                
+
             case .serverShutdown:
                 return .serverShutdown
 

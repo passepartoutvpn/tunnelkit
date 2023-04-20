@@ -33,17 +33,17 @@ private let log = SwiftyBeaver.self
 
 struct NetworkSettingsBuilder {
     let remoteAddress: String
-    
+
     let localOptions: OpenVPN.Configuration
-    
+
     let remoteOptions: OpenVPN.Configuration
-    
+
     init(remoteAddress: String, localOptions: OpenVPN.Configuration, remoteOptions: OpenVPN.Configuration) {
         self.remoteAddress = remoteAddress
         self.localOptions = localOptions
         self.remoteOptions = remoteOptions
     }
-    
+
     func build() -> NEPacketTunnelNetworkSettings {
         let ipv4Settings = computedIPv4Settings
         let ipv6Settings = computedIPv6Settings
@@ -91,19 +91,19 @@ extension NetworkSettingsBuilder {
     var isGateway: Bool {
         isIPv4Gateway || isIPv6Gateway
     }
-    
+
     private var routingPolicies: [OpenVPN.RoutingPolicy]? {
         pullRoutes ? (remoteOptions.routingPolicies ?? localOptions.routingPolicies) : localOptions.routingPolicies
     }
-    
+
     private var isIPv4Gateway: Bool {
         routingPolicies?.contains(.IPv4) ?? false
     }
-    
+
     private var isIPv6Gateway: Bool {
         routingPolicies?.contains(.IPv6) ?? false
     }
-    
+
     private var allRoutes4: [IPv4Settings.Route] {
         var routes = localOptions.routes4 ?? []
         if pullRoutes, let remoteRoutes = remoteOptions.routes4 {
@@ -111,7 +111,7 @@ extension NetworkSettingsBuilder {
         }
         return routes
     }
-    
+
     private var allRoutes6: [IPv6Settings.Route] {
         var routes = localOptions.routes6 ?? []
         if pullRoutes, let remoteRoutes = remoteOptions.routes6 {
@@ -119,7 +119,7 @@ extension NetworkSettingsBuilder {
         }
         return routes
     }
-    
+
     private var allDNSServers: [String] {
         var servers = localOptions.dnsServers ?? []
         if pullDNS, let remoteServers = remoteOptions.dnsServers {
@@ -127,7 +127,7 @@ extension NetworkSettingsBuilder {
         }
         return servers
     }
-    
+
     private var dnsDomain: String? {
         var domain = localOptions.dnsDomain
         if pullDNS, let remoteDomain = remoteOptions.dnsDomain {
@@ -143,7 +143,7 @@ extension NetworkSettingsBuilder {
         }
         return searchDomains
     }
-    
+
     private var allProxyBypassDomains: [String] {
         var bypass = localOptions.proxyBypassDomains ?? []
         if pullProxy, let remoteBypass = remoteOptions.proxyBypassDomains {
@@ -164,7 +164,7 @@ extension NetworkSettingsBuilder {
         }
         let ipv4Settings = NEIPv4Settings(addresses: [ipv4.address], subnetMasks: [ipv4.addressMask])
         var neRoutes: [NEIPv4Route] = []
-        
+
         // route all traffic to VPN?
         if isIPv4Gateway {
             let defaultRoute = NEIPv4Route.default()
@@ -172,7 +172,7 @@ extension NetworkSettingsBuilder {
             neRoutes.append(defaultRoute)
             log.info("Routing.IPv4: Setting default gateway to \(ipv4.defaultGateway)")
         }
-        
+
         for r in allRoutes4 {
             let ipv4Route = NEIPv4Route(destinationAddress: r.destination, subnetMask: r.mask)
             let gw = r.gateway ?? ipv4.defaultGateway
@@ -185,14 +185,14 @@ extension NetworkSettingsBuilder {
         ipv4Settings.excludedRoutes = []
         return ipv4Settings
     }
-    
+
     private var computedIPv6Settings: NEIPv6Settings? {
         guard let ipv6 = remoteOptions.ipv6 else {
             return nil
         }
         let ipv6Settings = NEIPv6Settings(addresses: [ipv6.address], networkPrefixLengths: [ipv6.addressPrefixLength as NSNumber])
         var neRoutes: [NEIPv6Route] = []
-        
+
         // route all traffic to VPN?
         if isIPv6Gateway {
             let defaultRoute = NEIPv6Route.default()
@@ -200,7 +200,7 @@ extension NetworkSettingsBuilder {
             neRoutes.append(defaultRoute)
             log.info("Routing.IPv6: Setting default gateway to \(ipv6.defaultGateway)")
         }
-        
+
         for r in allRoutes6 {
             let ipv6Route = NEIPv6Route(destinationAddress: r.destination, networkPrefixLength: r.prefixLength as NSNumber)
             let gw = r.gateway ?? ipv6.defaultGateway
@@ -213,7 +213,7 @@ extension NetworkSettingsBuilder {
         ipv6Settings.excludedRoutes = []
         return ipv6Settings
     }
-    
+
     var hasGateway: Bool {
         var hasGateway = false
         if isIPv4Gateway && remoteOptions.ipv4 != nil {
@@ -260,7 +260,7 @@ extension NetworkSettingsBuilder {
                 break
             }
         }
-        
+
         // fall back
         if dnsSettings == nil {
             let dnsServers = allDNSServers
@@ -277,7 +277,7 @@ extension NetworkSettingsBuilder {
                 }
             }
         }
-        
+
         // "hack" for split DNS (i.e. use VPN only for DNS)
         if !isGateway {
             dnsSettings?.matchDomains = [""]
@@ -296,7 +296,7 @@ extension NetworkSettingsBuilder {
                 dnsSettings?.matchDomains = dnsSettings?.searchDomains
             }
         }
-        
+
         return dnsSettings
     }
 }
@@ -329,7 +329,7 @@ extension NetworkSettingsBuilder {
             proxySettings?.autoProxyConfigurationEnabled = true
             log.info("Routing: Setting PAC \(pacURL)")
         }
-        
+
         // only set if there is a proxy (proxySettings set to non-nil above)
         if proxySettings != nil {
             let bypass = allProxyBypassDomains

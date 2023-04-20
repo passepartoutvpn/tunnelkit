@@ -67,10 +67,10 @@ public protocol GenericSocket {
 
     /// The address of the remote endpoint.
     var remoteAddress: String? { get }
-    
+
     /// `true` if the socket has a better path.
     var hasBetterPath: Bool { get }
-    
+
     /// `true` if the socket was shut down.
     var isShutdown: Bool { get }
 
@@ -94,7 +94,7 @@ public protocol GenericSocket {
      Shuts down the socket
      **/
     func shutdown()
-    
+
     /**
      Returns an upgraded socket if available (e.g. when a better path exists).
  

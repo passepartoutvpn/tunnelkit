@@ -34,34 +34,34 @@ private let tunnelIdentifier = "com.algoritmico.macos.TunnelKit.Demo.OpenVPN.Tun
 
 class OpenVPNViewController: NSViewController {
     @IBOutlet var textUsername: NSTextField!
-    
+
     @IBOutlet var textPassword: NSTextField!
-    
+
     @IBOutlet var textServer: NSTextField!
-    
+
     @IBOutlet var textDomain: NSTextField!
-    
+
     @IBOutlet var textPort: NSTextField!
-    
+
     @IBOutlet var buttonConnection: NSButton!
-    
+
     private let vpn = NetworkExtensionVPN()
-    
+
     private var vpnStatus: VPNStatus = .disconnected
 
     private let keychain = Keychain(group: appGroup)
-    
+
     private var cfg: OpenVPN.ProviderConfiguration?
-    
+
     override func viewDidLoad() {
         super.viewDidLoad()
-        
+
         textServer.stringValue = "nl-free-50"
         textDomain.stringValue = "protonvpn.net"
         textPort.stringValue = "80"
         textUsername.stringValue = ""
         textPassword.stringValue = ""
-        
+
         NotificationCenter.default.addObserver(
             self,
             selector: #selector(VPNStatusDidChange(notification:)),
@@ -78,20 +78,20 @@ class OpenVPNViewController: NSViewController {
         Task {
             await vpn.prepare()
         }
-        
+
 //        testFetchRef()
     }
-    
+
     @IBAction func connectionClicked(_ sender: Any) {
         switch vpnStatus {
         case .disconnected:
             connect()
-            
+
         case .connected, .connecting, .disconnecting:
             disconnect()
         }
     }
-    
+
     func connect() {
         let server = textServer.stringValue
         let domain = textDomain.stringValue
@@ -127,7 +127,7 @@ class OpenVPNViewController: NSViewController {
             )
         }
     }
-    
+
     func disconnect() {
         Task {
             await vpn.disconnect()
@@ -138,15 +138,15 @@ class OpenVPNViewController: NSViewController {
         switch vpnStatus {
         case .connected, .connecting:
             buttonConnection.title = "Disconnect"
-            
+
         case .disconnected:
             buttonConnection.title = "Connect"
-            
+
         case .disconnecting:
             buttonConnection.title = "Disconnecting"
         }
     }
-    
+
     @objc private func VPNStatusDidChange(notification: Notification) {
         vpnStatus = notification.vpnStatus
         print("VPNStatusDidChange: \(vpnStatus)")
@@ -175,4 +175,3 @@ class OpenVPNViewController: NSViewController {
 //        print("\(username) -> \(fetchedPassword)")
 //    }
 }
-

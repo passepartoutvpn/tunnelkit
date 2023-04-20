@@ -64,10 +64,10 @@ public class SecureRandom {
         }
         return randomNumber
     }
-    
+
     public static func uint32() throws -> UInt32 {
         var randomNumber: UInt32 = 0
-        
+
         try withUnsafeMutablePointer(to: &randomNumber) {
             try $0.withMemoryRebound(to: UInt8.self, capacity: 4) { (randomBytes: UnsafeMutablePointer<UInt8>) -> Void in
                 guard SecRandomCopyBytes(kSecRandomDefault, 4, randomBytes) == 0 else {
@@ -75,7 +75,7 @@ public class SecureRandom {
                 }
             }
         }
-        
+
         return randomNumber
     }
 
@@ -88,7 +88,7 @@ public class SecureRandom {
                 throw SecureRandomError.randomGenerator
             }
         }
-        
+
         return randomData
     }
 
@@ -99,7 +99,7 @@ public class SecureRandom {
             bzero(randomBytes, length)
             randomBytes.deallocate()
         }
-        
+
         guard SecRandomCopyBytes(kSecRandomDefault, length, randomBytes) == 0 else {
             throw SecureRandomError.randomGenerator
         }

@@ -38,37 +38,37 @@ import Foundation
 
 /// The possible errors raised/thrown during `OpenVPNSession` operation.
 public enum OpenVPNError: String, Error {
-    
+
     /// The negotiation timed out.
     case negotiationTimeout
-    
+
     /// The VPN session id is missing.
     case missingSessionId
-    
+
     /// The VPN session id doesn't match.
     case sessionMismatch
-    
+
     /// The connection key is wrong or wasn't expected.
     case badKey
-    
+
     /// The control packet has an incorrect prefix payload.
     case wrongControlDataPrefix
-    
+
     /// The provided credentials failed authentication.
     case badCredentials
-    
+
     /// The PUSH_REPLY is multipart.
     case continuationPushReply
-    
+
     /// The reply to PUSH_REQUEST is malformed.
     case malformedPushReply
-    
+
     /// A write operation failed at the link layer (e.g. network unreachable).
     case failedLinkWrite
-    
+
     /// The server couldn't ping back before timeout.
     case pingTimeout
-    
+
     /// The session reached a stale state and can't be recovered.
     case staleSession
 

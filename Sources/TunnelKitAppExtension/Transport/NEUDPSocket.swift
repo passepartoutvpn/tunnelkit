@@ -44,37 +44,37 @@ private let log = SwiftyBeaver.self
 /// UDP implementation of a `GenericSocket` via NetworkExtension.
 public class NEUDPSocket: NSObject, GenericSocket {
     private static var linkContext = 0
-    
+
     public let impl: NWUDPSession
-    
+
     public init(impl: NWUDPSession) {
         self.impl = impl
 
         isActive = false
         isShutdown = false
     }
-    
+
     // MARK: GenericSocket
-    
+
     private weak var queue: DispatchQueue?
-    
+
     private var isActive: Bool
-    
+
     public private(set) var isShutdown: Bool
 
     public var remoteAddress: String? {
         return (impl.resolvedEndpoint as? NWHostEndpoint)?.hostname
     }
-    
+
     public var hasBetterPath: Bool {
         return impl.hasBetterPath
     }
-    
+
     public weak var delegate: GenericSocketDelegate?
-    
+
     public func observe(queue: DispatchQueue, activeTimeout: Int) {
         isActive = false
-        
+
         self.queue = queue
         queue.schedule(after: .milliseconds(activeTimeout)) { [weak self] in
             guard let _self = self else {
@@ -88,27 +88,27 @@ public class NEUDPSocket: NSObject, GenericSocket {
         impl.addObserver(self, forKeyPath: #keyPath(NWUDPSession.state), options: [.initial, .new], context: &NEUDPSocket.linkContext)
         impl.addObserver(self, forKeyPath: #keyPath(NWUDPSession.hasBetterPath), options: .new, context: &NEUDPSocket.linkContext)
     }
-    
+
     public func unobserve() {
         impl.removeObserver(self, forKeyPath: #keyPath(NWUDPSession.state), context: &NEUDPSocket.linkContext)
         impl.removeObserver(self, forKeyPath: #keyPath(NWUDPSession.hasBetterPath), context: &NEUDPSocket.linkContext)
     }
-    
+
     public func shutdown() {
         impl.cancel()
     }
-    
+
     public func upgraded() -> GenericSocket? {
         guard impl.hasBetterPath else {
             return nil
         }
         return NEUDPSocket(impl: NWUDPSession(upgradeFor: impl))
     }
-    
+
     // MARK: Connection KVO (any queue)
-    
-    public override func observeValue(forKeyPath keyPath: String?, of object: Any?, change: [NSKeyValueChangeKey : Any]?, context: UnsafeMutableRawPointer?) {
-        guard (context == &NEUDPSocket.linkContext) else {
+
+    public override func observeValue(forKeyPath keyPath: String?, of object: Any?, change: [NSKeyValueChangeKey: Any]?, context: UnsafeMutableRawPointer?) {
+        guard context == &NEUDPSocket.linkContext else {
             super.observeValue(forKeyPath: keyPath, of: object, change: change, context: context)
             return
         }
@@ -119,8 +119,8 @@ public class NEUDPSocket: NSObject, GenericSocket {
             self.observeValueInTunnelQueue(forKeyPath: keyPath, of: object, change: change, context: context)
         }
     }
-    
-    private func observeValueInTunnelQueue(forKeyPath keyPath: String?, of object: Any?, change: [NSKeyValueChangeKey : Any]?, context: UnsafeMutableRawPointer?) {
+
+    private func observeValueInTunnelQueue(forKeyPath keyPath: String?, of object: Any?, change: [NSKeyValueChangeKey: Any]?, context: UnsafeMutableRawPointer?) {
 //        if let keyPath = keyPath {
 //            log.debug("KVO change reported (\(anyPointer(object)).\(keyPath))")
 //        }
@@ -138,7 +138,7 @@ public class NEUDPSocket: NSObject, GenericSocket {
             } else {
                 log.debug("Socket state is \(impl.state) (endpoint: \(impl.endpoint.maskedDescription) -> in progress)")
             }
-            
+
             switch impl.state {
             case .ready:
                 guard !isActive else {
@@ -146,29 +146,29 @@ public class NEUDPSocket: NSObject, GenericSocket {
                 }
                 isActive = true
                 delegate?.socketDidBecomeActive(self)
-                
+
             case .cancelled:
                 isShutdown = true
                 delegate?.socket(self, didShutdownWithFailure: false)
-                
+
             case .failed:
                 isShutdown = true
 //                if timedOut {
 //                    delegate?.socketShouldChangeProtocol(self)
 //                }
                 delegate?.socket(self, didShutdownWithFailure: true)
-                
+
             default:
                 break
             }
-            
+
         case #keyPath(NWUDPSession.hasBetterPath):
             guard impl.hasBetterPath else {
                 break
             }
             log.debug("Socket has a better path")
             delegate?.socketHasBetterPath(self)
-            
+
         default:
             break
         }

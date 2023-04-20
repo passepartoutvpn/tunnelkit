@@ -42,18 +42,18 @@ extension WireGuard {
 
             case lastError = "WireGuard.LastError"
         }
-        
+
         public let title: String
-        
+
         public let appGroup: String
 
         public let configuration: WireGuard.Configuration
 
         public var shouldDebug = false
 
-        public var debugLogPath: String? = nil
+        public var debugLogPath: String?
 
-        public var debugLogFormat: String? = nil
+        public var debugLogFormat: String?
 
         public init(_ title: String, appGroup: String, configuration: WireGuard.Configuration) {
             self.title = title
@@ -68,7 +68,7 @@ extension WireGuard {
         }
     }
 }
-    
+
 // MARK: NetworkExtensionConfiguration
 
 extension WireGuard.ProviderConfiguration: NetworkExtensionConfiguration {
@@ -96,7 +96,6 @@ extension WireGuard.ProviderConfiguration {
     public var lastError: WireGuardProviderError? {
         return defaults?.wireGuardLastError
     }
-    
 
     public var urlForDebugLog: URL? {
         return defaults?.wireGuardURLForDebugLog(appGroup: appGroup)

@@ -41,17 +41,17 @@ import CTunnelKitOpenVPNProtocol
 
 class EncryptionPerformanceTests: XCTestCase {
     private var cbcEncrypter: Encrypter!
-    
+
     private var cbcDecrypter: Decrypter!
-    
+
     private var gcmEncrypter: Encrypter!
-    
+
     private var gcmDecrypter: Decrypter!
-    
+
     override func setUp() {
         let cipherKey = try! SecureRandom.safeData(length: 32)
         let hmacKey = try! SecureRandom.safeData(length: 32)
-        
+
         let cbc = CryptoBox(cipherAlgorithm: "aes-128-cbc", digestAlgorithm: "sha1")
         try! cbc.configure(withCipherEncKey: cipherKey, cipherDecKey: cipherKey, hmacEncKey: hmacKey, hmacDecKey: hmacKey)
         cbcEncrypter = cbc.encrypter()
@@ -72,7 +72,7 @@ class EncryptionPerformanceTests: XCTestCase {
         let suite = TestUtils.generateDataSuite(1000, 100000)
         measure {
             for data in suite {
-                let _ = try! self.cbcEncrypter.encryptData(data, flags: nil)
+                _ = try! self.cbcEncrypter.encryptData(data, flags: nil)
             }
         }
     }
@@ -86,7 +86,7 @@ class EncryptionPerformanceTests: XCTestCase {
         }
         measure {
             for data in suite {
-                let _ = try! self.gcmEncrypter.encryptData(data, flags: &flags)
+                _ = try! self.gcmEncrypter.encryptData(data, flags: &flags)
             }
         }
     }

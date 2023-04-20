@@ -51,22 +51,22 @@ dccdb953cdf32bea03f365760b0ed800
 7aed27125592a7148d25c87fdbe0a3f6
 -----END OpenVPN Static key V1-----
 """
-    
+
     override func setUp() {
         super.setUp()
         // Put setup code here. This method is called before the invocation of each test method in the class.
     }
-    
+
     override func tearDown() {
         // Put teardown code here. This method is called after the invocation of each test method in the class.
         super.tearDown()
     }
-    
+
     func testFileBidirectional() {
         let expected = Data(hex: "cf55d863fcbe314df5f0b45dbe974d9bde33ef5b4803c3985531c6c23ca6906d6cd028efc8585d1b9e71003566bd7891b9cc9212bcba510109922eed87f5c8e6")
         let key = OpenVPN.StaticKey(file: content, direction: nil)
         XCTAssertNotNil(key)
-        
+
         XCTAssertEqual(key?.hmacSendKey.toData(), expected)
         XCTAssertEqual(key?.hmacReceiveKey.toData(), expected)
     }
@@ -76,7 +76,7 @@ dccdb953cdf32bea03f365760b0ed800
         let receive = Data(hex: "cf55d863fcbe314df5f0b45dbe974d9bde33ef5b4803c3985531c6c23ca6906d6cd028efc8585d1b9e71003566bd7891b9cc9212bcba510109922eed87f5c8e6")
         let key = OpenVPN.StaticKey(file: content, direction: .client)
         XCTAssertNotNil(key)
-        
+
         XCTAssertEqual(key?.hmacSendKey.toData(), send)
         XCTAssertEqual(key?.hmacReceiveKey.toData(), receive)
     }

@@ -23,7 +23,7 @@ open class WireGuardTunnelProvider: NEPacketTunnelProvider {
     open override func startTunnel(options: [String: NSObject]?, completionHandler: @escaping (Error?) -> Void) {
 
         // BEGIN: TunnelKit
-        
+
         guard let tunnelProviderProtocol = protocolConfiguration as? NETunnelProviderProtocol else {
             fatalError("Not a NETunnelProviderProtocol")
         }
@@ -39,7 +39,7 @@ open class WireGuardTunnelProvider: NEPacketTunnelProvider {
             completionHandler(WireGuardProviderError.savedProtocolConfigurationIsInvalid)
             return
         }
-        
+
         configureLogging()
 
         // END: TunnelKit
@@ -128,7 +128,7 @@ extension WireGuardTunnelProvider {
     private func configureLogging() {
         let logLevel: SwiftyBeaver.Level = (cfg.shouldDebug ? .debug : .info)
         let logFormat = cfg.debugLogFormat ?? "$Dyyyy-MM-dd HH:mm:ss.SSS$d $L $N.$F:$l - $M"
-        
+
         if cfg.shouldDebug {
             let console = ConsoleDestination()
             console.useNSLog = true

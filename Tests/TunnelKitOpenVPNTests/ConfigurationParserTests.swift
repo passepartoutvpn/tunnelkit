@@ -32,24 +32,24 @@ class ConfigurationParserTests: XCTestCase {
         super.setUp()
         // Put setup code here. This method is called before the invocation of each test method in the class.
     }
-    
+
     override func tearDown() {
         // Put teardown code here. This method is called after the invocation of each test method in the class.
         super.tearDown()
     }
-    
+
     // from lines
-    
+
     func testCompression() throws {
         XCTAssertNil(try OpenVPN.ConfigurationParser.parsed(fromLines: ["comp-lzo"]).warning)
         XCTAssertNoThrow(try OpenVPN.ConfigurationParser.parsed(fromLines: ["comp-lzo no"]))
         XCTAssertNoThrow(try OpenVPN.ConfigurationParser.parsed(fromLines: ["comp-lzo yes"]))
 //        XCTAssertThrowsError(try OpenVPN.ConfigurationParser.parsed(fromLines: ["comp-lzo yes"]))
-        
+
         XCTAssertNoThrow(try OpenVPN.ConfigurationParser.parsed(fromLines: ["compress"]))
         XCTAssertNoThrow(try OpenVPN.ConfigurationParser.parsed(fromLines: ["compress lzo"]))
     }
-    
+
     func testKeepAlive() throws {
         let cfg1 = try OpenVPN.ConfigurationParser.parsed(fromLines: ["ping 10", "ping-restart 60"])
         let cfg2 = try OpenVPN.ConfigurationParser.parsed(fromLines: ["keepalive 10 60"])
@@ -59,7 +59,7 @@ class ConfigurationParserTests: XCTestCase {
         XCTAssertNotEqual(cfg1.configuration.keepAliveInterval, cfg3.configuration.keepAliveInterval)
         XCTAssertNotEqual(cfg1.configuration.keepAliveTimeout, cfg3.configuration.keepAliveTimeout)
     }
-    
+
     func testDHCPOption() throws {
         let lines = [
             "dhcp-option DNS 8.8.8.8",
@@ -76,7 +76,7 @@ class ConfigurationParserTests: XCTestCase {
             "dhcp-option PROXY_BYPASS   foo.com   bar.org     net.chat"
         ]
         XCTAssertNoThrow(try OpenVPN.ConfigurationParser.parsed(fromLines: lines))
-        
+
         let parsed = try! OpenVPN.ConfigurationParser.parsed(fromLines: lines).configuration
         XCTAssertEqual(parsed.dnsServers, ["8.8.8.8", "ffff::1"])
         XCTAssertEqual(parsed.dnsDomain, "second-domain.org")
@@ -88,7 +88,7 @@ class ConfigurationParserTests: XCTestCase {
         XCTAssertEqual(parsed.proxyAutoConfigurationURL?.absoluteString, "https://pac/")
         XCTAssertEqual(parsed.proxyBypassDomains, ["foo.com", "bar.org", "net.chat"])
     }
-    
+
     func testRedirectGateway() throws {
         var parsed: OpenVPN.Configuration
 
@@ -105,12 +105,12 @@ class ConfigurationParserTests: XCTestCase {
     }
 
     // from file
-    
+
     func testPIA() throws {
         let file = try OpenVPN.ConfigurationParser.parsed(fromURL: url(withName: "pia-hungary"))
         XCTAssertEqual(file.configuration.remotes, [
             .init("hungary.privateinternetaccess.com", .init(.udp, 1198)),
-            .init("hungary.privateinternetaccess.com", .init(.tcp, 502)),
+            .init("hungary.privateinternetaccess.com", .init(.tcp, 502))
         ])
         XCTAssertEqual(file.configuration.cipher, .aes128cbc)
         XCTAssertEqual(file.configuration.digest, .sha1)
@@ -121,38 +121,38 @@ class ConfigurationParserTests: XCTestCase {
         let stripped = lines.joined(separator: "\n")
         print(stripped)
     }
-    
+
     func testEncryptedCertificateKey() throws {
         try privateTestEncryptedCertificateKey(pkcs: "1")
         try privateTestEncryptedCertificateKey(pkcs: "8")
     }
-    
+
     func testXOR() throws {
         let cfg = try OpenVPN.ConfigurationParser.parsed(fromLines: ["scramble xormask F"])
         XCTAssertNil(cfg.warning)
-        XCTAssertEqual(cfg.configuration.xorMethod, OpenVPN.XORMethod.xormask(mask: Data(repeating: Character("F").asciiValue!, count:1)))
-        
+        XCTAssertEqual(cfg.configuration.xorMethod, OpenVPN.XORMethod.xormask(mask: Data(repeating: Character("F").asciiValue!, count: 1)))
+
         let cfg2 = try OpenVPN.ConfigurationParser.parsed(fromLines: ["scramble reverse"])
         XCTAssertNil(cfg.warning)
         XCTAssertEqual(cfg2.configuration.xorMethod, OpenVPN.XORMethod.reverse)
-        
+
         let cfg3 = try OpenVPN.ConfigurationParser.parsed(fromLines: ["scramble xorptrpos"])
         XCTAssertNil(cfg.warning)
         XCTAssertEqual(cfg3.configuration.xorMethod, OpenVPN.XORMethod.xorptrpos)
-        
+
         let cfg4 = try OpenVPN.ConfigurationParser.parsed(fromLines: ["scramble obfuscate FFFF"])
         XCTAssertNil(cfg.warning)
-        XCTAssertEqual(cfg4.configuration.xorMethod, OpenVPN.XORMethod.obfuscate(mask: Data(repeating: Character("F").asciiValue!, count:4)))
+        XCTAssertEqual(cfg4.configuration.xorMethod, OpenVPN.XORMethod.obfuscate(mask: Data(repeating: Character("F").asciiValue!, count: 4)))
     }
-    
+
     private func privateTestEncryptedCertificateKey(pkcs: String) throws {
         let cfgURL = url(withName: "tunnelbear.enc.\(pkcs)")
         XCTAssertThrowsError(try OpenVPN.ConfigurationParser.parsed(fromURL: cfgURL))
         XCTAssertNoThrow(try OpenVPN.ConfigurationParser.parsed(fromURL: cfgURL, passphrase: "foobar"))
     }
-    
+
     private func url(withName name: String) -> URL {
         return Bundle.module.url(forResource: name, withExtension: "ovpn")!
     }
-    
+
 }

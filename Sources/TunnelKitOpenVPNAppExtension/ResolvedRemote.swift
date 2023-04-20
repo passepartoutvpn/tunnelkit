@@ -31,27 +31,27 @@ private let log = SwiftyBeaver.self
 
 class ResolvedRemote: CustomStringConvertible {
     let originalEndpoint: Endpoint
-    
+
     private(set) var isResolved: Bool
-    
+
     private(set) var resolvedEndpoints: [Endpoint]
 
     private var currentEndpointIndex: Int
-    
+
     var currentEndpoint: Endpoint? {
         guard currentEndpointIndex < resolvedEndpoints.count else {
             return nil
         }
         return resolvedEndpoints[currentEndpointIndex]
     }
-    
+
     init(_ originalEndpoint: Endpoint) {
         self.originalEndpoint = originalEndpoint
         isResolved = false
         resolvedEndpoints = []
         currentEndpointIndex = 0
     }
-    
+
     func nextEndpoint() -> Bool {
         currentEndpointIndex += 1
         return currentEndpointIndex < resolvedEndpoints.count
@@ -63,7 +63,7 @@ class ResolvedRemote: CustomStringConvertible {
             completionHandler()
         }
     }
-    
+
     private func handleResult(_ result: Result<[DNSRecord], DNSError>) {
         switch result {
         case .success(let records):
@@ -87,9 +87,9 @@ class ResolvedRemote: CustomStringConvertible {
         log.debug("Unrolled endpoints: \(endpoints.maskedDescription)")
         return endpoints
     }
-    
+
     // MARK: CustomStringConvertible
-    
+
     var description: String {
         "{\(originalEndpoint.maskedDescription), resolved: \(resolvedEndpoints.maskedDescription)}"
     }

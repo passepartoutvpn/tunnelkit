@@ -52,9 +52,9 @@ public class InterfaceObserver: NSObject {
     public static let didDetectWifiChange = Notification.Name("InterfaceObserverDidDetectWifiChange")
 
     private var queue: DispatchQueue?
-    
+
     private var timer: DispatchSourceTimer?
-    
+
     private var lastWifiName: String?
 
     /**
@@ -89,7 +89,7 @@ public class InterfaceObserver: NSObject {
             self.fireWifiChange(withSSID: $0)
         }
     }
-    
+
     private func fireWifiChange(withSSID ssid: String?) {
         if ssid != lastWifiName {
             if let current = ssid {

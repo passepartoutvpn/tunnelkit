@@ -44,11 +44,11 @@ class EncryptionTests: XCTestCase {
     private var cipherEncKey: ZeroingData!
 
     private var cipherDecKey: ZeroingData!
-    
+
     private var hmacEncKey: ZeroingData!
-    
+
     private var hmacDecKey: ZeroingData!
-    
+
     override func setUp() {
         cipherEncKey = try! SecureRandom.safeData(length: 32)
         cipherDecKey = try! SecureRandom.safeData(length: 32)
@@ -76,10 +76,10 @@ class EncryptionTests: XCTestCase {
         let encrypted = try! client.encrypter().encryptData(plain, flags: nil)
         XCTAssertNoThrow(try server.decrypter().verifyData(encrypted, flags: nil))
     }
-    
+
     func testGCM() {
         let (client, server) = clientServer("aes-256-gcm", nil)
-        
+
         let packetId: [UInt8] = [0x56, 0x34, 0x12, 0x00]
         let ad: [UInt8] = [0x00, 0x12, 0x34, 0x56]
         var flags = packetId.withUnsafeBufferPointer { (iv) in
@@ -92,7 +92,7 @@ class EncryptionTests: XCTestCase {
         let decrypted = try! server.decrypter().decryptData(encrypted, flags: &flags)
         XCTAssertEqual(plain, decrypted)
     }
-    
+
     func testCTR() {
         let (client, server) = clientServer("aes-256-ctr", "sha256")
 
@@ -119,17 +119,17 @@ class EncryptionTests: XCTestCase {
         print(md5)
         XCTAssertEqual(md5, exp)
     }
-    
+
     func testPrivateKeyDecryption() {
         privateTestPrivateKeyDecryption(pkcs: "1")
         privateTestPrivateKeyDecryption(pkcs: "8")
     }
-    
+
     private func privateTestPrivateKeyDecryption(pkcs: String) {
         let bundle = Bundle.module
         let encryptedPath = bundle.path(forResource: "tunnelbear", ofType: "enc.\(pkcs).key")!
         let decryptedPath = bundle.path(forResource: "tunnelbear", ofType: "key")!
-        
+
         XCTAssertThrowsError(try TLSBox.decryptedPrivateKey(fromPath: encryptedPath, passphrase: "wrongone"))
         let decryptedViaPath = try! TLSBox.decryptedPrivateKey(fromPath: encryptedPath, passphrase: "foobar")
         print(decryptedViaPath)
@@ -137,17 +137,17 @@ class EncryptionTests: XCTestCase {
         let decryptedViaString = try! TLSBox.decryptedPrivateKey(fromPEM: encryptedPEM, passphrase: "foobar")
         print(decryptedViaString)
         XCTAssertEqual(decryptedViaPath, decryptedViaString)
-        
+
         let expDecrypted = try! String(contentsOfFile: decryptedPath)
         XCTAssertEqual(decryptedViaPath, expDecrypted)
     }
-    
+
     func testCertificatePreamble() {
         let url = Bundle.module.url(forResource: "tunnelbear", withExtension: "crt")!
         let cert = OpenVPN.CryptoContainer(pem: try! String(contentsOf: url))
         XCTAssert(cert.pem.hasPrefix("-----BEGIN"))
     }
-    
+
     private func clientServer(_ c: String?, _ d: String?) -> (CryptoBox, CryptoBox) {
         let client = CryptoBox(cipherAlgorithm: c, digestAlgorithm: d)
         let server = CryptoBox(cipherAlgorithm: c, digestAlgorithm: d)

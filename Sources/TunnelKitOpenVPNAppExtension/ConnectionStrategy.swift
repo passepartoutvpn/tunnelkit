@@ -48,7 +48,7 @@ class ConnectionStrategy {
     private var remotes: [ResolvedRemote]
 
     private var currentRemoteIndex: Int
-    
+
     var currentRemote: ResolvedRemote? {
         guard currentRemoteIndex < remotes.count else {
             return nil
@@ -89,13 +89,12 @@ class ConnectionStrategy {
         }
         return true
     }
-    
+
     func createSocket(
         from provider: NEProvider,
         timeout: Int,
         queue: DispatchQueue,
-        completionHandler: @escaping (Result<GenericSocket, OpenVPNProviderError>) -> Void)
-    {
+        completionHandler: @escaping (Result<GenericSocket, OpenVPNProviderError>) -> Void) {
         guard let remote = currentRemote else {
             completionHandler(.failure(.exhaustedEndpoints))
             return
@@ -130,7 +129,7 @@ private extension NEProvider {
         case .udp, .udp4, .udp6:
             let impl = createUDPSession(to: ep, from: nil)
             return NEUDPSocket(impl: impl)
-            
+
         case .tcp, .tcp4, .tcp6:
             let impl = createTCPConnection(to: ep, enableTLS: false, tlsParameters: nil, delegate: nil)
             return NETCPSocket(impl: impl)

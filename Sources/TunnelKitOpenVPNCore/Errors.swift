@@ -31,7 +31,7 @@ extension Error {
         let te = self as NSError
         return te.domain == OpenVPNErrorDomain
     }
-    
+
     public func openVPNErrorCode() -> OpenVPNErrorCode? {
         let te = self as NSError
         guard te.domain == OpenVPNErrorDomain else {

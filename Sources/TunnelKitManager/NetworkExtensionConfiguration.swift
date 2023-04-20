@@ -37,10 +37,10 @@ public struct NetworkExtensionExtra {
 
     /// Disconnects on sleep if `true`.
     public var disconnectsOnSleep = false
-    
+
     /// Enables best-effort kill switch.
     public var killSwitch = false
-    
+
     public init() {
     }
 }
@@ -50,7 +50,7 @@ public protocol NetworkExtensionConfiguration {
 
     /// The profile title in device settings.
     var title: String { get }
-    
+
     /**
      Returns a representation for use with tunnel implementations.
      

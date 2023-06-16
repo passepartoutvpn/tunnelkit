@@ -154,9 +154,9 @@ open class OpenVPNTunnelProvider: NEPacketTunnelProvider {
                 throw OpenVPNProviderConfigurationError.parameter(name: "protocolConfiguration.providerConfiguration")
             }
             cfg = try fromDictionary(OpenVPN.ProviderConfiguration.self, providerConfiguration)
-        } catch let e {
+        } catch {
             var message: String?
-            if let te = e as? OpenVPNProviderConfigurationError {
+            if let te = error as? OpenVPNProviderConfigurationError {
                 switch te {
                 case .parameter(let name):
                     message = "Tunnel configuration incomplete: \(name)"
@@ -165,8 +165,8 @@ open class OpenVPNTunnelProvider: NEPacketTunnelProvider {
                     break
                 }
             }
-            NSLog(message ?? "Unexpected error in tunnel configuration: \(e)")
-            completionHandler(e)
+            NSLog(message ?? "Unexpected error in tunnel configuration: \(error)")
+            completionHandler(error)
             return
         }
 
@@ -216,8 +216,8 @@ open class OpenVPNTunnelProvider: NEPacketTunnelProvider {
         do {
             session = try OpenVPNSession(queue: tunnelQueue, configuration: cfg.configuration, cachesURL: cachesURL)
             refreshDataCount()
-        } catch let e {
-            completionHandler(e)
+        } catch {
+            completionHandler(error)
             return
         }
         session.credentials = credentials

@@ -477,8 +477,8 @@ public class OpenVPNSession: Session {
                     continue
                 }
                 controlPacket = parsedPacket
-            } catch let e {
-                log.warning("Dropped malformed packet: \(e)")
+            } catch {
+                log.warning("Dropped malformed packet: \(error)")
                 continue
 //                deferStop(.shutdown, e)
 //                return
@@ -573,8 +573,8 @@ public class OpenVPNSession: Session {
         authenticator = nil
         do {
             try controlChannel.reset(forNewSession: forNewSession)
-        } catch let e {
-            deferStop(.shutdown, e)
+        } catch {
+            deferStop(.shutdown, error)
         }
     }
 
@@ -658,18 +658,18 @@ public class OpenVPNSession: Session {
             authenticator = try OpenVPN.Authenticator(credentials?.username, pushReply?.options.authToken ?? credentials?.password)
             authenticator?.withLocalOptions = withLocalOptions
             try authenticator?.putAuth(into: negotiationKey.tls, options: configuration)
-        } catch let e {
-            deferStop(.shutdown, e)
+        } catch {
+            deferStop(.shutdown, error)
             return
         }
 
         let cipherTextOut: Data
         do {
             cipherTextOut = try negotiationKey.tls.pullCipherText()
-        } catch let e {
-            if let _ = e.openVPNErrorCode() {
-                log.error("TLS.auth: Failed pulling ciphertext (error: \(e))")
-                shutdown(error: e)
+        } catch {
+            if let nativeError = error.nativeOpenVPNError {
+                log.error("TLS.auth: Failed pulling ciphertext (error: \(nativeError))")
+                shutdown(error: nativeError)
                 return
             }
             log.verbose("TLS.auth: Still can't pull ciphertext")
@@ -695,10 +695,10 @@ public class OpenVPNSession: Session {
         let cipherTextOut: Data
         do {
             cipherTextOut = try negotiationKey.tls.pullCipherText()
-        } catch let e {
-            if let _ = e.openVPNErrorCode() {
-                log.error("TLS.auth: Failed pulling ciphertext (error: \(e))")
-                shutdown(error: e)
+        } catch {
+            if let nativeError = error.nativeOpenVPNError {
+                log.error("TLS.auth: Failed pulling ciphertext (error: \(nativeError))")
+                shutdown(error: nativeError)
                 return
             }
             log.verbose("TLS.ifconfig: Still can't pull ciphertext")
@@ -789,21 +789,21 @@ public class OpenVPNSession: Session {
             negotiationKey.tlsOptional = tls
             do {
                 try negotiationKey.tls.start()
-            } catch let e {
-                deferStop(.shutdown, e)
+            } catch {
+                deferStop(.shutdown, error)
                 return
             }
 
             let cipherTextOut: Data
             do {
                 cipherTextOut = try negotiationKey.tls.pullCipherText()
-            } catch let e {
-                if let _ = e.openVPNErrorCode() {
-                    log.error("TLS.connect: Failed pulling ciphertext (error: \(e))")
-                    shutdown(error: e)
+            } catch {
+                if let nativeError = error.nativeOpenVPNError {
+                    log.error("TLS.connect: Failed pulling ciphertext (error: \(nativeError))")
+                    shutdown(error: nativeError)
                     return
                 }
-                deferStop(.shutdown, e)
+                deferStop(.shutdown, error)
                 return
             }
 
@@ -836,10 +836,10 @@ public class OpenVPNSession: Session {
                 cipherTextOut = try negotiationKey.tls.pullCipherText()
                 log.debug("TLS.connect: Send pulled ciphertext (\(cipherTextOut.count) bytes)")
                 enqueueControlPackets(code: .controlV1, key: negotiationKey.id, payload: cipherTextOut)
-            } catch let e {
-                if let _ = e.openVPNErrorCode() {
-                    log.error("TLS.connect: Failed pulling ciphertext (error: \(e))")
-                    shutdown(error: e)
+            } catch {
+                if let nativeError = error.nativeOpenVPNError {
+                    log.error("TLS.connect: Failed pulling ciphertext (error: \(nativeError))")
+                    shutdown(error: nativeError)
                     return
                 }
                 log.verbose("TLS.connect: No available ciphertext to pull")
@@ -878,8 +878,8 @@ public class OpenVPNSession: Session {
                 guard try auth.parseAuthReply() else {
                     return
                 }
-            } catch let e {
-                deferStop(.shutdown, e)
+            } catch {
+                deferStop(.shutdown, error)
                 return
             }
 
@@ -966,8 +966,8 @@ public class OpenVPNSession: Session {
             continuatedPushReplyMessage = completeMessage.replacingOccurrences(of: "push-continuation", with: "")
             // FIXME: strip "PUSH_REPLY" and "push-continuation 2"
             return
-        } catch let e {
-            deferStop(.shutdown, e)
+        } catch {
+            deferStop(.shutdown, error)
             return
         }
 
@@ -1025,9 +1025,9 @@ public class OpenVPNSession: Session {
         let rawList: [Data]
         do {
             rawList = try controlChannel.writeOutboundPackets()
-        } catch let e {
-            log.warning("Failed control packet serialization: \(e)")
-            deferStop(.shutdown, e)
+        } catch {
+            log.warning("Failed control packet serialization: \(error)")
+            deferStop(.shutdown, error)
             return
         }
         for raw in rawList {
@@ -1110,8 +1110,8 @@ public class OpenVPNSession: Session {
                 sessionId,
                 remoteSessionId
             )
-        } catch let e {
-            deferStop(.shutdown, e)
+        } catch {
+            deferStop(.shutdown, error)
             return
         }
 
@@ -1141,12 +1141,12 @@ public class OpenVPNSession: Session {
             }
 
             tunnel?.writePackets(decryptedPackets, completionHandler: nil)
-        } catch let e {
-            if let nativeError = e.nativeOpenVPNError {
+        } catch {
+            if let nativeError = error.nativeOpenVPNError {
                 deferStop(.shutdown, nativeError)
                 return
             }
-            deferStop(.reconnect, e)
+            deferStop(.reconnect, error)
         }
     }
 
@@ -1181,12 +1181,12 @@ public class OpenVPNSession: Session {
 //                    log.verbose("Data: \(encryptedPackets.count) packets successfully written to LINK")
                 }
             }
-        } catch let e {
-            if let nativeError = e.nativeOpenVPNError {
+        } catch {
+            if let nativeError = error.nativeOpenVPNError {
                 deferStop(.shutdown, nativeError)
                 return
             }
-            deferStop(.reconnect, e)
+            deferStop(.reconnect, error)
         }
     }
 
@@ -1206,8 +1206,8 @@ public class OpenVPNSession: Session {
                 ackPacketIds: [controlPacket.packetId],
                 ackRemoteSessionId: controlPacket.sessionId
             )
-        } catch let e {
-            deferStop(.shutdown, e)
+        } catch {
+            deferStop(.shutdown, error)
             return
         }
 

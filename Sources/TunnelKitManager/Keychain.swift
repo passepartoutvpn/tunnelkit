@@ -92,11 +92,11 @@ public class Keychain {
                 return try passwordReference(for: username, context: context)
             }
             removePassword(for: username, context: context)
-        } catch let e as KeychainError {
+        } catch let error as KeychainError {
 
             // rethrow cancelation
-            if e == .userCancelled {
-                throw e
+            if error == .userCancelled {
+                throw error
             }
 
             // otherwise, no pre-existing password

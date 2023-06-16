@@ -82,7 +82,7 @@ class ControlChannelTests: XCTestCase {
         let packet: ControlPacket
         do {
             packet = try client.deserialize(data: original, start: 0, end: nil)
-        } catch let e {
+        } catch {
             XCTAssertNil(e)
             return
         }
@@ -94,7 +94,7 @@ class ControlChannelTests: XCTestCase {
         let raw: Data
         do {
             raw = try server.serialize(packet: packet, timestamp: timestamp)
-        } catch let e {
+        } catch {
             XCTAssertNil(e)
             return
         }
@@ -113,7 +113,7 @@ class ControlChannelTests: XCTestCase {
         let packet: ControlPacket
         do {
             packet = try client.deserialize(data: original, start: 0, end: nil)
-        } catch let e {
+        } catch {
             XCTAssertNil(e)
             return
         }
@@ -126,7 +126,7 @@ class ControlChannelTests: XCTestCase {
         let raw: Data
         do {
             raw = try server.serialize(packet: packet, timestamp: timestamp)
-        } catch let e {
+        } catch {
             XCTAssertNil(e)
             return
         }

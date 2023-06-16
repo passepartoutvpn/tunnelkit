@@ -436,7 +436,11 @@ extension OpenVPNTunnelProvider: GenericSocketDelegate {
         if failure && (shutdownError == nil) {
             shutdownError = OpenVPNProviderError.linkError
         }
-        didTimeoutNegotiation = (shutdownError as? OpenVPNError == .negotiationTimeout)
+        if case .negotiationTimeout = shutdownError as? OpenVPNError {
+            didTimeoutNegotiation = true
+        } else {
+            didTimeoutNegotiation = false
+        }
 
         // only try upgrade on network errors
         if shutdownError as? OpenVPNError == nil {
@@ -655,36 +659,8 @@ extension OpenVPNTunnelProvider {
     }
 
     private func unifiedError(from error: Error) -> OpenVPNProviderError {
-        if let te = error.openVPNErrorCode() {
-            switch te {
-            case .cryptoRandomGenerator, .cryptoAlgorithm:
-                return .encryptionInitialization
-
-            case .cryptoEncryption, .cryptoHMAC:
-                return .encryptionData
-
-            case .tlscaRead, .tlscaUse, .tlscaPeerVerification,
-                    .tlsClientCertificateRead, .tlsClientCertificateUse,
-                    .tlsClientKeyRead, .tlsClientKeyUse:
-                return .tlsInitialization
-
-            case .tlsServerCertificate, .tlsServerEKU, .tlsServerHost:
-                return .tlsServerVerification
-
-            case .tlsHandshake:
-                return .tlsHandshake
-
-            case .dataPathOverflow, .dataPathPeerIdMismatch:
-                return .unexpectedReply
-
-            case .dataPathCompression:
-                return .serverCompression
-
-            default:
-                break
-            }
-        } else if let se = error as? OpenVPNError {
-            switch se {
+        if let se = error as? OpenVPNError {
+            switch se.nativeOpenVPNError ?? se {
             case .negotiationTimeout, .pingTimeout, .staleSession:
                 return .timeout
 
@@ -702,6 +678,35 @@ extension OpenVPNTunnelProvider {
 
             case .serverShutdown:
                 return .serverShutdown
+
+            case .native(let code):
+                switch code {
+                case .cryptoRandomGenerator, .cryptoAlgorithm:
+                    return .encryptionInitialization
+
+                case .cryptoEncryption, .cryptoHMAC:
+                    return .encryptionData
+
+                case .tlscaRead, .tlscaUse, .tlscaPeerVerification,
+                        .tlsClientCertificateRead, .tlsClientCertificateUse,
+                        .tlsClientKeyRead, .tlsClientKeyUse:
+                    return .tlsInitialization
+
+                case .tlsServerCertificate, .tlsServerEKU, .tlsServerHost:
+                    return .tlsServerVerification
+
+                case .tlsHandshake:
+                    return .tlsHandshake
+
+                case .dataPathOverflow, .dataPathPeerIdMismatch:
+                    return .unexpectedReply
+
+                case .dataPathCompression:
+                    return .serverCompression
+
+                default:
+                    break
+                }
 
             default:
                 return .unexpectedReply

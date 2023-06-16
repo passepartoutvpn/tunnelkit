@@ -33,7 +33,7 @@ import CTunnelKitOpenVPNProtocol
 private let log = SwiftyBeaver.self
 
 extension OpenVPN {
-    class ControlChannelError: Error, CustomStringConvertible {
+    struct ControlChannelError: Error, CustomStringConvertible {
         let description: String
 
         init(_ message: String) {

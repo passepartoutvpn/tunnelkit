@@ -962,7 +962,7 @@ public class OpenVPNSession: Session {
                     throw OpenVPNError.serverCompression
                 }
             }
-        } catch OpenVPNError.continuationPushReply {
+        } catch OpenVPN.ConfigurationError.continuationPushReply {
             continuatedPushReplyMessage = completeMessage.replacingOccurrences(of: "push-continuation", with: "")
             // FIXME: strip "PUSH_REPLY" and "push-continuation 2"
             return

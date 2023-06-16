@@ -61,9 +61,6 @@ public enum OpenVPNError: Error {
     /// The provided credentials failed authentication.
     case badCredentials
 
-    /// The PUSH_REPLY is multipart.
-    case continuationPushReply
-
     /// The reply to PUSH_REQUEST is malformed.
     case malformedPushReply
 

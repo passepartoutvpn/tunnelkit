@@ -44,5 +44,8 @@ extension OpenVPN {
 
         /// Encryption passphrase is incorrect or key is corrupt.
         case unableToDecrypt(error: Error)
+
+        /// The PUSH_REPLY is multipart.
+        case continuationPushReply
     }
 }

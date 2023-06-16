@@ -339,7 +339,7 @@ extension OpenVPN {
                     isContinuation = ($0.first == "2")
                 }
                 guard !isContinuation else {
-                    throw OpenVPNError.continuationPushReply
+                    throw ConfigurationError.continuationPushReply
                 }
 
                 // MARK: Inline content

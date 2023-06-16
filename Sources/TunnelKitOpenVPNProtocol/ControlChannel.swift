@@ -33,14 +33,6 @@ import CTunnelKitOpenVPNProtocol
 private let log = SwiftyBeaver.self
 
 extension OpenVPN {
-    struct ControlChannelError: Error, CustomStringConvertible {
-        let description: String
-
-        init(_ message: String) {
-            description = "\(String(describing: ControlChannelError.self))(\(message))"
-        }
-    }
-
     class ControlChannel {
         private let serializer: ControlChannelSerializer
 
@@ -101,12 +93,17 @@ extension OpenVPN {
         }
 
         func readInboundPacket(withData data: Data, offset: Int) throws -> ControlPacket {
-            let packet = try serializer.deserialize(data: data, start: offset, end: nil)
-            log.debug("Control: Read packet \(packet)")
-            if let ackIds = packet.ackIds as? [UInt32], let ackRemoteSessionId = packet.ackRemoteSessionId {
-                try readAcks(ackIds, acksRemoteSessionId: ackRemoteSessionId)
+            do {
+                let packet = try serializer.deserialize(data: data, start: offset, end: nil)
+                log.debug("Control: Read packet \(packet)")
+                if let ackIds = packet.ackIds as? [UInt32], let ackRemoteSessionId = packet.ackRemoteSessionId {
+                    try readAcks(ackIds, acksRemoteSessionId: ackRemoteSessionId)
+                }
+                return packet
+            } catch {
+                log.error("Control: Channel failure \(error)")
+                throw error
             }
-            return packet
         }
 
         func enqueueInboundPacket(packet: ControlPacket) -> [ControlPacket] {

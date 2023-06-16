@@ -52,6 +52,9 @@ public enum OpenVPNError: Error {
     /// The connection key is wrong or wasn't expected.
     case badKey
 
+    /// Control channel failure.
+    case controlChannel(message: String)
+
     /// The control packet has an incorrect prefix payload.
     case wrongControlDataPrefix
 

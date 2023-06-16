@@ -87,9 +87,9 @@ public enum OpenVPNError: Error {
 }
 
 extension Error {
-    public var nativeOpenVPNError: OpenVPNError? {
-        let te = self as NSError
-        guard te.domain == OpenVPNErrorDomain, let code = OpenVPNErrorCode(rawValue: te.code) else {
+    public var asNativeOpenVPNError: OpenVPNError? {
+        let nativeError = self as NSError
+        guard nativeError.domain == OpenVPNErrorDomain, let code = OpenVPNErrorCode(rawValue: nativeError.code) else {
             return nil
         }
         return .native(code: code)

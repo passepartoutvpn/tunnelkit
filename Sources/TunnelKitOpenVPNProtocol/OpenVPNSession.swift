@@ -667,7 +667,7 @@ public class OpenVPNSession: Session {
         do {
             cipherTextOut = try negotiationKey.tls.pullCipherText()
         } catch {
-            if let nativeError = error.nativeOpenVPNError {
+            if let nativeError = error.asNativeOpenVPNError {
                 log.error("TLS.auth: Failed pulling ciphertext (error: \(nativeError))")
                 shutdown(error: nativeError)
                 return
@@ -696,7 +696,7 @@ public class OpenVPNSession: Session {
         do {
             cipherTextOut = try negotiationKey.tls.pullCipherText()
         } catch {
-            if let nativeError = error.nativeOpenVPNError {
+            if let nativeError = error.asNativeOpenVPNError {
                 log.error("TLS.auth: Failed pulling ciphertext (error: \(nativeError))")
                 shutdown(error: nativeError)
                 return
@@ -798,7 +798,7 @@ public class OpenVPNSession: Session {
             do {
                 cipherTextOut = try negotiationKey.tls.pullCipherText()
             } catch {
-                if let nativeError = error.nativeOpenVPNError {
+                if let nativeError = error.asNativeOpenVPNError {
                     log.error("TLS.connect: Failed pulling ciphertext (error: \(nativeError))")
                     shutdown(error: nativeError)
                     return
@@ -837,7 +837,7 @@ public class OpenVPNSession: Session {
                 log.debug("TLS.connect: Send pulled ciphertext (\(cipherTextOut.count) bytes)")
                 enqueueControlPackets(code: .controlV1, key: negotiationKey.id, payload: cipherTextOut)
             } catch {
-                if let nativeError = error.nativeOpenVPNError {
+                if let nativeError = error.asNativeOpenVPNError {
                     log.error("TLS.connect: Failed pulling ciphertext (error: \(nativeError))")
                     shutdown(error: nativeError)
                     return
@@ -1142,7 +1142,7 @@ public class OpenVPNSession: Session {
 
             tunnel?.writePackets(decryptedPackets, completionHandler: nil)
         } catch {
-            if let nativeError = error.nativeOpenVPNError {
+            if let nativeError = error.asNativeOpenVPNError {
                 deferStop(.shutdown, nativeError)
                 return
             }
@@ -1182,7 +1182,7 @@ public class OpenVPNSession: Session {
                 }
             }
         } catch {
-            if let nativeError = error.nativeOpenVPNError {
+            if let nativeError = error.asNativeOpenVPNError {
                 deferStop(.shutdown, nativeError)
                 return
             }

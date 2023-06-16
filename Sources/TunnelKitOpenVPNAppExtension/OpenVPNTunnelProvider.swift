@@ -660,7 +660,7 @@ extension OpenVPNTunnelProvider {
 
     private func unifiedError(from error: Error) -> OpenVPNProviderError {
         if let se = error as? OpenVPNError {
-            switch se.nativeOpenVPNError ?? se {
+            switch se.asNativeOpenVPNError ?? se {
             case .negotiationTimeout, .pingTimeout, .staleSession:
                 return .timeout
 

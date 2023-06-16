@@ -85,3 +85,13 @@ public enum OpenVPNError: Error {
     /// NSError from ObjC layer.
     case native(code: OpenVPNErrorCode)
 }
+
+extension Error {
+    public var nativeOpenVPNError: OpenVPNError? {
+        let te = self as NSError
+        guard te.domain == OpenVPNErrorDomain, let code = OpenVPNErrorCode(rawValue: te.code) else {
+            return nil
+        }
+        return .native(code: code)
+    }
+}

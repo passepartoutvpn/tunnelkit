@@ -154,18 +154,18 @@ open class OpenVPNTunnelProvider: NEPacketTunnelProvider {
                 throw ConfigurationError.parameter(name: "protocolConfiguration.providerConfiguration")
             }
             cfg = try fromDictionary(OpenVPN.ProviderConfiguration.self, providerConfiguration)
-        } catch {
-            var message: String?
-            if let te = error as? ConfigurationError {
-                switch te {
-                case .parameter(let name):
-                    message = "Tunnel configuration incomplete: \(name)"
+        } catch let cfgError as ConfigurationError {
+            switch cfgError {
+            case .parameter(let name):
+                NSLog("Tunnel configuration incomplete: \(name)")
 
-                default:
-                    break
-                }
+            default:
+                NSLog("Tunnel configuration error: \(cfgError)")
             }
-            NSLog(message ?? "Unexpected error in tunnel configuration: \(error)")
+            completionHandler(cfgError)
+            return
+        } catch {
+            NSLog("Unexpected error in tunnel configuration: \(error)")
             completionHandler(error)
             return
         }

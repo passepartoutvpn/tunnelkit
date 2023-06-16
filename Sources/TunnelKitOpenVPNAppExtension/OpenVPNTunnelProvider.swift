@@ -659,8 +659,8 @@ extension OpenVPNTunnelProvider {
     }
 
     private func unifiedError(from error: Error) -> OpenVPNProviderError {
-        if let se = error as? OpenVPNError {
-            switch se.asNativeOpenVPNError ?? se {
+        if let specificError = error as? OpenVPNError {
+            switch specificError.asNativeOpenVPNError ?? specificError {
             case .negotiationTimeout, .pingTimeout, .staleSession:
                 return .timeout
 

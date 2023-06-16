@@ -64,7 +64,7 @@ class ResolvedRemote: CustomStringConvertible {
         }
     }
 
-    private func handleResult(_ result: Result<[DNSRecord], DNSError>) {
+    private func handleResult(_ result: Result<[DNSRecord], Error>) {
         switch result {
         case .success(let records):
             log.debug("DNS resolved addresses: \(records.map { $0.address }.maskedDescription)")

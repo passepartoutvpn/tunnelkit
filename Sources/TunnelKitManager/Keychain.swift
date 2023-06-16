@@ -114,7 +114,7 @@ public class Keychain {
         var ref: CFTypeRef?
         let status = SecItemAdd(query as CFDictionary, &ref)
         guard status == errSecSuccess, let refData = ref as? Data else {
-            throw KeychainError.add
+            throw TunnelKitManagerError.keychain(.add)
         }
         return refData
     }
@@ -160,16 +160,16 @@ public class Keychain {
             break
 
         case errSecUserCanceled:
-            throw KeychainError.userCancelled
+            throw TunnelKitManagerError.keychain(.userCancelled)
 
         default:
-            throw KeychainError.notFound
+            throw TunnelKitManagerError.keychain(.notFound)
         }
         guard let data = result as? Data else {
-            throw KeychainError.notFound
+            throw TunnelKitManagerError.keychain(.notFound)
         }
         guard let password = String(data: data, encoding: .utf8) else {
-            throw KeychainError.notFound
+            throw TunnelKitManagerError.keychain(.notFound)
         }
         return password
     }
@@ -197,13 +197,13 @@ public class Keychain {
             break
 
         case errSecUserCanceled:
-            throw KeychainError.userCancelled
+            throw TunnelKitManagerError.keychain(.userCancelled)
 
         default:
-            throw KeychainError.notFound
+            throw TunnelKitManagerError.keychain(.notFound)
         }
         guard let data = result as? Data else {
-            throw KeychainError.notFound
+            throw TunnelKitManagerError.keychain(.notFound)
         }
         return data
     }
@@ -226,16 +226,16 @@ public class Keychain {
             break
 
         case errSecUserCanceled:
-            throw KeychainError.userCancelled
+            throw TunnelKitManagerError.keychain(.userCancelled)
 
         default:
-            throw KeychainError.notFound
+            throw TunnelKitManagerError.keychain(.notFound)
         }
         guard let data = result as? Data else {
-            throw KeychainError.notFound
+            throw TunnelKitManagerError.keychain(.notFound)
         }
         guard let password = String(data: data, encoding: .utf8) else {
-            throw KeychainError.notFound
+            throw TunnelKitManagerError.keychain(.notFound)
         }
         return password
     }
@@ -265,7 +265,7 @@ public class Keychain {
 
         let status = SecItemAdd(query as CFDictionary, nil)
         guard status == errSecSuccess else {
-            throw KeychainError.add
+            throw TunnelKitManagerError.keychain(.add)
         }
         return try publicKey(withIdentifier: identifier)
     }
@@ -294,13 +294,13 @@ public class Keychain {
             break
 
         case errSecUserCanceled:
-            throw KeychainError.userCancelled
+            throw TunnelKitManagerError.keychain(.userCancelled)
 
         default:
-            throw KeychainError.notFound
+            throw TunnelKitManagerError.keychain(.notFound)
         }
 //        guard let key = result as? SecKey else {
-//            throw KeychainError.typeMismatch
+//            throw TunnelKitManagerError.keychain(.typeMismatch)
 //        }
 //        return key
         return result as! SecKey

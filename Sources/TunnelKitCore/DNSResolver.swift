@@ -53,8 +53,11 @@ public struct DNSRecord {
 
 /// Errors coming from `DNSResolver`.
 public enum DNSError: Error {
+
+    /// Resolution failed.
     case failure
 
+    /// Resolution timed out.
     case timeout
 }
 
@@ -71,8 +74,8 @@ public class DNSResolver {
      - Parameter queue: The queue to execute the `completionHandler` in.
      - Parameter completionHandler: The completion handler with the resolved addresses and an optional error.
      */
-    public static func resolve(_ hostname: String, timeout: Int, queue: DispatchQueue, completionHandler: @escaping (Result<[DNSRecord], DNSError>) -> Void) {
-        var pendingHandler: ((Result<[DNSRecord], DNSError>) -> Void)? = completionHandler
+    public static func resolve(_ hostname: String, timeout: Int, queue: DispatchQueue, completionHandler: @escaping (Result<[DNSRecord], Error>) -> Void) {
+        var pendingHandler: ((Result<[DNSRecord], Error>) -> Void)? = completionHandler
         let host = CFHostCreateWithName(nil, hostname as CFString).takeRetainedValue()
         DNSResolver.queue.async {
             CFHostStartInfoResolution(host, .addresses, nil)
@@ -91,15 +94,15 @@ public class DNSResolver {
                 return
             }
             CFHostCancelInfoResolution(host, .addresses)
-            handler(.failure(.timeout))
+            handler(.failure(TunnelKitCoreError.dnsResolver(.timeout)))
             pendingHandler = nil
         }
     }
 
-    private static func didResolve(host: CFHost, completionHandler: @escaping (Result<[DNSRecord], DNSError>) -> Void) {
+    private static func didResolve(host: CFHost, completionHandler: @escaping (Result<[DNSRecord], Error>) -> Void) {
         var success: DarwinBoolean = false
         guard let rawAddresses = CFHostGetAddressing(host, &success)?.takeUnretainedValue() as Array? else {
-            completionHandler(.failure(.failure))
+            completionHandler(.failure(TunnelKitCoreError.dnsResolver(.failure)))
             return
         }
 
@@ -129,7 +132,7 @@ public class DNSResolver {
             }
         }
         guard !records.isEmpty else {
-            completionHandler(.failure(.failure))
+            completionHandler(.failure(TunnelKitCoreError.dnsResolver(.failure)))
             return
         }
         completionHandler(.success(records))

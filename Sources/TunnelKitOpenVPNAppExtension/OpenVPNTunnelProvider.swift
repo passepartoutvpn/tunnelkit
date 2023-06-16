@@ -145,18 +145,18 @@ open class OpenVPNTunnelProvider: NEPacketTunnelProvider {
         // required configuration
         do {
             guard let tunnelProtocol = protocolConfiguration as? NETunnelProviderProtocol else {
-                throw OpenVPNProviderConfigurationError.parameter(name: "protocolConfiguration")
+                throw ConfigurationError.parameter(name: "protocolConfiguration")
             }
             guard let _ = tunnelProtocol.serverAddress else {
-                throw OpenVPNProviderConfigurationError.parameter(name: "protocolConfiguration.serverAddress")
+                throw ConfigurationError.parameter(name: "protocolConfiguration.serverAddress")
             }
             guard let providerConfiguration = tunnelProtocol.providerConfiguration else {
-                throw OpenVPNProviderConfigurationError.parameter(name: "protocolConfiguration.providerConfiguration")
+                throw ConfigurationError.parameter(name: "protocolConfiguration.providerConfiguration")
             }
             cfg = try fromDictionary(OpenVPN.ProviderConfiguration.self, providerConfiguration)
         } catch {
             var message: String?
-            if let te = error as? OpenVPNProviderConfigurationError {
+            if let te = error as? ConfigurationError {
                 switch te {
                 case .parameter(let name):
                     message = "Tunnel configuration incomplete: \(name)"
@@ -188,7 +188,7 @@ open class OpenVPNTunnelProvider: NEPacketTunnelProvider {
         let credentials: OpenVPN.Credentials?
         if let username = protocolConfiguration.username, let passwordReference = protocolConfiguration.passwordReference {
             guard let password = try? Keychain.password(forReference: passwordReference) else {
-                completionHandler(OpenVPNProviderConfigurationError.credentials(details: "Keychain.password(forReference:)"))
+                completionHandler(ConfigurationError.credentials(details: "Keychain.password(forReference:)"))
                 return
             }
             credentials = OpenVPN.Credentials(username, password)
@@ -200,7 +200,7 @@ open class OpenVPNTunnelProvider: NEPacketTunnelProvider {
         cfg._appexSetLastError(nil)
 
         guard OpenVPN.prepareRandomNumberGenerator(seedLength: prngSeedLength) else {
-            completionHandler(OpenVPNProviderConfigurationError.prngInitialization)
+            completionHandler(ConfigurationError.prngInitialization)
             return
         }
 
@@ -632,9 +632,9 @@ extension OpenVPNTunnelProvider {
         log.debug("Flushing log...")
 
         // XXX: should enforce SwiftyBeaver flush?
-//        if let url = cfg.urlForDebugLog {
-//            memoryLog.flush(to: url)
-//        }
+        //        if let url = cfg.urlForDebugLog {
+        //            memoryLog.flush(to: url)
+        //        }
     }
 
     private func logCurrentSSID() {
@@ -651,14 +651,31 @@ extension OpenVPNTunnelProvider {
 //        let anyObject = object as AnyObject
 //        return Unmanaged<AnyObject>.passUnretained(anyObject).toOpaque()
 //    }
+}
 
-    // MARK: Errors
+// MARK: Errors
 
-    private func setErrorStatus(with error: Error) {
+private extension OpenVPNTunnelProvider {
+    enum ConfigurationError: Error {
+
+        /// A field in the `OpenVPNProvider.Configuration` provided is incorrect or incomplete.
+        case parameter(name: String)
+
+        /// Credentials are missing or inaccessible.
+        case credentials(details: String)
+
+        /// The pseudo-random number generator could not be initialized.
+        case prngInitialization
+
+        /// The TLS certificate could not be serialized.
+        case certificateSerialization
+    }
+
+    func setErrorStatus(with error: Error) {
         cfg._appexSetLastError(unifiedError(from: error))
     }
 
-    private func unifiedError(from error: Error) -> OpenVPNProviderError {
+    func unifiedError(from error: Error) -> OpenVPNProviderError {
         if let specificError = error as? OpenVPNError {
             switch specificError.asNativeOpenVPNError ?? specificError {
             case .negotiationTimeout, .pingTimeout, .staleSession:
@@ -715,6 +732,8 @@ extension OpenVPNTunnelProvider {
         return error as? OpenVPNProviderError ?? .linkError
     }
 }
+
+// MARK: Hacks
 
 private extension NEPacketTunnelProvider {
     func forceExitOnMac() {

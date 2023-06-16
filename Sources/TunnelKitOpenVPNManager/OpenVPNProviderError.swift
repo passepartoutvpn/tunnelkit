@@ -36,22 +36,6 @@
 
 import Foundation
 
-/// Mostly programming errors by host app.
-public enum OpenVPNProviderConfigurationError: Error {
-
-    /// A field in the `OpenVPNProvider.Configuration` provided is incorrect or incomplete.
-    case parameter(name: String)
-
-    /// Credentials are missing or inaccessible.
-    case credentials(details: String)
-
-    /// The pseudo-random number generator could not be initialized.
-    case prngInitialization
-
-    /// The TLS certificate could not be serialized.
-    case certificateSerialization
-}
-
 /// The errors causing a tunnel disconnection.
 public enum OpenVPNProviderError: String, Error {
 

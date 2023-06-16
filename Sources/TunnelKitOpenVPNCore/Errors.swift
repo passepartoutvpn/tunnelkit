@@ -27,16 +27,11 @@ import Foundation
 import CTunnelKitOpenVPNCore
 
 extension Error {
-    public func isOpenVPNError() -> Bool {
+    public var nativeOpenVPNError: OpenVPNError? {
         let te = self as NSError
-        return te.domain == OpenVPNErrorDomain
-    }
-
-    public func openVPNErrorCode() -> OpenVPNErrorCode? {
-        let te = self as NSError
-        guard te.domain == OpenVPNErrorDomain else {
+        guard te.domain == OpenVPNErrorDomain, let code = OpenVPNErrorCode(rawValue: te.code) else {
             return nil
         }
-        return OpenVPNErrorCode(rawValue: te.code)
+        return .native(code: code)
     }
 }

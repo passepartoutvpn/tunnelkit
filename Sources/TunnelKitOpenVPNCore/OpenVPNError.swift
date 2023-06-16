@@ -35,9 +35,10 @@
 //
 
 import Foundation
+import CTunnelKitOpenVPNCore
 
 /// The possible errors raised/thrown during `OpenVPNSession` operation.
-public enum OpenVPNError: String, Error {
+public enum OpenVPNError: Error {
 
     /// The negotiation timed out.
     case negotiationTimeout
@@ -80,4 +81,7 @@ public enum OpenVPNError: String, Error {
 
     /// Remote server shut down (--explicit-exit-notify).
     case serverShutdown
+
+    /// NSError from ObjC layer.
+    case native(code: OpenVPNErrorCode)
 }

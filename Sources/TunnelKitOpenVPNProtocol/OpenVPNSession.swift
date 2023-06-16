@@ -1142,8 +1142,8 @@ public class OpenVPNSession: Session {
 
             tunnel?.writePackets(decryptedPackets, completionHandler: nil)
         } catch let e {
-            guard !e.isOpenVPNError() else {
-                deferStop(.shutdown, e)
+            if let nativeError = e.nativeOpenVPNError {
+                deferStop(.shutdown, nativeError)
                 return
             }
             deferStop(.reconnect, e)
@@ -1182,8 +1182,8 @@ public class OpenVPNSession: Session {
                 }
             }
         } catch let e {
-            guard !e.isOpenVPNError() else {
-                deferStop(.shutdown, e)
+            if let nativeError = e.nativeOpenVPNError {
+                deferStop(.shutdown, nativeError)
                 return
             }
             deferStop(.reconnect, e)

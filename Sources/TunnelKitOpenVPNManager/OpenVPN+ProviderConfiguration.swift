@@ -139,7 +139,7 @@ extension OpenVPN.ProviderConfiguration {
     /**
      The last error reported by the tunnel, if any.
      */
-    public var lastError: OpenVPNProviderError? {
+    public var lastError: TunnelKitOpenVPNError? {
         return defaults?.openVPNLastError
     }
 
@@ -164,7 +164,7 @@ extension OpenVPN.ProviderConfiguration {
         defaults?.openVPNServerConfiguration = newValue
     }
 
-    public func _appexSetLastError(_ newValue: OpenVPNProviderError?) {
+    public func _appexSetLastError(_ newValue: TunnelKitOpenVPNError?) {
         defaults?.openVPNLastError = newValue
     }
 
@@ -250,12 +250,12 @@ extension UserDefaults {
         }
     }
 
-    public fileprivate(set) var openVPNLastError: OpenVPNProviderError? {
+    public fileprivate(set) var openVPNLastError: TunnelKitOpenVPNError? {
         get {
             guard let rawValue = string(forKey: OpenVPN.ProviderConfiguration.Keys.lastError.rawValue) else {
                 return nil
             }
-            return OpenVPNProviderError(rawValue: rawValue)
+            return TunnelKitOpenVPNError(rawValue: rawValue)
         }
         set {
             guard let newValue = newValue else {

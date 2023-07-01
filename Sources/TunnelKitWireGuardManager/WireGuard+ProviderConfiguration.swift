@@ -91,7 +91,7 @@ extension WireGuard.ProviderConfiguration: NetworkExtensionConfiguration {
 // MARK: Shared data
 
 extension WireGuard.ProviderConfiguration {
-    public var lastError: WireGuardProviderError? {
+    public var lastError: TunnelKitWireGuardError? {
         return defaults?.wireGuardLastError
     }
 
@@ -105,7 +105,7 @@ extension WireGuard.ProviderConfiguration {
 }
 
 extension WireGuard.ProviderConfiguration {
-    public func _appexSetLastError(_ newValue: WireGuardProviderError?) {
+    public func _appexSetLastError(_ newValue: TunnelKitWireGuardError?) {
         defaults?.wireGuardLastError = newValue
     }
 
@@ -131,12 +131,12 @@ extension UserDefaults {
             .appendingPathComponent(path)
     }
 
-    public fileprivate(set) var wireGuardLastError: WireGuardProviderError? {
+    public fileprivate(set) var wireGuardLastError: TunnelKitWireGuardError? {
         get {
             guard let rawValue = string(forKey: WireGuard.ProviderConfiguration.Keys.lastError.rawValue) else {
                 return nil
             }
-            return WireGuardProviderError(rawValue: rawValue)
+            return TunnelKitWireGuardError(rawValue: rawValue)
         }
         set {
             guard let newValue = newValue else {

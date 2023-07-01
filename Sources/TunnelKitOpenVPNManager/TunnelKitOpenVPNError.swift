@@ -1,5 +1,5 @@
 //
-//  OpenVPNProviderError.swift
+//  TunnelKitOpenVPNError.swift
 //  TunnelKit
 //
 //  Created by Davide De Rosa on 11/8/21.
@@ -35,9 +35,13 @@
 //
 
 import Foundation
+import TunnelKitOpenVPNCore
 
 /// The errors causing a tunnel disconnection.
-public enum OpenVPNProviderError: String, Error {
+public enum TunnelKitOpenVPNError: String, Error {
+
+    /// Configuration error.
+    case configuration
 
     /// Socket endpoint could not be resolved.
     case dnsFailure

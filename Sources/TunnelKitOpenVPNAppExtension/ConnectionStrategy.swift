@@ -94,7 +94,7 @@ class ConnectionStrategy {
         from provider: NEProvider,
         timeout: Int,
         queue: DispatchQueue,
-        completionHandler: @escaping (Result<GenericSocket, OpenVPNProviderError>) -> Void) {
+        completionHandler: @escaping (Result<GenericSocket, TunnelKitOpenVPNError>) -> Void) {
         guard let remote = currentRemote else {
             completionHandler(.failure(.exhaustedEndpoints))
             return

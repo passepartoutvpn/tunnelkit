@@ -359,7 +359,7 @@ open class OpenVPNTunnelProvider: NEPacketTunnelProvider {
             // from stopTunnel(), in which case we don't need to feed an error parameter to
             // the stop completion handler
             //
-            pendingStartHandler?(error ?? OpenVPNProviderError.socketActivity)
+            pendingStartHandler?(error ?? TunnelKitOpenVPNError.socketActivity)
             pendingStartHandler = nil
         }
         // stopped intentionally
@@ -434,7 +434,7 @@ extension OpenVPNTunnelProvider: GenericSocketDelegate {
         // look for error causing shutdown
         shutdownError = session.stopError
         if failure && (shutdownError == nil) {
-            shutdownError = OpenVPNProviderError.linkError
+            shutdownError = TunnelKitOpenVPNError.linkError
         }
         if case .negotiationTimeout = shutdownError as? OpenVPNError {
             didTimeoutNegotiation = true
@@ -483,7 +483,7 @@ extension OpenVPNTunnelProvider: GenericSocketDelegate {
     public func socketHasBetterPath(_ socket: GenericSocket) {
         log.debug("Stopping tunnel due to a new better path")
         logCurrentSSID()
-        session?.reconnect(error: OpenVPNProviderError.networkChanged)
+        session?.reconnect(error: TunnelKitOpenVPNError.networkChanged)
     }
 }
 
@@ -550,7 +550,7 @@ extension OpenVPNTunnelProvider: OpenVPNSessionDelegate {
         let newSettings = NetworkSettingsBuilder(remoteAddress: remoteAddress, localOptions: localOptions, remoteOptions: remoteOptions)
 
         guard !newSettings.isGateway || newSettings.hasGateway else {
-            session?.shutdown(error: OpenVPNProviderError.gatewayUnattainable)
+            session?.shutdown(error: TunnelKitOpenVPNError.gatewayUnattainable)
             return
         }
 
@@ -598,7 +598,7 @@ extension OpenVPNTunnelProvider: OpenVPNSessionDelegate {
 extension OpenVPNTunnelProvider {
     private func tryNextEndpoint() -> Bool {
         guard strategy.tryNextEndpoint() else {
-            disposeTunnel(error: OpenVPNProviderError.exhaustedEndpoints)
+            disposeTunnel(error: TunnelKitOpenVPNError.exhaustedEndpoints)
             return false
         }
         return true
@@ -675,7 +675,7 @@ private extension OpenVPNTunnelProvider {
         cfg._appexSetLastError(unifiedError(from: error))
     }
 
-    func unifiedError(from error: Error) -> OpenVPNProviderError {
+    func unifiedError(from error: Error) -> TunnelKitOpenVPNError {
         if let specificError = error as? OpenVPNError {
             switch specificError.asNativeOpenVPNError ?? specificError {
             case .negotiationTimeout, .pingTimeout, .staleSession:
@@ -729,7 +729,7 @@ private extension OpenVPNTunnelProvider {
                 return .unexpectedReply
             }
         }
-        return error as? OpenVPNProviderError ?? .linkError
+        return error as? TunnelKitOpenVPNError ?? .linkError
     }
 }
 

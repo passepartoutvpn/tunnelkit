@@ -62,23 +62,10 @@ public struct IPv6Settings: Codable, Equatable, CustomStringConvertible {
     /// The address of the default gateway.
     public let defaultGateway: String
 
-    /// The additional routes.
-    @available(*, deprecated, message: "Store routes separately")
-    public let routes: [Route]
-
     public init(address: String, addressPrefixLength: UInt8, defaultGateway: String) {
         self.address = address
         self.addressPrefixLength = addressPrefixLength
         self.defaultGateway = defaultGateway
-        self.routes = []
-    }
-
-    @available(*, deprecated, message: "Store routes separately")
-    public init(address: String, addressPrefixLength: UInt8, defaultGateway: String, routes: [Route]) {
-        self.address = address
-        self.addressPrefixLength = addressPrefixLength
-        self.defaultGateway = defaultGateway
-        self.routes = routes
     }
 
     // MARK: CustomStringConvertible

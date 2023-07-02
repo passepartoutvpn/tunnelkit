@@ -632,9 +632,9 @@ extension OpenVPNTunnelProvider {
         log.debug("Flushing log...")
 
         // XXX: should enforce SwiftyBeaver flush?
-        //        if let url = cfg.urlForDebugLog {
-        //            memoryLog.flush(to: url)
-        //        }
+//        if let url = cfg.urlForDebugLog {
+//            memoryLog.flush(to: url)
+//        }
     }
 
     private func logCurrentSSID() {

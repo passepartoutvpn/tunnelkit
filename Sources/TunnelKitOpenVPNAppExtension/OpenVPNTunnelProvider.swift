@@ -676,6 +676,14 @@ private extension OpenVPNTunnelProvider {
     }
 
     func unifiedError(from error: Error) -> TunnelKitOpenVPNError {
+
+        // XXX: error handling is limited by lastError serialization
+        // requirement, cannot return a generic Error here
+//        openVPNError(from: error) ?? error
+        openVPNError(from: error) ?? .linkError
+    }
+
+    func openVPNError(from error: Error) -> TunnelKitOpenVPNError? {
         if let specificError = error as? OpenVPNError {
             switch specificError.asNativeOpenVPNError ?? specificError {
             case .negotiationTimeout, .pingTimeout, .staleSession:
@@ -729,7 +737,7 @@ private extension OpenVPNTunnelProvider {
                 return .unexpectedReply
             }
         }
-        return error as? TunnelKitOpenVPNError ?? .linkError
+        return nil
     }
 }
 

@@ -40,9 +40,6 @@ import TunnelKitOpenVPNCore
 /// The errors causing a tunnel disconnection.
 public enum TunnelKitOpenVPNError: String, Error {
 
-    /// Configuration error.
-    case configuration
-
     /// Socket endpoint could not be resolved.
     case dnsFailure
 

@@ -82,7 +82,7 @@ public class Keychain {
      - Parameter userDefined: Optional user-defined data.
      - Parameter label: An optional label.
      - Returns: The reference to the password.
-     - Throws: `KeychainError.add` if unable to add the password to the keychain.
+     - Throws: `TunnelKitManagerError.keychain` if unable to add the password to the keychain.
      **/
     @discardableResult
     public func set(password: String, for username: String, context: String, userDefined: String? = nil, label: String? = nil) throws -> Data {
@@ -92,10 +92,10 @@ public class Keychain {
                 return try passwordReference(for: username, context: context)
             }
             removePassword(for: username, context: context)
-        } catch let error as KeychainError {
+        } catch let error as TunnelKitManagerError {
 
             // rethrow cancelation
-            if error == .userCancelled {
+            if case .keychain(.userCancelled) = error {
                 throw error
             }
 
@@ -144,7 +144,7 @@ public class Keychain {
      - Parameter context: The context.
      - Parameter userDefined: Optional user-defined data.
      - Returns: The password for the input username.
-     - Throws: `KeychainError.notFound` if unable to find the password in the keychain.
+     - Throws: `TunnelKitManagerError.keychain` if unable to find the password in the keychain.
      **/
     public func password(for username: String, context: String, userDefined: String? = nil) throws -> String {
         var query = [String: Any]()
@@ -181,7 +181,7 @@ public class Keychain {
      - Parameter context: The context.
      - Parameter userDefined: Optional user-defined data.
      - Returns: The password reference for the input username.
-     - Throws: `KeychainError.notFound` if unable to find the password in the keychain.
+     - Throws: `TunnelKitManagerError.keychain` if unable to find the password in the keychain.
      **/
     public func passwordReference(for username: String, context: String, userDefined: String? = nil) throws -> Data {
         var query = [String: Any]()
@@ -213,7 +213,7 @@ public class Keychain {
 
      - Parameter reference: The password reference.
      - Returns: The password for the input reference.
-     - Throws: `KeychainError.notFound` if unable to find the password in the keychain.
+     - Throws: `TunnelKitManagerError.keychain` if unable to find the password in the keychain.
      **/
     public static func password(forReference reference: Data) throws -> String {
         var query = [String: Any]()
@@ -250,7 +250,7 @@ public class Keychain {
      - Parameter identifier: The unique identifier.
      - Parameter data: The public key data.
      - Returns: The `SecKey` object representing the public key.
-     - Throws: `KeychainError.add` if unable to add the public key to the keychain.
+     - Throws: `TunnelKitManagerError.keychain` if unable to add the public key to the keychain.
      **/
     public func add(publicKeyWithIdentifier identifier: String, data: Data) throws -> SecKey {
         var query = [String: Any]()
@@ -275,7 +275,7 @@ public class Keychain {
 
      - Parameter identifier: The unique identifier.
      - Returns: The `SecKey` object representing the public key.
-     - Throws: `KeychainError.notFound` if unable to find the public key in the keychain.
+     - Throws: `TunnelKitManagerError.keychain` if unable to find the public key in the keychain.
      **/
     public func publicKey(withIdentifier identifier: String) throws -> SecKey {
         var query = [String: Any]()

@@ -94,12 +94,18 @@ public class Keychain {
             removePassword(for: username, context: context)
         } catch let error as TunnelKitManagerError {
 
-            // rethrow cancelation
+            // this is a well-known error from password() or passwordReference(), keep going
+
+            // rethrow cancellation
             if case .keychain(.userCancelled) = error {
                 throw error
             }
 
             // otherwise, no pre-existing password
+        } catch {
+
+            // IMPORTANT: rethrow any other unknown error (leave this code explicit)
+            throw error
         }
 
         var query = [String: Any]()

@@ -46,14 +46,14 @@ extension OpenVPN {
         private static let begin = "-----BEGIN "
 
         private static let end = "-----END "
-        
+
         /// The content in PEM format (ASCII).
         public let pem: String
-        
+
         var isEncrypted: Bool {
             return pem.contains("ENCRYPTED")
         }
-        
+
         public init(pem: String) {
             guard let beginRange = pem.range(of: CryptoContainer.begin) else {
                 self.pem = ""
@@ -61,7 +61,7 @@ extension OpenVPN {
             }
             self.pem = String(pem[beginRange.lowerBound...])
         }
-        
+
         func write(to url: URL) throws {
             try pem.write(to: url, atomically: true, encoding: .ascii)
         }
@@ -73,13 +73,13 @@ extension OpenVPN {
         }
 
         // MARK: Codable
-        
+
         public init(from decoder: Decoder) throws {
             let container = try decoder.singleValueContainer()
             let pem = try container.decode(String.self)
             self.init(pem: pem)
         }
-        
+
         public func encode(to encoder: Encoder) throws {
             var container = encoder.singleValueContainer()
             try container.encode(pem)

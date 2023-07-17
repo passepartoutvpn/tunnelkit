@@ -3,7 +3,7 @@
 
 import Foundation
 
-public enum WireGuardProviderError: String, Error {
+public enum TunnelKitWireGuardError: String, Error {
     case savedProtocolConfigurationIsInvalid
     case dnsResolutionFailure
     case couldNotStartBackend

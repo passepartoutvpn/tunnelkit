@@ -61,9 +61,9 @@ public func Z(_ data: Data) -> ZeroingData {
     return ZeroingData(data: data)
 }
 
-//public func Z(_ data: Data, _ offset: Int, _ count: Int) -> ZeroingData {
+// public func Z(_ data: Data, _ offset: Int, _ count: Int) -> ZeroingData {
 //    return ZeroingData(data: data, offset: offset, count: count)
-//}
+// }
 
 public func Z(_ string: String, nullTerminated: Bool) -> ZeroingData {
     return ZeroingData(string: string, nullTerminated: nullTerminated)

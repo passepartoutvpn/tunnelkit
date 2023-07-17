@@ -46,13 +46,13 @@ public enum KeychainError: Error {
 
     /// Unable to add.
     case add
-    
+
     /// Item not found.
     case notFound
-    
+
     /// Operation cancelled or unauthorized.
     case userCancelled
-    
+
 //    /// Unexpected item type returned.
 //    case typeMismatch
 }
@@ -70,9 +70,9 @@ public class Keychain {
     public init(group: String?) {
         accessGroup = group
     }
-    
+
     // MARK: Password
-    
+
     /**
      Sets a password.
 
@@ -82,7 +82,7 @@ public class Keychain {
      - Parameter userDefined: Optional user-defined data.
      - Parameter label: An optional label.
      - Returns: The reference to the password.
-     - Throws: `KeychainError.add` if unable to add the password to the keychain.
+     - Throws: `TunnelKitManagerError.keychain` if unable to add the password to the keychain.
      **/
     @discardableResult
     public func set(password: String, for username: String, context: String, userDefined: String? = nil, label: String? = nil) throws -> Data {
@@ -92,14 +92,20 @@ public class Keychain {
                 return try passwordReference(for: username, context: context)
             }
             removePassword(for: username, context: context)
-        } catch let e as KeychainError {
+        } catch let error as TunnelKitManagerError {
 
-            // rethrow cancelation
-            if e == .userCancelled {
-                throw e
+            // this is a well-known error from password() or passwordReference(), keep going
+
+            // rethrow cancellation
+            if case .keychain(.userCancelled) = error {
+                throw error
             }
 
             // otherwise, no pre-existing password
+        } catch {
+
+            // IMPORTANT: rethrow any other unknown error (leave this code explicit)
+            throw error
         }
 
         var query = [String: Any]()
@@ -114,11 +120,11 @@ public class Keychain {
         var ref: CFTypeRef?
         let status = SecItemAdd(query as CFDictionary, &ref)
         guard status == errSecSuccess, let refData = ref as? Data else {
-            throw KeychainError.add
+            throw TunnelKitManagerError.keychain(.add)
         }
         return refData
     }
-    
+
     /**
      Removes a password.
 
@@ -144,7 +150,7 @@ public class Keychain {
      - Parameter context: The context.
      - Parameter userDefined: Optional user-defined data.
      - Returns: The password for the input username.
-     - Throws: `KeychainError.notFound` if unable to find the password in the keychain.
+     - Throws: `TunnelKitManagerError.keychain` if unable to find the password in the keychain.
      **/
     public func password(for username: String, context: String, userDefined: String? = nil) throws -> String {
         var query = [String: Any]()
@@ -153,23 +159,23 @@ public class Keychain {
         query[kSecAttrAccount as String] = username
         query[kSecMatchLimit as String] = kSecMatchLimitOne
         query[kSecReturnData as String] = true
-        
+
         var result: AnyObject?
         switch SecItemCopyMatching(query as CFDictionary, &result) {
         case errSecSuccess:
             break
-            
+
         case errSecUserCanceled:
-            throw KeychainError.userCancelled
+            throw TunnelKitManagerError.keychain(.userCancelled)
 
         default:
-            throw KeychainError.notFound
+            throw TunnelKitManagerError.keychain(.notFound)
         }
         guard let data = result as? Data else {
-            throw KeychainError.notFound
+            throw TunnelKitManagerError.keychain(.notFound)
         }
         guard let password = String(data: data, encoding: .utf8) else {
-            throw KeychainError.notFound
+            throw TunnelKitManagerError.keychain(.notFound)
         }
         return password
     }
@@ -181,7 +187,7 @@ public class Keychain {
      - Parameter context: The context.
      - Parameter userDefined: Optional user-defined data.
      - Returns: The password reference for the input username.
-     - Throws: `KeychainError.notFound` if unable to find the password in the keychain.
+     - Throws: `TunnelKitManagerError.keychain` if unable to find the password in the keychain.
      **/
     public func passwordReference(for username: String, context: String, userDefined: String? = nil) throws -> Data {
         var query = [String: Any]()
@@ -190,67 +196,67 @@ public class Keychain {
         query[kSecAttrAccount as String] = username
         query[kSecMatchLimit as String] = kSecMatchLimitOne
         query[kSecReturnPersistentRef as String] = true
-        
+
         var result: AnyObject?
         switch SecItemCopyMatching(query as CFDictionary, &result) {
         case errSecSuccess:
             break
-            
+
         case errSecUserCanceled:
-            throw KeychainError.userCancelled
+            throw TunnelKitManagerError.keychain(.userCancelled)
 
         default:
-            throw KeychainError.notFound
+            throw TunnelKitManagerError.keychain(.notFound)
         }
         guard let data = result as? Data else {
-            throw KeychainError.notFound
+            throw TunnelKitManagerError.keychain(.notFound)
         }
         return data
     }
-    
+
     /**
      Gets a password associated with a password reference.
 
      - Parameter reference: The password reference.
      - Returns: The password for the input reference.
-     - Throws: `KeychainError.notFound` if unable to find the password in the keychain.
+     - Throws: `TunnelKitManagerError.keychain` if unable to find the password in the keychain.
      **/
     public static func password(forReference reference: Data) throws -> String {
         var query = [String: Any]()
         query[kSecValuePersistentRef as String] = reference
         query[kSecReturnData as String] = true
-        
+
         var result: AnyObject?
         switch SecItemCopyMatching(query as CFDictionary, &result) {
         case errSecSuccess:
             break
-            
+
         case errSecUserCanceled:
-            throw KeychainError.userCancelled
+            throw TunnelKitManagerError.keychain(.userCancelled)
 
         default:
-            throw KeychainError.notFound
+            throw TunnelKitManagerError.keychain(.notFound)
         }
         guard let data = result as? Data else {
-            throw KeychainError.notFound
+            throw TunnelKitManagerError.keychain(.notFound)
         }
         guard let password = String(data: data, encoding: .utf8) else {
-            throw KeychainError.notFound
+            throw TunnelKitManagerError.keychain(.notFound)
         }
         return password
     }
-    
+
     // MARK: Key
-    
+
     // https://forums.developer.apple.com/thread/13748
-    
+
     /**
      Adds a public key.
 
      - Parameter identifier: The unique identifier.
      - Parameter data: The public key data.
      - Returns: The `SecKey` object representing the public key.
-     - Throws: `KeychainError.add` if unable to add the public key to the keychain.
+     - Throws: `TunnelKitManagerError.keychain` if unable to add the public key to the keychain.
      **/
     public func add(publicKeyWithIdentifier identifier: String, data: Data) throws -> SecKey {
         var query = [String: Any]()
@@ -265,17 +271,17 @@ public class Keychain {
 
         let status = SecItemAdd(query as CFDictionary, nil)
         guard status == errSecSuccess else {
-            throw KeychainError.add
+            throw TunnelKitManagerError.keychain(.add)
         }
         return try publicKey(withIdentifier: identifier)
     }
-    
+
     /**
      Gets a public key.
 
      - Parameter identifier: The unique identifier.
      - Returns: The `SecKey` object representing the public key.
-     - Throws: `KeychainError.notFound` if unable to find the public key in the keychain.
+     - Throws: `TunnelKitManagerError.keychain` if unable to find the public key in the keychain.
      **/
     public func publicKey(withIdentifier identifier: String) throws -> SecKey {
         var query = [String: Any]()
@@ -292,20 +298,20 @@ public class Keychain {
         switch SecItemCopyMatching(query as CFDictionary, &result) {
         case errSecSuccess:
             break
-            
+
         case errSecUserCanceled:
-            throw KeychainError.userCancelled
+            throw TunnelKitManagerError.keychain(.userCancelled)
 
         default:
-            throw KeychainError.notFound
+            throw TunnelKitManagerError.keychain(.notFound)
         }
 //        guard let key = result as? SecKey else {
-//            throw KeychainError.typeMismatch
+//            throw TunnelKitManagerError.keychain(.typeMismatch)
 //        }
 //        return key
         return result as! SecKey
     }
-    
+
     /**
      Removes a public key.
 
@@ -325,16 +331,14 @@ public class Keychain {
         let status = SecItemDelete(query as CFDictionary)
         return status == errSecSuccess
     }
-    
+
     // MARK: Helpers
-    
+
         public func setScope(query: inout [String: Any], context: String, userDefined: String?) {
         if let accessGroup = accessGroup {
             query[kSecAttrAccessGroup as String] = accessGroup
             #if os(macOS)
-            if #available(macOS 10.15, *) {
-                query[kSecUseDataProtectionKeychain as String] = true
-            }
+            query[kSecUseDataProtectionKeychain as String] = true
             #endif
         }
         query[kSecAttrService as String] = context

@@ -41,16 +41,16 @@ import TunnelKitCore
 private let log = SwiftyBeaver.self
 
 extension OpenVPN {
-    
+
     /// A pair of credentials for authentication.
     public struct Credentials: Codable, Equatable {
 
         /// The username.
         public let username: String
-        
+
         /// The password.
         public let password: String
-        
+
         public init(_ username: String, _ password: String) {
             self.username = username
             self.password = password
@@ -59,64 +59,64 @@ extension OpenVPN {
 
     /// Encryption algorithm.
     public enum Cipher: String, Codable, CustomStringConvertible {
-        
+
         // WARNING: must match OpenSSL algorithm names
-        
+
         /// AES encryption with 128-bit key size and CBC.
         case aes128cbc = "AES-128-CBC"
-        
+
         /// AES encryption with 192-bit key size and CBC.
         case aes192cbc = "AES-192-CBC"
-        
+
         /// AES encryption with 256-bit key size and CBC.
         case aes256cbc = "AES-256-CBC"
-        
+
         /// AES encryption with 128-bit key size and GCM.
         case aes128gcm = "AES-128-GCM"
-        
+
         /// AES encryption with 192-bit key size and GCM.
         case aes192gcm = "AES-192-GCM"
-        
+
         /// AES encryption with 256-bit key size and GCM.
         case aes256gcm = "AES-256-GCM"
-        
+
         /// Returns the key size for this cipher.
         public var keySize: Int {
             switch self {
             case .aes128cbc, .aes128gcm:
                 return 128
-                
+
             case .aes192cbc, .aes192gcm:
                 return 192
-                
+
             case .aes256cbc, .aes256gcm:
                 return 256
             }
         }
-        
+
         /// Digest should be ignored when this is `true`.
         public var embedsDigest: Bool {
             return rawValue.hasSuffix("-GCM")
         }
-        
+
         /// Returns a generic name for this cipher.
         public var genericName: String {
             return rawValue.hasSuffix("-GCM") ? "AES-GCM" : "AES-CBC"
         }
-        
+
         public var description: String {
             return rawValue
         }
     }
-    
+
     /// Message digest algorithm.
     public enum Digest: String, Codable, CustomStringConvertible {
-        
+
         // WARNING: must match OpenSSL algorithm names
-        
+
         /// SHA1 message digest.
         case sha1 = "SHA1"
-        
+
         /// SHA224 message digest.
         case sha224 = "SHA224"
 
@@ -128,17 +128,17 @@ extension OpenVPN {
 
         /// SHA256 message digest.
         case sha512 = "SHA512"
-        
+
         /// Returns a generic name for this digest.
         public var genericName: String {
             return "HMAC"
         }
-        
+
         public var description: String {
             return "\(genericName)-\(rawValue)"
         }
     }
-    
+
     /// Routing policy.
     public enum RoutingPolicy: String, Codable {
 
@@ -147,20 +147,20 @@ extension OpenVPN {
 
         /// All IPv6 traffic goes through the VPN.
         case IPv6
-        
+
         /// Block LAN while connected.
         case blockLocal
     }
-    
+
     /// Settings that can be pulled from server.
     public enum PullMask: String, Codable, CaseIterable {
 
         /// Routes and gateways.
         case routes
-        
+
         /// DNS settings.
         case dns
-        
+
         /// Proxy settings.
         case proxy
     }
@@ -169,91 +169,91 @@ extension OpenVPN {
     public struct ConfigurationBuilder {
 
         // MARK: General
-        
+
         /// The cipher algorithm for data encryption.
         public var cipher: Cipher?
-        
+
         /// The set of supported cipher algorithms for data encryption (2.5.).
         public var dataCiphers: [Cipher]?
-        
+
         /// The digest algorithm for HMAC.
         public var digest: Digest?
-        
+
         /// Compression framing, disabled by default.
         public var compressionFraming: CompressionFraming?
-        
+
         /// Compression algorithm, disabled by default.
         public var compressionAlgorithm: CompressionAlgorithm?
-        
+
         /// The CA for TLS negotiation (PEM format).
         public var ca: CryptoContainer?
-        
+
         /// The optional client certificate for TLS negotiation (PEM format).
         public var clientCertificate: CryptoContainer?
-        
+
         /// The private key for the certificate in `clientCertificate` (PEM format).
         public var clientKey: CryptoContainer?
-        
+
         /// The optional TLS wrapping.
         public var tlsWrap: TLSWrap?
-        
+
         /// If set, overrides TLS security level (0 = lowest).
         public var tlsSecurityLevel: Int?
 
         /// Sends periodical keep-alive packets if set.
         public var keepAliveInterval: TimeInterval?
-        
+
         /// Disconnects after no keep-alive packets are received within timeout interval if set.
         public var keepAliveTimeout: TimeInterval?
-        
+
         /// The number of seconds after which a renegotiation should be initiated. If `nil`, the client will never initiate a renegotiation.
         public var renegotiatesAfter: TimeInterval?
-        
+
         // MARK: Client
-        
+
         /// The list of server endpoints.
         public var remotes: [Endpoint]?
-        
+
         /// If true, checks EKU of server certificate.
         public var checksEKU: Bool?
-        
+
         /// If true, checks if hostname (sanHost) is present in certificates SAN.
         public var checksSANHost: Bool?
-        
+
         /// The server hostname used for checking certificate SAN.
         public var sanHost: String?
-        
+
         /// Picks endpoint from `remotes` randomly.
         public var randomizeEndpoint: Bool?
-        
+
         /// Prepend hostnames with a number of random bytes defined in `Configuration.randomHostnamePrefixLength`.
         public var randomizeHostnames: Bool?
-        
+
         /// Server is patched for the PIA VPN provider.
         public var usesPIAPatches: Bool?
-        
+
         /// The tunnel MTU.
         public var mtu: Int?
-        
+
         /// Requires username authentication.
         public var authUserPass: Bool?
 
         // MARK: Server
-        
+
         /// The auth-token returned by the server.
         public var authToken: String?
-        
+
         /// The peer-id returned by the server.
         public var peerId: UInt32?
-        
+
         // MARK: Routing
-        
+
         /// The settings for IPv4. `OpenVPNSession` only evaluates this server-side.
         public var ipv4: IPv4Settings?
-        
+
         /// The settings for IPv6. `OpenVPNSession` only evaluates this server-side.
         public var ipv6: IPv6Settings?
-        
+
         /// The IPv4 routes if `ipv4` is nil.
         public var routes4: [IPv4Settings.Route]?
 
@@ -262,13 +262,13 @@ extension OpenVPN {
 
         /// Set false to ignore DNS settings, even when pushed.
         public var isDNSEnabled: Bool?
-        
+
         /// The DNS protocol, defaults to `.plain` (iOS 14+ / macOS 11+).
         public var dnsProtocol: DNSProtocol?
 
         /// The DNS servers if `dnsProtocol = .plain` or nil.
         public var dnsServers: [String]?
-        
+
         /// The server URL if `dnsProtocol = .https`.
         public var dnsHTTPSURL: URL?
 
@@ -295,30 +295,30 @@ extension OpenVPN {
 
         /// The Proxy Auto-Configuration (PAC) url.
         public var proxyAutoConfigurationURL: URL?
-        
+
         /// Set false to ignore proxy settings, even when pushed.
         public var isProxyEnabled: Bool?
-        
+
         /// The HTTP proxy.
         public var httpProxy: Proxy?
 
         /// The HTTPS proxy.
         public var httpsProxy: Proxy?
-        
+
         /// The list of domains not passing through the proxy.
         public var proxyBypassDomains: [String]?
-        
+
         /// Policies for redirecting traffic through the VPN gateway.
         public var routingPolicies: [RoutingPolicy]?
-        
+
         /// Server settings that must not be pulled.
         public var noPullMask: [PullMask]?
 
         // MARK: Extra
-        
+
         /// The method to follow in regards to the XOR patch.
         public var xorMethod: XORMethod?
-        
+
         /**
          Creates a `ConfigurationBuilder`.
          
@@ -332,7 +332,7 @@ extension OpenVPN {
                 compressionAlgorithm = Configuration.Fallback.compressionAlgorithm
             }
         }
-        
+
         /**
          Builds a `Configuration` object.
          
@@ -386,45 +386,45 @@ extension OpenVPN {
             )
         }
     }
-    
+
     /// The immutable configuration for `OpenVPNSession`.
     public struct Configuration: Codable, Equatable {
         struct Fallback {
             static let cipher: Cipher = .aes128cbc
-            
+
             static let digest: Digest = .sha1
-            
+
             static let compressionFraming: CompressionFraming = .disabled
-            
+
             static let compressionAlgorithm: CompressionAlgorithm = .disabled
         }
-        
+
         private static let randomHostnamePrefixLength = 6
-        
+
         /// - Seealso: `ConfigurationBuilder.cipher`
         public let cipher: Cipher?
-        
+
         /// - Seealso: `ConfigurationBuilder.dataCiphers`
         public let dataCiphers: [Cipher]?
-        
+
         /// - Seealso: `ConfigurationBuilder.digest`
         public let digest: Digest?
-        
+
         /// - Seealso: `ConfigurationBuilder.compressionFraming`
         public let compressionFraming: CompressionFraming?
-        
+
         /// - Seealso: `ConfigurationBuilder.compressionAlgorithm`
         public let compressionAlgorithm: CompressionAlgorithm?
-        
+
         /// - Seealso: `ConfigurationBuilder.ca`
         public let ca: CryptoContainer?
-        
+
         /// - Seealso: `ConfigurationBuilder.clientCertificate`
         public let clientCertificate: CryptoContainer?
-        
+
         /// - Seealso: `ConfigurationBuilder.clientKey`
         public let clientKey: CryptoContainer?
-        
+
         /// - Seealso: `ConfigurationBuilder.tlsWrap`
         public let tlsWrap: TLSWrap?
 
@@ -433,7 +433,7 @@ extension OpenVPN {
 
         /// - Seealso: `ConfigurationBuilder.keepAliveInterval`
         public let keepAliveInterval: TimeInterval?
-        
+
         /// - Seealso: `ConfigurationBuilder.keepAliveTimeout`
         public let keepAliveTimeout: TimeInterval?
 
@@ -445,22 +445,22 @@ extension OpenVPN {
 
         /// - Seealso: `ConfigurationBuilder.checksEKU`
         public let checksEKU: Bool?
-        
+
         /// - Seealso: `ConfigurationBuilder.checksSANHost`
         public let checksSANHost: Bool?
-        
+
         /// - Seealso: `ConfigurationBuilder.sanHost`
         public let sanHost: String?
-        
+
         /// - Seealso: `ConfigurationBuilder.randomizeEndpoint`
         public let randomizeEndpoint: Bool?
-        
+
         /// - Seealso: `ConfigurationBuilder.randomizeHostnames`
         public var randomizeHostnames: Bool?
 
         /// - Seealso: `ConfigurationBuilder.usesPIAPatches`
         public let usesPIAPatches: Bool?
-        
+
         /// - Seealso: `ConfigurationBuilder.mtu`
         public let mtu: Int?
 
@@ -469,10 +469,10 @@ extension OpenVPN {
 
         /// - Seealso: `ConfigurationBuilder.authToken`
         public let authToken: String?
-        
+
         /// - Seealso: `ConfigurationBuilder.peerId`
         public let peerId: UInt32?
-        
+
         /// - Seealso: `ConfigurationBuilder.ipv4`
         public let ipv4: IPv4Settings?
 
@@ -490,16 +490,16 @@ extension OpenVPN {
 
         /// - Seealso: `ConfigurationBuilder.dnsProtocol`
         public let dnsProtocol: DNSProtocol?
-        
+
         /// - Seealso: `ConfigurationBuilder.dnsServers`
         public let dnsServers: [String]?
-        
+
         /// - Seealso: `ConfigurationBuilder.dnsHTTPSURL`
         public let dnsHTTPSURL: URL?
-        
+
         /// - Seealso: `ConfigurationBuilder.dnsTLSServerName`
         public let dnsTLSServerName: String?
-        
+
         /// - Seealso: `ConfigurationBuilder.dnsDomain`
         public let dnsDomain: String?
 
@@ -514,24 +514,24 @@ extension OpenVPN {
 
         /// - Seealso: `ConfigurationBuilder.httpsProxy`
         public let httpsProxy: Proxy?
-        
+
         /// - Seealso: `ConfigurationBuilder.proxyAutoConfigurationURL`
         public let proxyAutoConfigurationURL: URL?
 
         /// - Seealso: `ConfigurationBuilder.proxyBypassDomains`
         public let proxyBypassDomains: [String]?
-        
+
         /// - Seealso: `ConfigurationBuilder.routingPolicies`
         public let routingPolicies: [RoutingPolicy]?
-        
+
         /// - Seealso: `ConfigurationBuilder.noPullMask`
         public let noPullMask: [PullMask]?
-        
+
         /// - Seealso: `ConfigurationBuilder.xorMethod`
         public let xorMethod: XORMethod?
-        
+
         // MARK: Shortcuts
-        
+
         public var fallbackCipher: Cipher {
             return cipher ?? Fallback.cipher
         }
@@ -556,9 +556,9 @@ extension OpenVPN {
             let pulled = Array(Set(all).subtracting(notPulled))
             return !pulled.isEmpty ? pulled : nil
         }
-        
+
         // MARK: Computed
-        
+
         public var processedRemotes: [Endpoint]? {
             guard var processedRemotes = remotes else {
                 return nil
@@ -584,7 +584,7 @@ extension OpenVPN {
 // MARK: Modification
 
 extension OpenVPN.Configuration {
-    
+
     /**
      Returns a `ConfigurationBuilder` to use this configuration as a starting point for a new one.
      
@@ -701,7 +701,7 @@ extension OpenVPN.Configuration {
                 log.info("\tTLS security level: default")
             }
         }
-        
+
         if let keepAliveSeconds = keepAliveInterval, keepAliveSeconds > 0 {
             log.info("\tKeep-alive interval: \(keepAliveSeconds.asTimeString)")
         } else if isLocal {

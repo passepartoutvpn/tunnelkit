@@ -35,7 +35,7 @@ class RoutingTests: XCTestCase {
     override func tearDown() {
         // Put teardown code here. This method is called after the invocation of each test method in the class.
     }
-    
+
     func testEntryMatch4() {
         let entry24 = RoutingTableEntry(iPv4Network: "192.168.1.0/24", gateway: nil, networkInterface: "en0")
         print(entry24.networkMask()!)
@@ -65,10 +65,10 @@ class RoutingTests: XCTestCase {
             XCTAssertFalse(entry24.matchesDestination("abcd:efef:1233::\(i)"))
         }
     }
-    
+
     func testFindGatewayLAN4() {
         let table = RoutingTable()
-        
+
         for entry in table.ipv4() {
             print(entry)
         }
@@ -83,11 +83,11 @@ class RoutingTests: XCTestCase {
 
     func testFindGatewayLAN6() {
         let table = RoutingTable()
-        
+
         for entry in table.ipv6() {
             print(entry)
         }
-        
+
         if let defaultGateway = table.defaultGateway6()?.gateway() {
             print("Default gateway: \(defaultGateway)")
             if let lan = table.broadestRoute6(matchingDestination: defaultGateway) {
@@ -95,13 +95,13 @@ class RoutingTests: XCTestCase {
             }
         }
     }
-    
+
     func testPartitioning() {
         let v4 = RoutingTableEntry(iPv4Network: "192.168.1.0/24", gateway: nil, networkInterface: "en0")
         let v4Boundary = RoutingTableEntry(iPv4Network: "192.168.1.0/31", gateway: nil, networkInterface: "en0")
         let v6 = RoutingTableEntry(iPv6Network: "abcd:efef:120::/46", gateway: nil, networkInterface: "en0")
         let v6Boundary = RoutingTableEntry(iPv6Network: "abcd:efef:120::/127", gateway: nil, networkInterface: "en0")
-        
+
         guard let v4parts = v4.partitioned() else {
             fatalError()
         }

@@ -15,8 +15,8 @@
         "repositoryURL": "https://github.com/SwiftyBeaver/SwiftyBeaver",
         "state": {
           "branch": null,
-          "revision": "2c039501d6eeb4d4cd4aec4a8d884ad28862e044",
-          "version": "1.9.5"
+          "revision": "12b5acf96d98f91d50de447369bd18df74600f1a",
+          "version": "1.9.6"
         }
       },
       {
@@ -24,7 +24,7 @@
         "repositoryURL": "https://github.com/passepartoutvpn/wireguard-apple",
         "state": {
           "branch": null,
-          "revision": "57f9babde0fb7567f31a75e943538022f8725f8f",
+          "revision": "73d9152fa0cb661db0348a1ac11dbbf998422a50",
           "version": "1.0.17"
         }
       }

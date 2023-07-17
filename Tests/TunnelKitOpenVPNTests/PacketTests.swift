@@ -28,17 +28,17 @@ import XCTest
 import CTunnelKitOpenVPNProtocol
 
 class PacketTests: XCTestCase {
-    
+
     override func setUp() {
         super.setUp()
         // Put setup code here. This method is called before the invocation of each test method in the class.
     }
-    
+
     override func tearDown() {
         // Put teardown code here. This method is called after the invocation of each test method in the class.
         super.tearDown()
     }
-    
+
     func testControlPacket() {
         let id: UInt32 = 0x1456
         let code: PacketCode = .controlV1
@@ -64,7 +64,7 @@ class PacketTests: XCTestCase {
         let expected = Data(hex: "2b112233445566778805000000aa000000bb000000cc000000dd000000eea639328cbf03490e")
         print("Serialized: \(serialized.toHex())")
         print("Expected  : \(expected.toHex())")
-        
+
         XCTAssertEqual(serialized, expected)
     }
 }

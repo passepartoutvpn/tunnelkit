@@ -48,7 +48,7 @@ public class MemoryDestination: BaseDestination, CustomStringConvertible {
         super.init()
         asynchronously = false
     }
-    
+
     /**
      Starts logging. Optionally prepend an array of lines.
 
@@ -71,7 +71,7 @@ public class MemoryDestination: BaseDestination, CustomStringConvertible {
             try? content.write(to: url, atomically: true, encoding: .utf8)
         }
     }
-    
+
     // MARK: BaseDestination
 
     // XXX: executed in SwiftyBeaver queue. DO NOT invoke execute* here (sync in sync would crash otherwise)
@@ -89,7 +89,7 @@ public class MemoryDestination: BaseDestination, CustomStringConvertible {
     }
 
     // MARK: CustomStringConvertible
-    
+
     public var description: String {
         return executeSynchronously {
             return self.buffer.joined(separator: "\n")

@@ -40,26 +40,26 @@ import XCTest
 @testable import TunnelKitCore
 
 class RawPerformanceTests: XCTestCase {
-    
+
     override func setUp() {
         // Put setup code here. This method is called before the invocation of each test method in the class.
     }
-    
+
     override func tearDown() {
         // Put teardown code here. This method is called after the invocation of each test method in the class.
     }
-    
+
     // 0.434s
     func testUInt16FromBuffer() {
         let data = Data([0x22, 0xff, 0xaa, 0xbb, 0x55, 0x66])
-        
+
         measure {
             for _ in 0..<1000000 {
-                let _ = data.UInt16Value(from: 3)
+                _ = data.UInt16Value(from: 3)
             }
         }
     }
-    
+
 //    // 0.463s
 //    func testUInt16FromPointers() {
 //        let data = Data([0x22, 0xff, 0xaa, 0xbb, 0x55, 0x66])
@@ -81,18 +81,18 @@ class RawPerformanceTests: XCTestCase {
 //            }
 //        }
 //    }
-    
+
     // 0.469s
     func testUInt32FromPointers() {
         let data = Data([0x22, 0xff, 0xaa, 0xbb, 0x55, 0x66])
-        
+
         measure {
             for _ in 0..<1000000 {
-                let _ = data.UInt32Value(from: 1)
+                _ = data.UInt32Value(from: 1)
             }
         }
     }
-    
+
 //    // 0.071s
 //    func testRandomUInt32FromBuffer() {
 //        measure {
@@ -101,12 +101,12 @@ class RawPerformanceTests: XCTestCase {
 //            }
 //        }
 //    }
-    
+
     // 0.063s
     func testRandomUInt32FromPointers() {
         measure {
             for _ in 0..<10000 {
-                let _ = try! SecureRandom.uint32()
+                _ = try! SecureRandom.uint32()
             }
         }
     }
@@ -127,7 +127,7 @@ class RawPerformanceTests: XCTestCase {
         measure {
             for data in suite {
 //                let _ = UInt32(bigEndian: data.subdata(in: 0..<4).withUnsafeBytes { $0.pointee })
-                let _ = data.networkUInt32Value(from: 0)
+                _ = data.networkUInt32Value(from: 0)
             }
         }
     }
@@ -137,7 +137,7 @@ class RawPerformanceTests: XCTestCase {
         let suite = TestUtils.generateDataSuite(1000, 100000)
         measure {
             for data in suite {
-                let _ = data.subdata(in: 5..<data.count)
+                _ = data.subdata(in: 5..<data.count)
             }
         }
     }

@@ -29,11 +29,11 @@ import TunnelKitOpenVPNCore
 /// Processes data packets according to a XOR method.
 public struct XORProcessor {
     private let method: OpenVPN.XORMethod?
-    
+
     public init(method: OpenVPN.XORMethod?) {
         self.method = method
     }
-    
+
     /**
      Returns an array of data packets processed according to XOR method.
      
@@ -49,7 +49,7 @@ public struct XORProcessor {
             processPacket($0, outbound: outbound)
         }
     }
-    
+
     /**
      Returns a data packet processed according to XOR method.
      
@@ -64,13 +64,13 @@ public struct XORProcessor {
         switch method {
         case .xormask(let mask):
             return Self.xormask(packet: packet, mask: mask)
-            
+
         case .xorptrpos:
             return Self.xorptrpos(packet: packet)
-            
+
         case .reverse:
             return Self.reverse(packet: packet)
-            
+
         case .obfuscate(let mask):
             if outbound {
                 return Self.xormask(packet: Self.xorptrpos(packet: Self.reverse(packet: Self.xorptrpos(packet: packet))), mask: mask)
@@ -87,13 +87,13 @@ extension XORProcessor {
             byte ^ [UInt8](mask)[index % mask.count]
         })
     }
-    
+
     private static func xorptrpos(packet: Data) -> Data {
         Data(packet.enumerated().map { (index, byte) in
             byte ^ UInt8(truncatingIfNeeded: index &+ 1)
         })
     }
-    
+
     private static func reverse(packet: Data) -> Data {
         Data(([UInt8](packet))[0..<1] + ([UInt8](packet)[1...]).reversed())
     }

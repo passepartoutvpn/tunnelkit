@@ -44,11 +44,9 @@ extension UnicodeScalar {
         let value = self.value
         if 48 <= value && value <= 57 {
             return UInt8(value - 48)
-        }
-        else if 65 <= value && value <= 70 {
+        } else if 65 <= value && value <= 70 {
             return UInt8(value - 55)
-        }
-        else if 97 <= value && value <= 102 {
+        } else if 97 <= value && value <= 102 {
             return UInt8(value - 87)
         }
         fatalError("\(self) not a legal hex nibble")
@@ -58,7 +56,7 @@ extension UnicodeScalar {
 extension Data {
     public init(hex: String) {
         let scalars = hex.unicodeScalars
-        var bytes = Array<UInt8>(repeating: 0, count: (scalars.count + 1) >> 1)
+        var bytes = [UInt8](repeating: 0, count: (scalars.count + 1) >> 1)
         for (index, scalar) in scalars.enumerated() {
             var nibble = scalar.hexNibble
             if index & 1 == 0 {
@@ -72,7 +70,7 @@ extension Data {
     public func toHex() -> String {
         return map { String(format: "%02hhx", $0) }.joined()
     }
-    
+
     public mutating func zero() {
         resetBytes(in: 0..<count)
     }
@@ -90,7 +88,7 @@ extension Data {
         }
         append(buffer)
     }
-    
+
     public mutating func append(_ value: UInt32) {
         var localValue = value
         let buffer = withUnsafePointer(to: &localValue) {
@@ -98,7 +96,7 @@ extension Data {
         }
         append(buffer)
     }
-    
+
     public mutating func append(_ value: UInt64) {
         var localValue = value
         let buffer = withUnsafePointer(to: &localValue) {
@@ -106,7 +104,7 @@ extension Data {
         }
         append(buffer)
     }
-    
+
     public mutating func append(nullTerminatedString: String) {
         append(nullTerminatedString.data(using: .ascii)!)
         append(UInt8(0))
@@ -115,7 +113,7 @@ extension Data {
     public func nullTerminatedString(from: Int) -> String? {
         var nullOffset: Int?
         for i in from..<count {
-            if (self[i] == 0) {
+            if self[i] == 0 {
                 nullOffset = i
                 break
             }
@@ -137,7 +135,7 @@ extension Data {
 //        print("value: \(String(format: "%x", value))")
         return value
     }
-    
+
     @available(*, deprecated)
     func UInt16ValueFromPointers(from: Int) -> UInt16 {
         return subdata(in: from..<(from + 2)).withUnsafeBytes { $0.pointee }
@@ -155,7 +153,7 @@ extension Data {
 //        print("value: \(String(format: "%x", value))")
         return value
     }
-    
+
     @available(*, deprecated)
     func UInt32ValueFromBuffer(from: Int) -> UInt32 {
         var value: UInt32 = 0
@@ -167,7 +165,7 @@ extension Data {
 //        print("value: \(String(format: "%x", value))")
         return value
     }
-    
+
     // best
     public func UInt32Value(from: Int) -> UInt32 {
         return subdata(in: from..<(from + 4)).withUnsafeBytes {

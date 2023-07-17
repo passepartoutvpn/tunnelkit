@@ -54,7 +54,7 @@ public class SecureRandom {
         var randomBuffer = [UInt8](repeating: 0, count: 4)
 
         guard SecRandomCopyBytes(kSecRandomDefault, 4, &randomBuffer) == 0 else {
-            throw SecureRandomError.randomGenerator
+            throw TunnelKitCoreError.secureRandom(.randomGenerator)
         }
 
         var randomNumber: UInt32 = 0
@@ -64,18 +64,18 @@ public class SecureRandom {
         }
         return randomNumber
     }
-    
+
     public static func uint32() throws -> UInt32 {
         var randomNumber: UInt32 = 0
-        
+
         try withUnsafeMutablePointer(to: &randomNumber) {
             try $0.withMemoryRebound(to: UInt8.self, capacity: 4) { (randomBytes: UnsafeMutablePointer<UInt8>) -> Void in
                 guard SecRandomCopyBytes(kSecRandomDefault, 4, randomBytes) == 0 else {
-                    throw SecureRandomError.randomGenerator
+                    throw TunnelKitCoreError.secureRandom(.randomGenerator)
                 }
             }
         }
-        
+
         return randomNumber
     }
 
@@ -85,10 +85,10 @@ public class SecureRandom {
         try randomData.withUnsafeMutableBytes {
             let randomBytes = $0.bytePointer
             guard SecRandomCopyBytes(kSecRandomDefault, length, randomBytes) == 0 else {
-                throw SecureRandomError.randomGenerator
+                throw TunnelKitCoreError.secureRandom(.randomGenerator)
             }
         }
-        
+
         return randomData
     }
 
@@ -99,9 +99,9 @@ public class SecureRandom {
             bzero(randomBytes, length)
             randomBytes.deallocate()
         }
-        
+
         guard SecRandomCopyBytes(kSecRandomDefault, length, randomBytes) == 0 else {
-            throw SecureRandomError.randomGenerator
+            throw TunnelKitCoreError.secureRandom(.randomGenerator)
         }
 
         return Z(bytes: randomBytes, count: length)

@@ -32,7 +32,7 @@ import CTunnelKitOpenVPNProtocol
 
 class NETCPLink: LinkInterface {
     private let impl: NWTCPConnection
-    
+
     private let maxPacketSize: Int
 
     private let xorMethod: OpenVPN.XORMethod?
@@ -45,15 +45,15 @@ class NETCPLink: LinkInterface {
         self.xorMethod = xorMethod
         xorMask = xorMethod?.mask
     }
-    
+
     // MARK: LinkInterface
-    
+
     let isReliable: Bool = true
-    
+
     var remoteAddress: String? {
         (impl.remoteAddress as? NWHostEndpoint)?.hostname
     }
-    
+
     var remoteProtocol: String? {
         guard let remote = impl.remoteAddress as? NWHostEndpoint else {
             return nil
@@ -64,13 +64,13 @@ class NETCPLink: LinkInterface {
     var packetBufferSize: Int {
         return maxPacketSize
     }
-    
+
     func setReadHandler(queue: DispatchQueue, _ handler: @escaping ([Data]?, Error?) -> Void) {
         loopReadPackets(queue, Data(), handler)
     }
-    
+
     private func loopReadPackets(_ queue: DispatchQueue, _ buffer: Data, _ handler: @escaping ([Data]?, Error?) -> Void) {
-        
+
         // WARNING: runs in Network.framework queue
         impl.readMinimumLength(2, maximumLength: packetBufferSize) { [weak self] (data, error) in
             guard let self = self else {
@@ -81,7 +81,7 @@ class NETCPLink: LinkInterface {
                     handler(nil, error)
                     return
                 }
-                
+
                 var newBuffer = buffer
                 newBuffer.append(contentsOf: data)
                 var until = 0
@@ -93,12 +93,12 @@ class NETCPLink: LinkInterface {
                 )
                 newBuffer = newBuffer.subdata(in: until..<newBuffer.count)
                 self.loopReadPackets(queue, newBuffer, handler)
-                
+
                 handler(packets, nil)
             }
         }
     }
-    
+
     func writePacket(_ packet: Data, completionHandler: ((Error?) -> Void)?) {
         let stream = PacketStream.outboundStream(
             fromPacket: packet,
@@ -109,7 +109,7 @@ class NETCPLink: LinkInterface {
             completionHandler?(error)
         }
     }
-    
+
     func writePackets(_ packets: [Data], completionHandler: ((Error?) -> Void)?) {
         let stream = PacketStream.outboundStream(
             fromPackets: packets,

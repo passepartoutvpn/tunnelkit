@@ -33,7 +33,7 @@ public struct Endpoint: RawRepresentable, Codable, Equatable, CustomStringConver
     private static let rx = NSRegularExpression("^([^\\s]+):(UDP[46]?|TCP[46]?):(\\d+)$")
 
     public let address: String
-    
+
     public let proto: EndpointProtocol
 
     public init(_ address: String, _ proto: EndpointProtocol) {
@@ -60,7 +60,7 @@ public struct Endpoint: RawRepresentable, Codable, Equatable, CustomStringConver
     public var isHostname: Bool {
         !isIPv4 && !isIPv6
     }
-    
+
     public func withRandomPrefixLength(_ length: Int) throws -> Endpoint {
         guard isHostname else {
             return self
@@ -69,9 +69,9 @@ public struct Endpoint: RawRepresentable, Codable, Equatable, CustomStringConver
         let prefixedAddress = "\(prefix.toHex()).\(address)"
         return Endpoint(prefixedAddress, proto)
     }
-    
+
     // MARK: RawRepresentable
-    
+
     public init?(rawValue: String) {
         let components = Self.rx.groups(in: rawValue)
         guard components.count == 3 else {
@@ -90,9 +90,9 @@ public struct Endpoint: RawRepresentable, Codable, Equatable, CustomStringConver
     public var rawValue: String {
         "\(address):\(proto.socketType.rawValue):\(proto.port)"
     }
-    
+
     // MARK: CustomStringConvertible
-    
+
     public var description: String {
         "\(address.maskedDescription):\(proto.rawValue)"
     }
@@ -100,10 +100,10 @@ public struct Endpoint: RawRepresentable, Codable, Equatable, CustomStringConver
 
 /// Defines the communication protocol of an endpoint.
 public struct EndpointProtocol: RawRepresentable, Equatable, CustomStringConvertible {
-    
+
     /// The socket type.
     public let socketType: SocketType
-    
+
     /// The remote port.
     public let port: UInt16
 
@@ -111,9 +111,9 @@ public struct EndpointProtocol: RawRepresentable, Equatable, CustomStringConvert
         self.socketType = socketType
         self.port = port
     }
-    
+
     // MARK: RawRepresentable
-    
+
     public init?(rawValue: String) {
         let components = rawValue.components(separatedBy: ":")
         guard components.count == 2 else {
@@ -127,13 +127,13 @@ public struct EndpointProtocol: RawRepresentable, Equatable, CustomStringConvert
         }
         self.init(socketType, port)
     }
-    
+
     public var rawValue: String {
         "\(socketType.rawValue):\(port)"
     }
-    
+
     // MARK: CustomStringConvertible
-    
+
     public var description: String {
         rawValue
     }
@@ -146,7 +146,7 @@ extension EndpointProtocol: Codable {
         let proto = EndpointProtocol(rawValue: rawValue) ?? EndpointProtocol(.udp, 1198)
         self.init(proto.socketType, proto.port)
     }
-    
+
     public func encode(to encoder: Encoder) throws {
         var container = encoder.singleValueContainer()
         try container.encode(rawValue)

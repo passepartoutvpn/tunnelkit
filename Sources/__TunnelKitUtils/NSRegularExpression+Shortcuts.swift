@@ -29,10 +29,10 @@ extension NSRegularExpression {
     public convenience init(_ pattern: String) {
         try! self.init(pattern: pattern, options: [])
     }
-    
+
     public func groups(in string: String) -> [String] {
         var results: [String] = []
-        enumerateMatches(in: string, options: [], range: NSMakeRange(0, string.count)) { result, flags, stop in
+        enumerateMatches(in: string, options: [], range: NSRange(location: 0, length: string.count)) { result, _, _ in
             guard let result = result else {
                 return
             }
@@ -48,7 +48,7 @@ extension NSRegularExpression {
 
 extension NSRegularExpression {
     public func enumerateSpacedComponents(in string: String, using block: ([String]) -> Void) {
-        enumerateMatches(in: string, options: [], range: NSMakeRange(0, string.count)) { result, flags, stop in
+        enumerateMatches(in: string, options: [], range: NSRange(location: 0, length: string.count)) { result, _, _ in
             guard let range = result?.range else {
                 return
             }
@@ -57,7 +57,7 @@ extension NSRegularExpression {
             block(tokens)
         }
     }
-    
+
     public func enumerateSpacedArguments(in string: String, using block: ([String]) -> Void) {
         enumerateSpacedComponents(in: string) { (tokens) in
             var args = tokens

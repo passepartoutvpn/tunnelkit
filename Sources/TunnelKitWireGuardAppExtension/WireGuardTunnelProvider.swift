@@ -23,7 +23,7 @@ open class WireGuardTunnelProvider: NEPacketTunnelProvider {
     open override func startTunnel(options: [String: NSObject]?, completionHandler: @escaping (Error?) -> Void) {
 
         // BEGIN: TunnelKit
-        
+
         guard let tunnelProviderProtocol = protocolConfiguration as? NETunnelProviderProtocol else {
             fatalError("Not a NETunnelProviderProtocol")
         }
@@ -36,10 +36,10 @@ open class WireGuardTunnelProvider: NEPacketTunnelProvider {
             cfg = try fromDictionary(WireGuard.ProviderConfiguration.self, providerConfiguration)
             tunnelConfiguration = cfg.configuration.tunnelConfiguration
         } catch {
-            completionHandler(WireGuardProviderError.savedProtocolConfigurationIsInvalid)
+            completionHandler(TunnelKitWireGuardError.savedProtocolConfigurationIsInvalid)
             return
         }
-        
+
         configureLogging()
 
         // END: TunnelKit
@@ -59,24 +59,24 @@ open class WireGuardTunnelProvider: NEPacketTunnelProvider {
             case .cannotLocateTunnelFileDescriptor:
                 wg_log(.error, staticMessage: "Starting tunnel failed: could not determine file descriptor")
                 self.cfg._appexSetLastError(.couldNotDetermineFileDescriptor)
-                completionHandler(WireGuardProviderError.couldNotDetermineFileDescriptor)
+                completionHandler(TunnelKitWireGuardError.couldNotDetermineFileDescriptor)
 
             case .dnsResolution(let dnsErrors):
                 let hostnamesWithDnsResolutionFailure = dnsErrors.map(\.address)
                     .joined(separator: ", ")
                 wg_log(.error, message: "DNS resolution failed for the following hostnames: \(hostnamesWithDnsResolutionFailure)")
                 self.cfg._appexSetLastError(.dnsResolutionFailure)
-                completionHandler(WireGuardProviderError.dnsResolutionFailure)
+                completionHandler(TunnelKitWireGuardError.dnsResolutionFailure)
 
             case .setNetworkSettings(let error):
                 wg_log(.error, message: "Starting tunnel failed with setTunnelNetworkSettings returning \(error.localizedDescription)")
                 self.cfg._appexSetLastError(.couldNotSetNetworkSettings)
-                completionHandler(WireGuardProviderError.couldNotSetNetworkSettings)
+                completionHandler(TunnelKitWireGuardError.couldNotSetNetworkSettings)
 
             case .startWireGuardBackend(let errorCode):
                 wg_log(.error, message: "Starting tunnel failed with wgTurnOn returning \(errorCode)")
                 self.cfg._appexSetLastError(.couldNotStartBackend)
-                completionHandler(WireGuardProviderError.couldNotStartBackend)
+                completionHandler(TunnelKitWireGuardError.couldNotStartBackend)
 
             case .invalidState:
                 // Must never happen
@@ -128,7 +128,7 @@ extension WireGuardTunnelProvider {
     private func configureLogging() {
         let logLevel: SwiftyBeaver.Level = (cfg.shouldDebug ? .debug : .info)
         let logFormat = cfg.debugLogFormat ?? "$Dyyyy-MM-dd HH:mm:ss.SSS$d $L $N.$F:$l - $M"
-        
+
         if cfg.shouldDebug {
             let console = ConsoleDestination()
             console.useNSLog = true

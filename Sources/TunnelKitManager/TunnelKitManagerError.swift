@@ -1,8 +1,8 @@
 //
-//  DNSProtocol.swift
+//  TunnelKitManagerError.swift
 //  TunnelKit
 //
-//  Created by Davide De Rosa on 1/22/21.
+//  Created by Davide De Rosa on 6/16/23.
 //  Copyright (c) 2023 Davide De Rosa. All rights reserved.
 //
 //  https://github.com/passepartoutvpn
@@ -25,18 +25,7 @@
 
 import Foundation
 
-/// The protocol used in DNS servers.
-public enum DNSProtocol: String, Codable {
-
-    /// The value to fall back to when unset.
-    public static let fallback: DNSProtocol = .plain
-
-    /// Standard plaintext DNS (port 53).
-    case plain
-
-    /// DNS over HTTPS.
-    case https
-
-    /// DNS over TLS (port 853).
-    case tls
+/// Errors returned by Core library.
+public enum TunnelKitManagerError: Error {
+    case keychain(_ error: KeychainError)
 }

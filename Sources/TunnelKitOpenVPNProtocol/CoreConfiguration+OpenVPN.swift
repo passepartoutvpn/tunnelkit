@@ -41,29 +41,29 @@ import CTunnelKitOpenVPNProtocol
 
 extension CoreConfiguration {
     struct OpenVPN {
-    
+
         // MARK: Session
-        
+
         static let usesReplayProtection = true
 
         static let negotiationTimeout = 30.0
-        
+
         static let hardResetTimeout = 10.0
 
         static let tickInterval = 0.2
-        
+
         static let pushRequestInterval = 2.0
-        
+
         static let pingTimeoutCheckInterval = 10.0
-        
+
         static let pingTimeout = 120.0
-        
+
         static let retransmissionLimit = 0.1
-        
+
         static let softNegotiationTimeout = 120.0
-        
+
         // MARK: Authentication
-        
+
         static func peerInfo(extra: [String: String]? = nil) -> String {
             let platform: String
             let platformVersion = ProcessInfo.processInfo.operatingSystemVersion
@@ -79,7 +79,7 @@ extension CoreConfiguration {
                 "IV_UI_VER=\(uiVersion)",
                 "IV_PROTO=2",
                 "IV_NCP=2",
-                "IV_LZO_STUB=1",
+                "IV_LZO_STUB=1"
             ]
             if LZOFactory.isSupported() {
                 info.append("IV_LZO=1")
@@ -97,19 +97,19 @@ extension CoreConfiguration {
             info.append("")
             return info.joined(separator: "\n")
         }
-        
+
         static let randomLength = 32
-        
+
         // MARK: Keys
-        
+
         static let label1 = "OpenVPN master secret"
-        
+
         static let label2 = "OpenVPN key expansion"
-        
+
         static let preMasterLength = 48
-        
+
         static let keyLength = 64
-        
+
         static let keysCount = 4
     }
 }

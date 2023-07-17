@@ -47,15 +47,15 @@ class DataPathPerformanceTests: XCTestCase {
     private var encrypter: DataPathEncrypter!
 
     private var decrypter: DataPathDecrypter!
-    
+
     override func setUp() {
         let ck = try! SecureRandom.safeData(length: 32)
         let hk = try! SecureRandom.safeData(length: 32)
-        
+
         let crypto = try! OpenVPN.EncryptionBridge(.aes128cbc, .sha1, ck, ck, hk, hk)
         encrypter = crypto.encrypter()
         decrypter = crypto.decrypter()
-        
+
         dataPath = DataPath(
             encrypter: encrypter,
             decrypter: decrypter,
@@ -85,18 +85,18 @@ class DataPathPerformanceTests: XCTestCase {
 ////        print(">>> \(packets?.count) packets")
 //        XCTAssertEqual(decryptedPackets, packets)
 //    }
-    
+
     // 16ms
     func testPointerBased() {
         let packets = TestUtils.generateDataSuite(1200, 1000)
         var encryptedPackets: [Data]!
         var decryptedPackets: [Data]!
-        
+
         measure {
             encryptedPackets = try! self.dataPath.encryptPackets(packets, key: 0)
             decryptedPackets = try! self.dataPath.decryptPackets(encryptedPackets, keepAlive: nil)
         }
-        
+
 //        print(">>> \(packets?.count) packets")
         XCTAssertEqual(decryptedPackets, packets)
     }

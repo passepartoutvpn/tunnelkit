@@ -32,9 +32,9 @@ import TunnelKitOpenVPNProtocol
 
 class NEUDPLink: LinkInterface {
     private let impl: NWUDPSession
-    
+
     private let maxDatagrams: Int
-    
+
     private let xor: XORProcessor
 
     init(impl: NWUDPSession, maxDatagrams: Int? = nil, xorMethod: OpenVPN.XORMethod?) {
@@ -42,15 +42,15 @@ class NEUDPLink: LinkInterface {
         self.maxDatagrams = maxDatagrams ?? 200
         xor = XORProcessor(method: xorMethod)
     }
-    
+
     // MARK: LinkInterface
-    
+
     let isReliable: Bool = false
-    
+
     var remoteAddress: String? {
         (impl.resolvedEndpoint as? NWHostEndpoint)?.hostname
     }
-    
+
     var remoteProtocol: String? {
         guard let remote = impl.resolvedEndpoint as? NWHostEndpoint else {
             return nil
@@ -61,9 +61,9 @@ class NEUDPLink: LinkInterface {
     var packetBufferSize: Int {
         return maxDatagrams
     }
-    
+
     func setReadHandler(queue: DispatchQueue, _ handler: @escaping ([Data]?, Error?) -> Void) {
-        
+
         // WARNING: runs in Network.framework queue
         impl.setReadHandler({ [weak self] packets, error in
             guard let self = self else {
@@ -78,14 +78,14 @@ class NEUDPLink: LinkInterface {
             }
         }, maxDatagrams: maxDatagrams)
     }
-    
+
     func writePacket(_ packet: Data, completionHandler: ((Error?) -> Void)?) {
         let dataToUse = xor.processPacket(packet, outbound: true)
         impl.writeDatagram(dataToUse) { error in
             completionHandler?(error)
         }
     }
-    
+
     func writePackets(_ packets: [Data], completionHandler: ((Error?) -> Void)?) {
         let packetsToUse = xor.processPackets(packets, outbound: true)
         impl.writeMultipleDatagrams(packetsToUse) { error in

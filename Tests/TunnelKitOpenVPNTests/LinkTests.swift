@@ -49,19 +49,19 @@ class LinkTests: XCTestCase {
     }
 
     // UDP
-    
+
     func testUnreliableControlQueue() {
         let seq1 = [0, 5, 2, 1, 4, 3]
         let seq2 = [5, 2, 1, 9, 4, 3, 0, 8, 7, 10, 4, 3, 5, 6]
         let seq3 = [5, 2, 11, 1, 2, 9, 4, 5, 5, 3, 8, 0, 6, 8, 2, 7, 10, 4, 3, 5, 6]
-        
+
         for seq in [seq1, seq2, seq3] {
             XCTAssertEqual(TestUtils.uniqArray(seq.sorted()), handleControlSequence(seq))
         }
     }
-    
+
     // TCP
-    
+
 //    private func testPacketStream() {
 //        var bytes: [UInt8] = []
 //        var until: Int
@@ -156,25 +156,25 @@ class LinkTests: XCTestCase {
         }
         return hdl
     }
-    
+
     private func enqueueControl(_ q: inout [Int], _ id: inout Int, _ p: Int, _ h: (Int) -> Void) {
         q.append(p)
         q.sort { (p1, p2) -> Bool in
             return (p1 < p2)
         }
-        
+
         print("q = \(q)")
         print("id = \(id)")
         for p in q {
             print("test(\(p))")
-            if (p < id) {
+            if p < id {
                 q.removeFirst()
                 continue
             }
-            if (p != id) {
+            if p != id {
                 return
             }
-            
+
             h(p)
             print("handle(\(p))")
             id += 1

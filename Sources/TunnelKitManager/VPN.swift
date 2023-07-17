@@ -28,14 +28,14 @@ import Foundation
 /// Helps controlling a VPN without messing with underlying implementations.
 public protocol VPN {
     associatedtype Configuration
-    
+
     associatedtype Extra
-    
+
     /**
      Synchronizes with the current VPN state.
      */
     func prepare() async
-    
+
     /**
      Installs the VPN profile.
 
@@ -72,12 +72,12 @@ public protocol VPN {
         extra: Extra?,
         after: DispatchTimeInterval
     ) async throws
-    
+
     /**
      Disconnects from the VPN.
      */
     func disconnect() async
-    
+
     /**
      Uninstalls the VPN profile.
      */
@@ -91,19 +91,19 @@ extension DispatchTimeInterval {
         switch self {
         case .seconds(let sec):
             return UInt64(sec) * NSEC_PER_SEC
-            
+
         case .milliseconds(let msec):
             return UInt64(msec) * NSEC_PER_MSEC
-            
+
         case .microseconds(let usec):
             return UInt64(usec) * NSEC_PER_USEC
-            
+
         case .nanoseconds(let nsec):
             return UInt64(nsec)
-            
+
         case .never:
             return 0
-            
+
         @unknown default:
             return 0
         }

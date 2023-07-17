@@ -44,13 +44,13 @@ public class NetworkExtensionVPN: VPN {
     deinit {
         NotificationCenter.default.removeObserver(self)
     }
-    
+
     // MARK: Public
 
     public func prepare() async {
         _ = try? await NETunnelProviderManager.loadAllFromPreferences()
     }
-    
+
     public func install(
         _ tunnelBundleIdentifier: String,
         configuration: NetworkExtensionConfiguration,
@@ -62,7 +62,7 @@ public class NetworkExtensionVPN: VPN {
             extra: extra
         )
     }
-    
+
     public func reconnect(after: DispatchTimeInterval) async throws {
         let managers = try await lookupAll()
         guard let manager = managers.first else {
@@ -97,7 +97,7 @@ public class NetworkExtensionVPN: VPN {
             throw error
         }
     }
-    
+
     public func disconnect() async {
         guard let managers = try? await lookupAll() else {
             return
@@ -112,7 +112,7 @@ public class NetworkExtensionVPN: VPN {
             try? await m.saveToPreferences()
         }
     }
-    
+
     public func uninstall() async {
         guard let managers = try? await lookupAll() else {
             return
@@ -156,10 +156,10 @@ public class NetworkExtensionVPN: VPN {
         await retainManagers(managers) {
             $0.isTunnel(withIdentifier: tunnelBundleIdentifier)
         }
-        
+
         return targetManager
     }
-    
+
     @discardableResult
     private func install(
         _ manager: NETunnelProviderManager,
@@ -202,11 +202,11 @@ public class NetworkExtensionVPN: VPN {
             try? await o.removeFromPreferences()
         }
     }
-    
+
     private func lookupAll() async throws -> [NETunnelProviderManager] {
         try await NETunnelProviderManager.loadAllFromPreferences()
     }
-    
+
     // MARK: Notifications
 
     @objc private func vpnDidUpdate(_ notification: Notification) {
@@ -222,7 +222,7 @@ public class NetworkExtensionVPN: VPN {
         }
         notifyReinstall(manager)
     }
-    
+
     private func notifyReinstall(_ manager: NETunnelProviderManager) {
         let bundleId = manager.tunnelBundleIdentifier
         log.debug("VPN did reinstall (\(bundleId ?? "?")): isEnabled=\(manager.isEnabled)")
@@ -232,7 +232,7 @@ public class NetworkExtensionVPN: VPN {
         notification.vpnIsEnabled = manager.isEnabled
         NotificationCenter.default.post(notification)
     }
-    
+
     private func notifyStatus(_ connection: NETunnelProviderSession) {
         guard let _ = connection.manager.localizedDescription else {
             log.verbose("Ignoring VPN notification from bogus manager")
@@ -247,7 +247,7 @@ public class NetworkExtensionVPN: VPN {
         notification.vpnStatus = connection.status.wrappedStatus
         NotificationCenter.default.post(notification)
     }
-    
+
     private func notifyInstallError(_ error: Error) {
         log.error("VPN installation failed: \(error))")
 
@@ -265,7 +265,7 @@ private extension NEVPNManager {
         }
         return proto.providerBundleIdentifier
     }
-    
+
     func isTunnel(withIdentifier bundleIdentifier: String) -> Bool {
         return tunnelBundleIdentifier == bundleIdentifier
     }
@@ -276,13 +276,13 @@ private extension NEVPNStatus {
         switch self {
         case .connected:
             return .connected
-            
+
         case .connecting, .reasserting:
             return .connecting
-            
+
         case .disconnecting:
             return .disconnecting
-            
+
         case .disconnected, .invalid:
             return .disconnected
 

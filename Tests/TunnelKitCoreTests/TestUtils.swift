@@ -45,7 +45,7 @@ public class TestUtils {
         }
         return suite
     }
-    
+
     private init() {
     }
 }

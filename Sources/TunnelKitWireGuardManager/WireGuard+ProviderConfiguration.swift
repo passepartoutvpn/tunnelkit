@@ -42,18 +42,18 @@ extension WireGuard {
 
             case lastError = "WireGuard.LastError"
         }
-        
+
         public let title: String
-        
+
         public let appGroup: String
 
         public let configuration: WireGuard.Configuration
 
         public var shouldDebug = false
 
-        public var debugLogPath: String? = nil
+        public var debugLogPath: String?
 
-        public var debugLogFormat: String? = nil
+        public var debugLogFormat: String?
 
         public init(_ title: String, appGroup: String, configuration: WireGuard.Configuration) {
             self.title = title
@@ -68,7 +68,7 @@ extension WireGuard {
         }
     }
 }
-    
+
 // MARK: NetworkExtensionConfiguration
 
 extension WireGuard.ProviderConfiguration: NetworkExtensionConfiguration {
@@ -83,9 +83,7 @@ extension WireGuard.ProviderConfiguration: NetworkExtensionConfiguration {
         protocolConfiguration.passwordReference = extra?.passwordReference
         protocolConfiguration.disconnectOnSleep = extra?.disconnectsOnSleep ?? false
         protocolConfiguration.providerConfiguration = try asDictionary()
-        if #available(iOS 14, *) {
-            protocolConfiguration.includeAllNetworks = extra?.killSwitch ?? false
-        }
+        protocolConfiguration.includeAllNetworks = extra?.killSwitch ?? false
         return protocolConfiguration
     }
 }
@@ -93,10 +91,9 @@ extension WireGuard.ProviderConfiguration: NetworkExtensionConfiguration {
 // MARK: Shared data
 
 extension WireGuard.ProviderConfiguration {
-    public var lastError: WireGuardProviderError? {
+    public var lastError: TunnelKitWireGuardError? {
         return defaults?.wireGuardLastError
     }
-    
 
     public var urlForDebugLog: URL? {
         return defaults?.wireGuardURLForDebugLog(appGroup: appGroup)
@@ -108,7 +105,7 @@ extension WireGuard.ProviderConfiguration {
 }
 
 extension WireGuard.ProviderConfiguration {
-    public func _appexSetLastError(_ newValue: WireGuardProviderError?) {
+    public func _appexSetLastError(_ newValue: TunnelKitWireGuardError?) {
         defaults?.wireGuardLastError = newValue
     }
 
@@ -134,12 +131,12 @@ extension UserDefaults {
             .appendingPathComponent(path)
     }
 
-    public fileprivate(set) var wireGuardLastError: WireGuardProviderError? {
+    public fileprivate(set) var wireGuardLastError: TunnelKitWireGuardError? {
         get {
             guard let rawValue = string(forKey: WireGuard.ProviderConfiguration.Keys.lastError.rawValue) else {
                 return nil
             }
-            return WireGuardProviderError(rawValue: rawValue)
+            return TunnelKitWireGuardError(rawValue: rawValue)
         }
         set {
             guard let newValue = newValue else {

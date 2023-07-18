@@ -26,12 +26,12 @@ extension OSLogType {
 import Foundation
 import os.log
 
-public func wg_log(_ type: OSLogType, staticMessage msg: StaticString) {
+public func os_log(_ type: OSLogType, staticMessage msg: StaticString) {
     os_log(msg, log: OSLog.default, type: type)
     log.custom(level: type.sbLevel, message: msg, context: nil)
 }
 
-public func wg_log(_ type: OSLogType, message msg: String) {
+public func os_log(_ type: OSLogType, message msg: String) {
     os_log("%{public}s", log: OSLog.default, type: type, msg)
     log.custom(level: type.sbLevel, message: msg, context: nil)
 }

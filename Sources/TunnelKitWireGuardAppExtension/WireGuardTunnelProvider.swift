@@ -16,7 +16,7 @@ open class WireGuardTunnelProvider: NEPacketTunnelProvider {
 
     private lazy var adapter: WireGuardAdapter = {
         return WireGuardAdapter(with: self) { logLevel, message in
-            wg_log(logLevel.osLogLevel, message: message)
+//            os_log(logLevel.osLogLevel, message: message)
         }
     }()
 
@@ -51,8 +51,8 @@ open class WireGuardTunnelProvider: NEPacketTunnelProvider {
             guard let adapterError = adapterError else {
                 let interfaceName = self.adapter.interfaceName ?? "unknown"
 
-                wg_log(.info, message: "Tunnel interface is \(interfaceName)")
-                os_log("TUNNEL_KIT: Tunnel interface is \(interfaceName)    ")
+                os_log("Tunnel interface is \(interfaceName)")
+                os_log("TUNNEL_KIT: Tunnel interface is \(interfaceName)")
 
                 completionHandler(nil)
                 return
@@ -60,24 +60,24 @@ open class WireGuardTunnelProvider: NEPacketTunnelProvider {
 
             switch adapterError {
             case .cannotLocateTunnelFileDescriptor:
-                wg_log(.error, staticMessage: "Starting tunnel failed: could not determine file descriptor")
+                os_log("Starting tunnel failed: could not determine file descriptor")
                 self.cfg._appexSetLastError(.couldNotDetermineFileDescriptor)
                 completionHandler(TunnelKitWireGuardError.couldNotDetermineFileDescriptor)
 
             case .dnsResolution(let dnsErrors):
                 let hostnamesWithDnsResolutionFailure = dnsErrors.map(\.address)
                     .joined(separator: ", ")
-                wg_log(.error, message: "DNS resolution failed for the following hostnames: \(hostnamesWithDnsResolutionFailure)")
+                os_log("DNS resolution failed for the following hostnames: \(hostnamesWithDnsResolutionFailure)")
                 self.cfg._appexSetLastError(.dnsResolutionFailure)
                 completionHandler(TunnelKitWireGuardError.dnsResolutionFailure)
 
             case .setNetworkSettings(let error):
-                wg_log(.error, message: "Starting tunnel failed with setTunnelNetworkSettings returning \(error.localizedDescription)")
+                os_log("Starting tunnel failed with setTunnelNetworkSettings returning \(error.localizedDescription)")
                 self.cfg._appexSetLastError(.couldNotSetNetworkSettings)
                 completionHandler(TunnelKitWireGuardError.couldNotSetNetworkSettings)
 
             case .startWireGuardBackend(let errorCode):
-                wg_log(.error, message: "Starting tunnel failed with wgTurnOn returning \(errorCode)")
+                os_log("Starting tunnel failed with wgTurnOn returning \(errorCode)")
                 self.cfg._appexSetLastError(.couldNotStartBackend)
                 completionHandler(TunnelKitWireGuardError.couldNotStartBackend)
 
@@ -89,7 +89,7 @@ open class WireGuardTunnelProvider: NEPacketTunnelProvider {
     }
 
     open override func stopTunnel(with reason: NEProviderStopReason, completionHandler: @escaping () -> Void) {
-        wg_log(.info, staticMessage: "Stopping tunnel")
+        os_log("Stopping tunnel")
 
         adapter.stop { error in
             // BEGIN: TunnelKit
@@ -97,7 +97,7 @@ open class WireGuardTunnelProvider: NEPacketTunnelProvider {
             // END: TunnelKit
 
             if let error = error {
-                wg_log(.error, message: "Failed to stop WireGuard adapter: \(error.localizedDescription)")
+                os_log("Failed to stop WireGuard adapter: \(error.localizedDescription)")
             }
             completionHandler()
 

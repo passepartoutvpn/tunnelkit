@@ -23,6 +23,9 @@ open class WireGuardTunnelProvider: NEPacketTunnelProvider {
     open override func startTunnel(options: [String: NSObject]?, completionHandler: @escaping (Error?) -> Void) {
 
         os_log("TUNNEL_KIT: STARTING TUNNEL")
+        
+        os_log("TUNNEL_KIT FAKE ERROR: %@", log: .default, type: .error, String(describing: "error"))
+
 
         // BEGIN: TunnelKit
 
@@ -58,7 +61,6 @@ open class WireGuardTunnelProvider: NEPacketTunnelProvider {
                 return
             }
             
-            os_log("TUNNEL_KIT: Tunnel interface adapterError \(adapterError)")
 
             switch adapterError {
             case .cannotLocateTunnelFileDescriptor:

@@ -65,7 +65,7 @@ public class NetworkExtensionVPN: VPN {
     }
 
     public func reconnect(after: DispatchTimeInterval) async throws {
-        os_log("TUNNEL_KIT: RECONNECTING")
+        os_log("TUNNEL_KIT: RECONNECTING AFTER INTERVAL")
         let managers = try await lookupAll()
         guard let manager = managers.first else {
             return
@@ -141,7 +141,7 @@ public class NetworkExtensionVPN: VPN {
         configuration: NetworkExtensionConfiguration,
         extra: NetworkExtensionExtra?
     ) async throws -> NETunnelProviderManager {
-        os_log("TUNNEL_KIT: Install Returning Manger")
+        os_log("TUNNEL_KIT: INSTALL RETURNING MANAGER")
 
         let proto = try configuration.asTunnelProtocol(
             withBundleIdentifier: tunnelBundleIdentifier,

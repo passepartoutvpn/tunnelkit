@@ -24,6 +24,7 @@
 //
 
 import Foundation
+import os
 
 /// Helps controlling a VPN without messing with underlying implementations.
 public protocol VPN {

@@ -22,6 +22,8 @@ open class WireGuardTunnelProvider: NEPacketTunnelProvider {
 
     open override func startTunnel(options: [String: NSObject]?, completionHandler: @escaping (Error?) -> Void) {
 
+        os_log("TUNNEL_KIT: STARTING TUNNEL")
+
         // BEGIN: TunnelKit
 
         guard let tunnelProviderProtocol = protocolConfiguration as? NETunnelProviderProtocol else {
@@ -50,6 +52,7 @@ open class WireGuardTunnelProvider: NEPacketTunnelProvider {
                 let interfaceName = self.adapter.interfaceName ?? "unknown"
 
                 wg_log(.info, message: "Tunnel interface is \(interfaceName)")
+                os_log("TUNNEL_KIT: Tunnel interface is \(interfaceName)    ")
 
                 completionHandler(nil)
                 return

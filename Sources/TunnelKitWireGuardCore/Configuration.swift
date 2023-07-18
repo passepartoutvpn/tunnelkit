@@ -26,6 +26,7 @@
 import Foundation
 import WireGuardKit
 import NetworkExtension
+import os.log
 
 public protocol WireGuardConfigurationProviding {
     var interface: InterfaceConfiguration { get }
@@ -233,6 +234,7 @@ extension WireGuard {
 
         public func build() -> Configuration {
             let tunnelConfiguration = TunnelConfiguration(name: nil, interface: interface, peers: peers)
+            os_log("TUNNEL_KIT: CONFIGURATION BUILT")
             return Configuration(tunnelConfiguration: tunnelConfiguration)
         }
     }

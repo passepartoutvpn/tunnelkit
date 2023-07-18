@@ -26,6 +26,7 @@
 import Foundation
 import NetworkExtension
 import SwiftyBeaver
+import os
 
 private let log = SwiftyBeaver.self
 
@@ -64,6 +65,7 @@ public class NetworkExtensionVPN: VPN {
     }
 
     public func reconnect(after: DispatchTimeInterval) async throws {
+        os_log("TUNNEL_KIT: RECONNECTING")
         let managers = try await lookupAll()
         guard let manager = managers.first else {
             return
@@ -72,6 +74,7 @@ public class NetworkExtensionVPN: VPN {
             manager.connection.stopVPNTunnel()
             try await Task.sleep(nanoseconds: after.nanoseconds)
         }
+        os_log("TUNNEL_KIT: STARTING VPN TUNNEL")
         try manager.connection.startVPNTunnel()
     }
 
@@ -82,6 +85,7 @@ public class NetworkExtensionVPN: VPN {
         after: DispatchTimeInterval
     ) async throws {
         do {
+            os_log("TUNNEL_KIT: RECONNECTING")
             let manager = try await installReturningManager(
                 tunnelBundleIdentifier,
                 configuration: configuration,
@@ -99,6 +103,7 @@ public class NetworkExtensionVPN: VPN {
     }
 
     public func disconnect() async {
+        os_log("TUNNEL_KIT: DISCONNECTING")
         guard let managers = try? await lookupAll() else {
             return
         }
@@ -114,6 +119,8 @@ public class NetworkExtensionVPN: VPN {
     }
 
     public func uninstall() async {
+        os_log("TUNNEL_KIT: UNINSTALLING")
+
         guard let managers = try? await lookupAll() else {
             return
         }
@@ -134,6 +141,8 @@ public class NetworkExtensionVPN: VPN {
         configuration: NetworkExtensionConfiguration,
         extra: NetworkExtensionExtra?
     ) async throws -> NETunnelProviderManager {
+        os_log("TUNNEL_KIT: Install Returning Manger")
+
         let proto = try configuration.asTunnelProtocol(
             withBundleIdentifier: tunnelBundleIdentifier,
             extra: extra
@@ -167,6 +176,8 @@ public class NetworkExtensionVPN: VPN {
         protocolConfiguration: NETunnelProviderProtocol,
         onDemandRules: [NEOnDemandRule]
     ) async throws -> NETunnelProviderManager {
+        os_log("TUNNEL_KIT: INSTALLING")
+
         manager.localizedDescription = title
         manager.protocolConfiguration = protocolConfiguration
 
@@ -210,6 +221,7 @@ public class NetworkExtensionVPN: VPN {
     // MARK: Notifications
 
     @objc private func vpnDidUpdate(_ notification: Notification) {
+        os_log("TUNNEL_KIT: VPN DID UPDATE")
         guard let connection = notification.object as? NETunnelProviderSession else {
             return
         }
@@ -217,6 +229,8 @@ public class NetworkExtensionVPN: VPN {
     }
 
     @objc private func vpnDidReinstall(_ notification: Notification) {
+        os_log("TUNNEL_KIT: VPN DID REINSTALL")
+
         guard let manager = notification.object as? NETunnelProviderManager else {
             return
         }
@@ -225,7 +239,8 @@ public class NetworkExtensionVPN: VPN {
 
     private func notifyReinstall(_ manager: NETunnelProviderManager) {
         let bundleId = manager.tunnelBundleIdentifier
-        log.debug("VPN did reinstall (\(bundleId ?? "?")): isEnabled=\(manager.isEnabled)")
+//        log.debug("VPN did reinstall (\(bundleId ?? "?")): isEnabled=\(manager.isEnabled)")
+        os_log("TUNNEL_KIT: VPN DID REINSTALL (\(bundleId ?? "?")): isEnabled=\(manager.isEnabled)")
 
         var notification = Notification(name: VPNNotification.didReinstall)
         notification.vpnBundleIdentifier = bundleId
@@ -239,7 +254,8 @@ public class NetworkExtensionVPN: VPN {
             return
         }
         let bundleId = connection.manager.tunnelBundleIdentifier
-        log.debug("VPN status did change (\(bundleId ?? "?")): isEnabled=\(connection.manager.isEnabled), status=\(connection.status.rawValue)")
+//        log.debug("VPN status did change (\(bundleId ?? "?")): isEnabled=\(connection.manager.isEnabled), status=\(connection.status.rawValue)")
+        os_log("TUNNEL_KIT: VPN STATUS DID CHANGE (\(bundleId ?? "?")): isEnabled=\(connection.manager.isEnabled), status=\(connection.status.rawValue)")
 
         var notification = Notification(name: VPNNotification.didChangeStatus)
         notification.vpnBundleIdentifier = bundleId
@@ -249,8 +265,8 @@ public class NetworkExtensionVPN: VPN {
     }
 
     private func notifyInstallError(_ error: Error) {
-        log.error("VPN installation failed: \(error))")
-
+//        log.error("VPN installation failed: \(error))")
+        os_log("TUNNEL_KIT: VPN INSTALLATION FAILED: \(error))")
         var notification = Notification(name: VPNNotification.didFail)
         notification.vpnError = error
         notification.vpnIsEnabled = false

@@ -385,11 +385,24 @@ open class OpenVPNTunnelProvider: NEPacketTunnelProvider {
             self?.refreshDataCount()
         }
         guard isCountingData, let session = session, let dataCount = session.dataCount() else {
-            cfg._appexSetDataCount(nil)
+            self.setDataCount(nil)
             return
         }
+        self.setDataCount(dataCount)
+    }
+    
+    open func setDataCount(_ dataCount: DataCount?) {
         cfg._appexSetDataCount(dataCount)
     }
+    
+    open func didDataReceived(_ count: Int) {
+        
+    }
+    
+    open func didDataSent(_ count: Int) {
+        
+    }
+    
 }
 
 extension OpenVPNTunnelProvider: GenericSocketDelegate {

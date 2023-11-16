@@ -14,7 +14,7 @@ import os
 open class WireGuardTunnelProvider: NEPacketTunnelProvider {
     private var cfg: WireGuard.ProviderConfiguration!
 
-    private lazy var adapter: WireGuardAdapter = {
+    lazy var adapter: WireGuardAdapter = {
         return WireGuardAdapter(with: self) { logLevel, message in
             wg_log(logLevel.osLogLevel, message: message)
         }
@@ -23,7 +23,6 @@ open class WireGuardTunnelProvider: NEPacketTunnelProvider {
     open override func startTunnel(options: [String: NSObject]?, completionHandler: @escaping (Error?) -> Void) {
 
         // BEGIN: TunnelKit
-
         guard let tunnelProviderProtocol = protocolConfiguration as? NETunnelProviderProtocol else {
             fatalError("Not a NETunnelProviderProtocol")
         }
@@ -146,6 +145,38 @@ extension WireGuardTunnelProvider {
         // store path for clients
         cfg._appexSetDebugLogPath()
     }
+
+    func getStats() throws -> WgStats {
+        var result: String?
+
+        let dispatchGroup = DispatchGroup()
+        dispatchGroup.enter()
+        adapter.getRuntimeConfiguration { string in
+            result = string
+            dispatchGroup.leave()
+        }
+
+        guard case .success = dispatchGroup.wait(wallTimeout: .now() + 1) else { throw StatsError.timeout }
+        guard let result else { throw StatsError.nilValue }
+        guard let newStats = WgStats(from: result) else { throw StatsError.parse }
+
+        return newStats
+    }
+
+    enum StatsError: LocalizedError {
+        case timeout, nilValue, parse
+
+        var errorDescription: String? {
+            switch self {
+            case .timeout:
+                return "adapter.getRuntimeConfiguration() timeout."
+            case .nilValue:
+                return "Received nil string for stats."
+            case .parse:
+                return "Couldn't parse stats."
+            }
+        }
+    }
 }
 
 extension WireGuardLogLevel {
@@ -157,4 +188,37 @@ extension WireGuardLogLevel {
             return .error
         }
     }
+}
+
+private extension WgStats {
+    init?(from string: String) {
+        var bytesReceived: UInt64?
+        var bytesSent: UInt64?
+
+        string.enumerateLines { line, stop in
+            if bytesReceived == nil, let value = parseValue("rx_bytes=", in: line) {
+                bytesReceived = value
+            } else if bytesSent == nil, let value = parseValue("tx_bytes=", in: line) {
+                bytesSent = value
+            }
+
+            if bytesReceived != nil, bytesSent != nil {
+                stop = true
+            }
+        }
+
+        guard let bytesReceived, let bytesSent else {
+            return nil
+        }
+
+        self.init(bytesReceived: bytesReceived, bytesSent: bytesSent)
+    }
+}
+
+@inline(__always) private func parseValue(_ prefixKey: String, in line: String) -> UInt64? {
+    guard line.hasPrefix(prefixKey) else { return nil }
+
+    let value = line.dropFirst(prefixKey.count)
+
+    return UInt64(value)
 }

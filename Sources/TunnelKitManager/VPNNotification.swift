@@ -99,4 +99,19 @@ extension Notification {
             userInfo = newInfo
         }
     }
+
+    /// The current VPN connection date.
+    public var connectionDate: Date? {
+        get {
+            guard let date = userInfo?["ConnectionDate"] as? Date else {
+                fatalError("Notification has no connectionDate")
+            }
+            return date
+        }
+        set {
+            var newInfo = userInfo ?? [:]
+            newInfo["ConnectionDate"] = newValue
+            userInfo = newInfo
+        }
+    }
 }

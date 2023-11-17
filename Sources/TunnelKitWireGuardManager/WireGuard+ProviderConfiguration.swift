@@ -41,6 +41,8 @@ extension WireGuard {
             case logPath = "WireGuard.LogPath"
 
             case lastError = "WireGuard.LastError"
+
+            case dataCount = "WireGuard.DataCount"
         }
 
         public let title: String
@@ -91,6 +93,13 @@ extension WireGuard.ProviderConfiguration: NetworkExtensionConfiguration {
 // MARK: Shared data
 
 extension WireGuard.ProviderConfiguration {
+    /**
+     The most recent (received, sent) count in bytes.
+     */
+    public var dataCount: WireGuardDataCount? {
+        return defaults?.wireGuardDataCount
+    }
+
     public var lastError: TunnelKitWireGuardError? {
         return defaults?.wireGuardLastError
     }
@@ -102,9 +111,15 @@ extension WireGuard.ProviderConfiguration {
     private var defaults: UserDefaults? {
         return UserDefaults(suiteName: appGroup)
     }
+
 }
 
 extension WireGuard.ProviderConfiguration {
+
+    public func _appexSetDataCount(_ newValue: WireGuardDataCount?) {
+        defaults?.wireGuardDataCount = newValue
+    }
+
     public func _appexSetLastError(_ newValue: TunnelKitWireGuardError?) {
         defaults?.wireGuardLastError = newValue
     }
@@ -145,5 +160,51 @@ extension UserDefaults {
             }
             set(newValue.rawValue, forKey: WireGuard.ProviderConfiguration.Keys.lastError.rawValue)
         }
+    }
+
+    public fileprivate(set) var wireGuardDataCount: WireGuardDataCount? {
+        get {
+            guard let rawValue = wireGuardDataCountArray else {
+                return nil
+            }
+            guard rawValue.count == 2 else {
+                return nil
+            }
+            return WireGuardDataCount(rawValue[0], rawValue[1])
+        }
+        set {
+            guard let newValue = newValue else {
+                wireGuardRemoveDataCountArray()
+                return
+            }
+            wireGuardDataCountArray = [newValue.bytesReceived, newValue.bytesSent]
+        }
+    }
+
+    @objc private var wireGuardDataCountArray: [UInt64]? {
+        get {
+            return array(forKey: WireGuard.ProviderConfiguration.Keys.dataCount.rawValue) as? [UInt64]
+        }
+        set {
+            set(newValue, forKey: WireGuard.ProviderConfiguration.Keys.dataCount.rawValue)
+        }
+    }
+    private func wireGuardRemoveDataCountArray() {
+        removeObject(forKey: WireGuard.ProviderConfiguration.Keys.dataCount.rawValue)
+    }
+}
+
+/// A pair of received/sent bytes count.
+public struct WireGuardDataCount: Equatable {
+
+    /// Received bytes count.
+    public var bytesReceived: UInt64
+
+    /// Sent bytes count.
+    public var bytesSent: UInt64
+
+    public init(_ received: UInt64, _ sent: UInt64) {
+        self.bytesReceived = received
+        self.bytesSent = sent
     }
 }

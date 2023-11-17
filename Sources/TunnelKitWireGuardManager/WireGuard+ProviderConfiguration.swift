@@ -181,9 +181,9 @@ extension UserDefaults {
         }
     }
 
-    @objc private var wireGuardDataCountArray: [UInt64]? {
+    @objc private var wireGuardDataCountArray: [UInt]? {
         get {
-            return array(forKey: WireGuard.ProviderConfiguration.Keys.dataCount.rawValue) as? [UInt64]
+            return array(forKey: WireGuard.ProviderConfiguration.Keys.dataCount.rawValue) as? [UInt]
         }
         set {
             set(newValue, forKey: WireGuard.ProviderConfiguration.Keys.dataCount.rawValue)
@@ -191,20 +191,5 @@ extension UserDefaults {
     }
     private func wireGuardRemoveDataCountArray() {
         removeObject(forKey: WireGuard.ProviderConfiguration.Keys.dataCount.rawValue)
-    }
-}
-
-/// A pair of received/sent bytes count.
-public struct WireGuardDataCount: Equatable {
-
-    /// Received bytes count.
-    public var bytesReceived: UInt64
-
-    /// Sent bytes count.
-    public var bytesSent: UInt64
-
-    public init(_ received: UInt64, _ sent: UInt64) {
-        self.bytesReceived = received
-        self.bytesSent = sent
     }
 }

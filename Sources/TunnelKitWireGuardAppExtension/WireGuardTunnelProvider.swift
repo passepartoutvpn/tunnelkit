@@ -11,11 +11,6 @@ import Foundation
 import NetworkExtension
 import os
 
-
-extension Notification.Name {
-
-}
-
 open class WireGuardTunnelProvider: NEPacketTunnelProvider {
     private var cfg: WireGuard.ProviderConfiguration!
     
@@ -223,37 +218,4 @@ extension WireGuardLogLevel {
             return .error
         }
     }
-}
-
-private extension WireGuardDataCount {
-    init?(from string: String) {
-        var bytesReceived: UInt64?
-        var bytesSent: UInt64?
-
-        string.enumerateLines { line, stop in
-            if bytesReceived == nil, let value = parseValue("rx_bytes=", in: line) {
-                bytesReceived = value
-            } else if bytesSent == nil, let value = parseValue("tx_bytes=", in: line) {
-                bytesSent = value
-            }
-
-            if bytesReceived != nil, bytesSent != nil {
-                stop = true
-            }
-        }
-
-        guard let bytesReceived, let bytesSent else {
-            return nil
-        }
-
-        self.init(bytesReceived, bytesSent)
-    }
-}
-
-@inline(__always) private func parseValue(_ prefixKey: String, in line: String) -> UInt64? {
-    guard line.hasPrefix(prefixKey) else { return nil }
-
-    let value = line.dropFirst(prefixKey.count)
-
-    return UInt64(value)
 }

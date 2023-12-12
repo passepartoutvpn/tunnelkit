@@ -112,11 +112,9 @@ class EncryptionTests: XCTestCase {
 
 //        let expEncrypted = Data(hex: "319bb8e7f8f7930cc4625079dd32a6ef9540c2fc001c53f909f712037ae9818af840b88714")
         let encrypted = try! client.encrypter().encryptData(original, flags: &flags)
-        print(encrypted.toHex())
 //        XCTAssertEqual(encrypted, expEncrypted)
 
         let decrypted = try! server.decrypter().decryptData(encrypted, flags: &flags)
-        print(decrypted.toHex())
         XCTAssertEqual(decrypted, original)
     }
 
@@ -124,7 +122,6 @@ class EncryptionTests: XCTestCase {
         let path = Bundle.module.path(forResource: "pia-2048", ofType: "pem")!
         let md5 = try! TLSBox.md5(forCertificatePath: path)
         let exp = "e2fccccaba712ccc68449b1c56427ac1"
-        print(md5)
         XCTAssertEqual(md5, exp)
     }
 
@@ -140,10 +137,8 @@ class EncryptionTests: XCTestCase {
 
         XCTAssertThrowsError(try TLSBox.decryptedPrivateKey(fromPath: encryptedPath, passphrase: "wrongone"))
         let decryptedViaPath = try! TLSBox.decryptedPrivateKey(fromPath: encryptedPath, passphrase: "foobar")
-        print(decryptedViaPath)
         let encryptedPEM = try! String(contentsOfFile: encryptedPath, encoding: .utf8)
         let decryptedViaString = try! TLSBox.decryptedPrivateKey(fromPEM: encryptedPEM, passphrase: "foobar")
-        print(decryptedViaString)
         XCTAssertEqual(decryptedViaPath, decryptedViaString)
 
         let expDecrypted = try! String(contentsOfFile: decryptedPath)

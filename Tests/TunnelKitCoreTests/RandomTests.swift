@@ -48,15 +48,8 @@ class RandomTests: XCTestCase {
     }
 
     func testRandom1() {
-        print(try! SecureRandom.uint32())
-        print(try! SecureRandom.uint32())
-        print(try! SecureRandom.uint32())
-        print(try! SecureRandom.uint32())
-        print(try! SecureRandom.uint32())
     }
 
     func testRandom2() {
-        print("random UInt32: \(try! SecureRandom.uint32())")
-        print("random bytes: \(try! SecureRandom.data(length: 12).toHex())")
     }
 }

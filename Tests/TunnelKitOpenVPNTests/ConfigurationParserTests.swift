@@ -118,8 +118,7 @@ class ConfigurationParserTests: XCTestCase {
 
     func testStripped() throws {
         let lines = try OpenVPN.ConfigurationParser.parsed(fromURL: url(withName: "pia-hungary"), returnsStripped: true).strippedLines!
-        let stripped = lines.joined(separator: "\n")
-        print(stripped)
+        _ = lines.joined(separator: "\n")
     }
 
     func testEncryptedCertificateKey() throws {

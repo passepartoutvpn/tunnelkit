@@ -31,11 +31,6 @@ import XCTest
 
 private extension OpenVPN.PushReply {
     func debug() {
-        print("Compression framing: \(options.compressionFraming?.description ?? "disabled")")
-        print("Compression algorithm: \(options.compressionAlgorithm?.description ?? "disabled")")
-        print("IPv4: \(options.ipv4?.description ?? "none")")
-        print("IPv6: \(options.ipv6?.description ?? "none")")
-        print("DNS: \(options.dnsServers?.description ?? "none")")
     }
 }
 
@@ -174,7 +169,6 @@ class PushTests: XCTestCase {
     }
 
     func testPeerInfo() {
-        let peerInfo = CoreConfiguration.OpenVPN.peerInfo()
-        print(peerInfo)
+        _ = CoreConfiguration.OpenVPN.peerInfo()
     }
 }

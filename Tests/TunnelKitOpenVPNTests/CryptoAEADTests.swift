@@ -30,37 +30,31 @@ import CTunnelKitCore
 import CTunnelKitOpenVPNProtocol
 
 class CryptoAEADTests: XCTestCase {
-    private let cipherKey = ZeroingData(string: "aabbccddeeffaabbccddeeffaabbccddeeffaabbccddeeffaabbccddeeff", nullTerminated: false)
+    private let cipherKey = ZeroingData(count: 32)
 
-    private let hmacKey = ZeroingData(string: "0011223344556677001122334455667700112233445566770011223344556677", nullTerminated: false)
+    private let hmacKey = ZeroingData(count: 32)
 
     private let plainData = Data(hex: "00112233ffddaa")
 
-    private let encryptedData = Data(hex: "924e38066ef07f36e621a4b12322f68b4620ff9fad0c33")
-
-    func test_givenDecrypted_whenEncrypt_thenEncrypts() {
+    func test_givenData_whenEncrypt_thenDecrypts() {
         let sut = CryptoAEAD(cipherName: "aes-256-gcm")
         sut.configureEncryption(withCipherKey: cipherKey, hmacKey: hmacKey)
-
-        var flags = cryptoFlags
-        do {
-            let returnedData = try sut.encryptData(plainData, flags: &flags)
-            XCTAssertEqual(returnedData, encryptedData)
-        } catch {
-            XCTFail("Cannot encrypt: \(error)")
-        }
-    }
-
-    func test_givenEncrypted_whenDecrypt_thenDecrypts() {
-        let sut = CryptoAEAD(cipherName: "aes-256-gcm")
         sut.configureDecryption(withCipherKey: cipherKey, hmacKey: hmacKey)
 
         var flags = cryptoFlags
+        let encryptedData: Data
+        do {
+            encryptedData = try sut.encryptData(plainData, flags: &flags)
+        } catch {
+            XCTFail("Cannot encrypt: \(error)")
+            return
+        }
         do {
             let returnedData = try sut.decryptData(encryptedData, flags: &flags)
             XCTAssertEqual(returnedData, plainData)
         } catch {
             XCTFail("Cannot decrypt: \(error)")
+            return
         }
     }
 

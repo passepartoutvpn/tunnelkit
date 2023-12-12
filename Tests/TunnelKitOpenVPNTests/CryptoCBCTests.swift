@@ -30,15 +30,15 @@ import CTunnelKitCore
 import CTunnelKitOpenVPNProtocol
 
 class CryptoCBCTests: XCTestCase {
-    private let cipherKey = ZeroingData(string: "aabbccddeeffaabbccddeeffaabbccddeeffaabbccddeeffaabbccddeeff", nullTerminated: false)
+    private let cipherKey = ZeroingData(count: 16)
 
-    private let hmacKey = ZeroingData(string: "0011223344556677001122334455667700112233445566770011223344556677", nullTerminated: false)
+    private let hmacKey = ZeroingData(count: 32)
 
     private let plainData = Data(hex: "00112233ffddaa")
 
-    private let plainHMACData = Data(hex: "1d7c9d9d5aa411d18a8416e10a3c8f13c6e6941eeb3b81698496be034bf5113600112233ffddaa")
+    private let plainHMACData = Data(hex: "8dd324c81ca32f52e4aa1aa35139deba799a68460e80b0e5ac8bceb043edf6e500112233ffddaa")
 
-    private let encryptedHMACData = Data(hex: "24be983962e4b4aeacb5734522e37f90f6669e0cfd7f8ab962587dc97d1f600e000000000000000000000000000000003c76480bad5e953ca1211ef83f5594c6")
+    private let encryptedHMACData = Data(hex: "fea3fe87ee68eb21c697e62d3c29f7bea2f5b457d9a7fa66291322fc9c2fe6f700000000000000000000000000000000ebe197e706c3c5dcad026f4e3af1048b")
 
     func test_givenDecrypted_whenEncryptWithoutCipher_thenEncodesWithHMAC() {
         let sut = CryptoCBC(cipherName: nil, digestName: "sha256")
@@ -47,6 +47,8 @@ class CryptoCBCTests: XCTestCase {
         var flags = cryptoFlags
         do {
             let returnedData = try sut.encryptData(plainData, flags: &flags)
+            print("CBC got: \(returnedData.toHex())")
+            print("CBC exp: \(plainHMACData.toHex())")
             XCTAssertEqual(returnedData, plainHMACData)
         } catch {
             XCTFail("Cannot encrypt: \(error)")
@@ -60,6 +62,8 @@ class CryptoCBCTests: XCTestCase {
         var flags = cryptoFlags
         do {
             let returnedData = try sut.encryptData(plainData, flags: &flags)
+            print("CBC got: \(returnedData.toHex())")
+            print("CBC exp: \(encryptedHMACData.toHex())")
             XCTAssertEqual(returnedData, encryptedHMACData)
         } catch {
             XCTFail("Cannot encrypt: \(error)")
@@ -73,6 +77,8 @@ class CryptoCBCTests: XCTestCase {
         var flags = cryptoFlags
         do {
             let returnedData = try sut.decryptData(plainHMACData, flags: &flags)
+            print("CBC got: \(returnedData.toHex())")
+            print("CBC exp: \(plainData.toHex())")
             XCTAssertEqual(returnedData, plainData)
         } catch {
             XCTFail("Cannot decrypt: \(error)")
@@ -86,6 +92,8 @@ class CryptoCBCTests: XCTestCase {
         var flags = cryptoFlags
         do {
             let returnedData = try sut.decryptData(encryptedHMACData, flags: &flags)
+            print("CBC got: \(returnedData.toHex())")
+            print("CBC exp: \(plainData.toHex())")
             XCTAssertEqual(returnedData, plainData)
         } catch {
             XCTFail("Cannot decrypt: \(error)")

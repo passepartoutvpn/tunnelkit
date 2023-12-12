@@ -406,7 +406,7 @@ static BIO *create_BIO_from_PEM(NSString *pem) {
 
 - (BOOL)verifyEKUWithSSL:(SSL *)ssl
 {
-    X509 *cert = SSL_get_peer_certificate(self.ssl);
+    X509 *cert = SSL_get1_peer_certificate(self.ssl);
     if (!cert) {
         return NO;
     }
@@ -454,7 +454,7 @@ static BIO *create_BIO_from_PEM(NSString *pem) {
 
 - (BOOL)verifySANHostWithSSL:(SSL *)ssl
 {
-    X509 *cert = SSL_get_peer_certificate(self.ssl);
+    X509 *cert = SSL_get1_peer_certificate(self.ssl);
     if (!cert) {
         return NO;
     }

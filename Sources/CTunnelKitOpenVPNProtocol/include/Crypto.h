@@ -47,6 +47,7 @@ typedef struct {
     NSInteger ivLength;
     const uint8_t *_Nullable ad;
     NSInteger adLength;
+    BOOL forTesting;
 } CryptoFlags;
 
 // WARNING: dest must be able to hold ciphertext

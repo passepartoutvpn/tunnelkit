@@ -92,6 +92,15 @@ class CryptoCBCTests: XCTestCase {
         }
     }
 
+    func test_givenHMAC_thenVerifies() {
+        let sut = CryptoCBC(cipherName: nil, digestName: "sha256")
+        sut.configureDecryption(withCipherKey: nil, hmacKey: hmacKey)
+
+        var flags = cryptoFlags
+        XCTAssertNoThrow(try sut.verifyData(plainHMACData, flags: &flags))
+        XCTAssertNoThrow(try sut.verifyData(encryptedHMACData, flags: &flags))
+    }
+
     private var cryptoFlags: CryptoFlags {
         let packetId: [UInt8] = [0x56, 0x34, 0x12, 0x00]
         let ad: [UInt8] = [0x00, 0x12, 0x34, 0x56]

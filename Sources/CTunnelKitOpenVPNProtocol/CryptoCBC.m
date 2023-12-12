@@ -203,8 +203,6 @@ const NSInteger CryptoCBCMaxHMACLength = 100;
 
 - (BOOL)decryptBytes:(const uint8_t *)bytes length:(NSInteger)length dest:(uint8_t *)dest destLength:(NSInteger *)destLength flags:(const CryptoFlags * _Nullable)flags error:(NSError * _Nullable __autoreleasing * _Nullable)error
 {
-    NSAssert(self.cipher, @"No cipher provided");
-
     const uint8_t *iv = bytes + self.digestLength;
     const uint8_t *encrypted = bytes + self.digestLength + self.cipherIVLength;
     int l1 = 0, l2 = 0;
@@ -221,11 +219,18 @@ const NSInteger CryptoCBCMaxHMACLength = 100;
         return NO;
     }
     
-    TUNNEL_CRYPTO_TRACK_STATUS(code) EVP_CipherInit(self.cipherCtxDec, NULL, NULL, iv, -1);
-    TUNNEL_CRYPTO_TRACK_STATUS(code) EVP_CipherUpdate(self.cipherCtxDec, dest, &l1, encrypted, (int)length - self.digestLength - self.cipherIVLength);
-    TUNNEL_CRYPTO_TRACK_STATUS(code) EVP_CipherFinal_ex(self.cipherCtxDec, dest + l1, &l2);
+    if (self.cipher) {
+        TUNNEL_CRYPTO_TRACK_STATUS(code) EVP_CipherInit(self.cipherCtxDec, NULL, NULL, iv, -1);
+        TUNNEL_CRYPTO_TRACK_STATUS(code) EVP_CipherUpdate(self.cipherCtxDec, dest, &l1, encrypted, (int)length - self.digestLength - self.cipherIVLength);
+        TUNNEL_CRYPTO_TRACK_STATUS(code) EVP_CipherFinal_ex(self.cipherCtxDec, dest + l1, &l2);
 
-    *destLength = l1 + l2;
+        *destLength = l1 + l2;
+    } else {
+        l2 = (int)length - l1;
+        memcpy(dest, bytes + l1, l2);
+
+        *destLength = l2;
+    }
 
     TUNNEL_CRYPTO_RETURN_STATUS(code)
 }

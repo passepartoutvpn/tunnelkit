@@ -143,13 +143,14 @@ open class WireGuardTunnelProvider: NEPacketTunnelProvider {
             cfg._appexSetDataCount(nil)
             return
         }
-        do {
-            let dataCount = try getStats()
-            cfg._appexSetDataCount(dataCount)
-        } catch {
-            wg_log(.error, message: "Failed to refresh data count \(error.localizedDescription)")
+        fetchDataCount { [weak self] result in
+            switch result {
+            case .success(let dataCount):
+                self?.cfg._appexSetDataCount(dataCount)
+            case .failure(let error):
+                wg_log(.error, message: "Failed to refresh data count \(error.localizedDescription)")
+            }
         }
-
     }
 }
 
@@ -176,34 +177,23 @@ extension WireGuardTunnelProvider {
         cfg._appexSetDebugLogPath()
     }
 
-    func getStats() throws -> WireGuardDataCount {
-        var result: String?
-
-        let dispatchGroup = DispatchGroup()
-        dispatchGroup.enter()
-        adapter.getRuntimeConfiguration { string in
-            result = string
-            dispatchGroup.leave()
-        }
-
-        guard case .success = dispatchGroup.wait(wallTimeout: .now() + 1) else { throw StatsError.timeout }
-        guard let result else { throw StatsError.nilValue }
-        guard let newStats = WireGuardDataCount(from: result) else { throw StatsError.parse }
-
-        return newStats
+    func fetchDataCount(completiondHandler: @escaping (Result<WireGuardDataCount, Error>) -> Void) {
+        adapter.getRuntimeConfiguration { configurationString in
+            if let wireGuardDataCount = WireGuardDataCount(from: configurationString) {
+                completiondHandler(.success(wireGuardDataCount))
+            } else {
+                completiondHandler(.failure(StatsError.parseFailure))
+            }
+         }
     }
 
     enum StatsError: LocalizedError {
-        case timeout, nilValue, parse
+        case parseFailure
 
         var errorDescription: String? {
             switch self {
-            case .timeout:
-                return "adapter.getRuntimeConfiguration() timeout."
-            case .nilValue:
-                return "Received nil string for stats."
-            case .parse:
-                return "Couldn't parse stats."
+            case .parseFailure:
+                return "Couldn't parse the stats."
             }
         }
     }

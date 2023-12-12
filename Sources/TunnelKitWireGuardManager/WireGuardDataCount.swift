@@ -22,11 +22,11 @@ public struct WireGuardDataCount: Equatable {
 }
 
 extension WireGuardDataCount {
-    public init?(from string: String) {
+    public init?(from string: String?) {
         var bytesReceived: UInt?
         var bytesSent: UInt?
 
-        string.enumerateLines { line, stop in
+        string?.enumerateLines { line, stop in
             if bytesReceived == nil, let value = parseValue("rx_bytes=", in: line) {
                 bytesReceived = value
             } else if bytesSent == nil, let value = parseValue("tx_bytes=", in: line) {

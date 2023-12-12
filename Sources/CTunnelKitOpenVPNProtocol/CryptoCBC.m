@@ -151,13 +151,15 @@ const NSInteger CryptoCBCMaxHMACLength = 100;
     int code = 1;
 
     if (self.cipher) {
-        if (RAND_bytes(outIV, self.cipherIVLength) != 1) {
-            if (error) {
-                *error = OpenVPNErrorWithCode(OpenVPNErrorCodeCryptoRandomGenerator);
+        if (!flags || !flags->forTesting) {
+            if (RAND_bytes(outIV, self.cipherIVLength) != 1) {
+                if (error) {
+                    *error = OpenVPNErrorWithCode(OpenVPNErrorCodeCryptoRandomGenerator);
+                }
+                return NO;
             }
-            return NO;
         }
-        
+
         TUNNEL_CRYPTO_TRACK_STATUS(code) EVP_CipherInit(self.cipherCtxEnc, NULL, NULL, outIV, -1);
         TUNNEL_CRYPTO_TRACK_STATUS(code) EVP_CipherUpdate(self.cipherCtxEnc, outEncrypted, &l1, bytes, (int)length);
         TUNNEL_CRYPTO_TRACK_STATUS(code) EVP_CipherFinal_ex(self.cipherCtxEnc, outEncrypted + l1, &l2);

@@ -82,7 +82,11 @@ class EncryptionPerformanceTests: XCTestCase {
         let suite = TestUtils.generateDataSuite(1000, 100000)
         let ad: [UInt8] = [0x11, 0x22, 0x33, 0x44]
         var flags = ad.withUnsafeBufferPointer {
-            return CryptoFlags(iv: nil, ivLength: 0, ad: $0.baseAddress, adLength: ad.count)
+            CryptoFlags(iv: nil,
+                        ivLength: 0,
+                        ad: $0.baseAddress,
+                        adLength: ad.count,
+                        forTesting: true)
         }
         measure {
             for data in suite {

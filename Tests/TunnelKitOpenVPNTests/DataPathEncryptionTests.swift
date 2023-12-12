@@ -108,9 +108,7 @@ class DataPathEncryptionTests: XCTestCase {
         let key: UInt8 = 4
 
         let encrypted = try! path.encryptPackets([expectedPayload], key: key)
-        print(encrypted.map { $0.toHex() })
         let decrypted = try! path.decryptPackets(encrypted, keepAlive: nil)
-        print(decrypted.map { $0.toHex() })
         let payload = decrypted.first!
 
         XCTAssertEqual(payload, expectedPayload)

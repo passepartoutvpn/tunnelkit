@@ -47,8 +47,6 @@ class CryptoCBCTests: XCTestCase {
         var flags = cryptoFlags
         do {
             let returnedData = try sut.encryptData(plainData, flags: &flags)
-            print("CBC got: \(returnedData.toHex())")
-            print("CBC exp: \(plainHMACData.toHex())")
             XCTAssertEqual(returnedData, plainHMACData)
         } catch {
             XCTFail("Cannot encrypt: \(error)")
@@ -62,8 +60,6 @@ class CryptoCBCTests: XCTestCase {
         var flags = cryptoFlags
         do {
             let returnedData = try sut.encryptData(plainData, flags: &flags)
-            print("CBC got: \(returnedData.toHex())")
-            print("CBC exp: \(encryptedHMACData.toHex())")
             XCTAssertEqual(returnedData, encryptedHMACData)
         } catch {
             XCTFail("Cannot encrypt: \(error)")
@@ -77,8 +73,6 @@ class CryptoCBCTests: XCTestCase {
         var flags = cryptoFlags
         do {
             let returnedData = try sut.decryptData(plainHMACData, flags: &flags)
-            print("CBC got: \(returnedData.toHex())")
-            print("CBC exp: \(plainData.toHex())")
             XCTAssertEqual(returnedData, plainData)
         } catch {
             XCTFail("Cannot decrypt: \(error)")
@@ -92,8 +86,6 @@ class CryptoCBCTests: XCTestCase {
         var flags = cryptoFlags
         do {
             let returnedData = try sut.decryptData(encryptedHMACData, flags: &flags)
-            print("CBC got: \(returnedData.toHex())")
-            print("CBC exp: \(plainData.toHex())")
             XCTAssertEqual(returnedData, plainData)
         } catch {
             XCTFail("Cannot decrypt: \(error)")

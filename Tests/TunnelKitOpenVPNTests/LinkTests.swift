@@ -152,7 +152,6 @@ class LinkTests: XCTestCase {
             enqueueControl(&q, &id, p) {
                 hdl.append($0)
             }
-            print()
         }
         return hdl
     }
@@ -163,10 +162,7 @@ class LinkTests: XCTestCase {
             return (p1 < p2)
         }
 
-        print("q = \(q)")
-        print("id = \(id)")
         for p in q {
-            print("test(\(p))")
             if p < id {
                 q.removeFirst()
                 continue
@@ -176,7 +172,6 @@ class LinkTests: XCTestCase {
             }
 
             h(p)
-            print("handle(\(p))")
             id += 1
             q.removeFirst()
         }

@@ -82,7 +82,6 @@ class DataPathPerformanceTests: XCTestCase {
 //            decryptedPackets = try! self.swiftDP.decryptPackets(encryptedPackets, keepAlive: nil)
 //        }
 //        
-////        print(">>> \(packets?.count) packets")
 //        XCTAssertEqual(decryptedPackets, packets)
 //    }
 
@@ -97,7 +96,6 @@ class DataPathPerformanceTests: XCTestCase {
             decryptedPackets = try! self.dataPath.decryptPackets(encryptedPackets, keepAlive: nil)
         }
 
-//        print(">>> \(packets?.count) packets")
         XCTAssertEqual(decryptedPackets, packets)
     }
 }

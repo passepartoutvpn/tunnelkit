@@ -32,7 +32,6 @@ class CompressionTests: XCTestCase {
 
     override func setUp() {
         // Put setup code here. This method is called before the invocation of each test method in the class.
-//        print("LZO version: \(LZO.versionString())")
     }
 
     override func tearDown() {
@@ -51,8 +50,6 @@ class CompressionTests: XCTestCase {
             XCTFail("Unable to decompress data")
             return
         }
-        print("BEFORE: \(src)")
-        print("AFTER : \(dstDecompressed)")
         XCTAssertEqual(src, dstDecompressed)
     }
 }

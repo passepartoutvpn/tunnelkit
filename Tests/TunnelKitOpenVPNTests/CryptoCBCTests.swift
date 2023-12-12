@@ -34,32 +34,61 @@ class CryptoCBCTests: XCTestCase {
 
     private let hmacKey = ZeroingData(string: "0011223344556677001122334455667700112233445566770011223344556677", nullTerminated: false)
 
-    func test_whenEncrypt_thenHMACMatches() {
+    private let plainData = Data(hex: "00112233ffddaa")
+
+    private let plainHMACData = Data(hex: "1d7c9d9d5aa411d18a8416e10a3c8f13c6e6941eeb3b81698496be034bf5113600112233ffddaa")
+
+    private let encryptedHMACData = Data(hex: "24be983962e4b4aeacb5734522e37f90f6669e0cfd7f8ab962587dc97d1f600e000000000000000000000000000000003c76480bad5e953ca1211ef83f5594c6")
+
+    func test_givenDecrypted_whenEncryptWithoutCipher_thenEncodesWithHMAC() {
         let sut = CryptoCBC(cipherName: nil, digestName: "sha256")
         sut.configureEncryption(withCipherKey: nil, hmacKey: hmacKey)
 
-        let data = Data(hex: "00112233ffddaa")
-        let expectedData = Data(hex: "1d7c9d9d5aa411d18a8416e10a3c8f13c6e6941eeb3b81698496be034bf5113600112233ffddaa")
+        var flags = cryptoFlags
         do {
-            let returnedData = try sut.encryptData(data, flags: nil)
-            XCTAssertEqual(returnedData, expectedData)
+            let returnedData = try sut.encryptData(plainData, flags: &flags)
+            XCTAssertEqual(returnedData, plainHMACData)
         } catch {
             XCTFail("Cannot encrypt: \(error)")
         }
     }
 
-    func test_whenEncrypt_thenResultMatches() {
+    func test_givenDecrypted_whenEncryptWithCipher_thenEncryptsWithHMAC() {
         let sut = CryptoCBC(cipherName: "aes-128-cbc", digestName: "sha256")
         sut.configureEncryption(withCipherKey: cipherKey, hmacKey: hmacKey)
 
-        let data = Data(hex: "00112233ffddaa")
         var flags = cryptoFlags
-        let expectedData = Data(hex: "24be983962e4b4aeacb5734522e37f90f6669e0cfd7f8ab962587dc97d1f600e000000000000000000000000000000003c76480bad5e953ca1211ef83f5594c6")
         do {
-            let returnedData = try sut.encryptData(data, flags: &flags)
-            XCTAssertEqual(returnedData, expectedData)
+            let returnedData = try sut.encryptData(plainData, flags: &flags)
+            XCTAssertEqual(returnedData, encryptedHMACData)
         } catch {
             XCTFail("Cannot encrypt: \(error)")
+        }
+    }
+
+    func test_givenEncodedWithHMAC_thenDecodes() {
+        let sut = CryptoCBC(cipherName: nil, digestName: "sha256")
+        sut.configureDecryption(withCipherKey: nil, hmacKey: hmacKey)
+
+        var flags = cryptoFlags
+        do {
+            let returnedData = try sut.decryptData(plainHMACData, flags: &flags)
+            XCTAssertEqual(returnedData, plainData)
+        } catch {
+            XCTFail("Cannot decrypt: \(error)")
+        }
+    }
+
+    func test_givenEncryptedWithHMAC_thenDecrypts() {
+        let sut = CryptoCBC(cipherName: "aes-128-cbc", digestName: "sha256")
+        sut.configureDecryption(withCipherKey: cipherKey, hmacKey: hmacKey)
+
+        var flags = cryptoFlags
+        do {
+            let returnedData = try sut.decryptData(encryptedHMACData, flags: &flags)
+            XCTAssertEqual(returnedData, plainData)
+        } catch {
+            XCTFail("Cannot decrypt: \(error)")
         }
     }
 

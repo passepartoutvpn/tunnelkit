@@ -34,18 +34,33 @@ class CryptoAEADTests: XCTestCase {
 
     private let hmacKey = ZeroingData(string: "0011223344556677001122334455667700112233445566770011223344556677", nullTerminated: false)
 
-    func test_whenEncrypt_thenResultMatches() {
+    private let plainData = Data(hex: "00112233ffddaa")
+
+    private let encryptedData = Data(hex: "924e38066ef07f36e621a4b12322f68b4620ff9fad0c33")
+
+    func test_givenDecrypted_whenEncrypt_thenEncrypts() {
         let sut = CryptoAEAD(cipherName: "aes-256-gcm")
         sut.configureEncryption(withCipherKey: cipherKey, hmacKey: hmacKey)
 
-        let data = Data(hex: "00112233ffddaa")
         var flags = cryptoFlags
-        let expectedData = Data(hex: "924e38066ef07f36e621a4b12322f68b4620ff9fad0c33")
         do {
-            let returnedData = try sut.encryptData(data, flags: &flags)
-            XCTAssertEqual(returnedData, expectedData)
+            let returnedData = try sut.encryptData(plainData, flags: &flags)
+            XCTAssertEqual(returnedData, encryptedData)
         } catch {
             XCTFail("Cannot encrypt: \(error)")
+        }
+    }
+
+    func test_givenEncrypted_whenDecrypt_thenDecrypts() {
+        let sut = CryptoAEAD(cipherName: "aes-256-gcm")
+        sut.configureDecryption(withCipherKey: cipherKey, hmacKey: hmacKey)
+
+        var flags = cryptoFlags
+        do {
+            let returnedData = try sut.decryptData(encryptedData, flags: &flags)
+            XCTAssertEqual(returnedData, plainData)
+        } catch {
+            XCTFail("Cannot decrypt: \(error)")
         }
     }
 

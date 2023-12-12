@@ -34,18 +34,33 @@ class CryptoCTRTests: XCTestCase {
 
     private let hmacKey = ZeroingData(string: "0011223344556677001122334455667700112233445566770011223344556677", nullTerminated: false)
 
-    func test_whenEncrypt_thenResultMatches() {
+    private let plainData = Data(hex: "00112233ffddaa")
+
+    private let encryptedData = Data(hex: "52c3a656f80491ef706a3f82eb403e87552c447523fd06e472f6986f74ddf404610c86d72c68df")
+
+    func test_givenDecrypted_whenEncrypt_thenEncrypts() {
         let sut = CryptoCTR(cipherName: "aes-128-ctr", digestName: "sha256")
         sut.configureEncryption(withCipherKey: cipherKey, hmacKey: hmacKey)
 
-        let data = Data(hex: "00112233ffddaa")
         var flags = cryptoFlags
-        let expectedData = Data(hex: "52c3a656f80491ef706a3f82eb403e87552c447523fd06e472f6986f74ddf404610c86d72c68df")
         do {
-            let returnedData = try sut.encryptData(data, flags: &flags)
-            XCTAssertEqual(returnedData, expectedData)
+            let returnedData = try sut.encryptData(plainData, flags: &flags)
+            XCTAssertEqual(returnedData, encryptedData)
         } catch {
             XCTFail("Cannot encrypt: \(error)")
+        }
+    }
+
+    func test_givenEncrypted_whenDecrypt_thenDecrypts() {
+        let sut = CryptoCTR(cipherName: "aes-128-ctr", digestName: "sha256")
+        sut.configureDecryption(withCipherKey: cipherKey, hmacKey: hmacKey)
+
+        var flags = cryptoFlags
+        do {
+            let returnedData = try sut.decryptData(encryptedData, flags: &flags)
+            XCTAssertEqual(returnedData, plainData)
+        } catch {
+            XCTFail("Cannot decrypt: \(error)")
         }
     }
 

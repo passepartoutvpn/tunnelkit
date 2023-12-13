@@ -33,13 +33,9 @@ public struct WireGuardDataCount: Equatable {
     /// Sent bytes count.
     public let bytesSent: UInt
 
-    // TODO: remove
-    public let unparsedString: String
-
-    public init(_ received: UInt, _ sent: UInt, unparsedString: String) {
+    public init(_ received: UInt, _ sent: UInt) {
         self.bytesReceived = received
         self.bytesSent = sent
-        self.unparsedString = unparsedString
     }
 }
 
@@ -64,7 +60,7 @@ extension WireGuardDataCount {
             return nil
         }
 
-        self.init(bytesReceived, bytesSent, unparsedString: string)
+        self.init(bytesReceived, bytesSent)
     }
 }
 

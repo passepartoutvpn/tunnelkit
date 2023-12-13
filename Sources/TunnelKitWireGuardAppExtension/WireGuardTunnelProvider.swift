@@ -51,12 +51,17 @@ open class WireGuardTunnelProvider: NEPacketTunnelProvider {
 
         // Start the tunnel
         adapter.start(tunnelConfiguration: tunnelConfiguration) { [weak self] adapterError in
+            guard let self else {
+                completionHandler(nil)
+                return
+            }
+
             guard let adapterError = adapterError else {
-                let interfaceName = self?.adapter.interfaceName ?? "unknown"
+                let interfaceName = self.adapter.interfaceName ?? "unknown"
 
                 wg_log(.info, message: "Tunnel interface is \(interfaceName)")
-                self?.tunnelIsStarted = true
-                self?.refreshDataCount()
+                self.tunnelIsStarted = true
+                self.refreshDataCount()
                 completionHandler(nil)
                 return
             }
@@ -64,24 +69,24 @@ open class WireGuardTunnelProvider: NEPacketTunnelProvider {
             switch adapterError {
             case .cannotLocateTunnelFileDescriptor:
                 wg_log(.error, staticMessage: "Starting tunnel failed: could not determine file descriptor")
-                self?.cfg._appexSetLastError(.couldNotDetermineFileDescriptor)
+                self.cfg._appexSetLastError(.couldNotDetermineFileDescriptor)
                 completionHandler(TunnelKitWireGuardError.couldNotDetermineFileDescriptor)
 
             case .dnsResolution(let dnsErrors):
                 let hostnamesWithDnsResolutionFailure = dnsErrors.map(\.address)
                     .joined(separator: ", ")
                 wg_log(.error, message: "DNS resolution failed for the following hostnames: \(hostnamesWithDnsResolutionFailure)")
-                self?.cfg._appexSetLastError(.dnsResolutionFailure)
+                self.cfg._appexSetLastError(.dnsResolutionFailure)
                 completionHandler(TunnelKitWireGuardError.dnsResolutionFailure)
 
             case .setNetworkSettings(let error):
                 wg_log(.error, message: "Starting tunnel failed with setTunnelNetworkSettings returning \(error.localizedDescription)")
-                self?.cfg._appexSetLastError(.couldNotSetNetworkSettings)
+                self.cfg._appexSetLastError(.couldNotSetNetworkSettings)
                 completionHandler(TunnelKitWireGuardError.couldNotSetNetworkSettings)
 
             case .startWireGuardBackend(let errorCode):
                 wg_log(.error, message: "Starting tunnel failed with wgTurnOn returning \(errorCode)")
-                self?.cfg._appexSetLastError(.couldNotStartBackend)
+                self.cfg._appexSetLastError(.couldNotStartBackend)
                 completionHandler(TunnelKitWireGuardError.couldNotStartBackend)
 
             case .invalidState:
@@ -96,9 +101,13 @@ open class WireGuardTunnelProvider: NEPacketTunnelProvider {
 
         adapter.stop { [weak self] error in
             // BEGIN: TunnelKit
-            self?.cfg._appexSetLastError(nil)
-            self?.tunnelIsStarted = false
-            self?.refreshDataCount()
+            guard let self else {
+                completionHandler()
+                return
+            }
+            self.cfg._appexSetLastError(nil)
+            self.tunnelIsStarted = false
+            self.refreshDataCount()
             // END: TunnelKit
 
             if let error = error {
@@ -116,7 +125,9 @@ open class WireGuardTunnelProvider: NEPacketTunnelProvider {
     }
 
     open override func handleAppMessage(_ messageData: Data, completionHandler: ((Data?) -> Void)? = nil) {
-        guard let completionHandler = completionHandler else { return }
+        guard let completionHandler = completionHandler else {
+            return
+        }
 
         if messageData.count == 1 && messageData[0] == 0 {
             adapter.getRuntimeConfiguration { settings in
@@ -134,7 +145,9 @@ open class WireGuardTunnelProvider: NEPacketTunnelProvider {
     // MARK: Data counter (tunnel queue)
 
     private func refreshDataCount() {
-        guard dataCountInterval > 0 else { return }
+        guard dataCountInterval > 0 else {
+            return
+        }
         tunnelQueue.schedule(after: DispatchTimeInterval.milliseconds(dataCountInterval)) { [weak self] in
             self?.refreshDataCount()
         }
@@ -144,9 +157,12 @@ open class WireGuardTunnelProvider: NEPacketTunnelProvider {
             return
         }
         fetchDataCount { [weak self] result in
+            guard let self else {
+                return
+            }
             switch result {
             case .success(let dataCount):
-                self?.cfg._appexSetDataCount(dataCount)
+                self.cfg._appexSetDataCount(dataCount)
             case .failure(let error):
                 wg_log(.error, message: "Failed to refresh data count \(error.localizedDescription)")
             }
@@ -179,7 +195,8 @@ extension WireGuardTunnelProvider {
 
     func fetchDataCount(completiondHandler: @escaping (Result<WireGuardDataCount, Error>) -> Void) {
         adapter.getRuntimeConfiguration { configurationString in
-            if let wireGuardDataCount = WireGuardDataCount(from: configurationString) {
+            if let configurationString = configurationString,
+                let wireGuardDataCount = WireGuardDataCount(from: configurationString) {
                 completiondHandler(.success(wireGuardDataCount))
             } else {
                 completiondHandler(.failure(StatsError.parseFailure))
@@ -187,7 +204,7 @@ extension WireGuardTunnelProvider {
          }
     }
 
-    enum StatsError: LocalizedError {
+   private enum StatsError: Error {
         case parseFailure
 
         var errorDescription: String? {

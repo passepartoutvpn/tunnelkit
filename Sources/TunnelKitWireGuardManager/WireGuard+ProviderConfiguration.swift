@@ -93,9 +93,8 @@ extension WireGuard.ProviderConfiguration: NetworkExtensionConfiguration {
 // MARK: Shared data
 
 extension WireGuard.ProviderConfiguration {
-    /**
-     The most recent (received, sent) count in bytes.
-     */
+
+    /// The most recent (received, sent) count in bytes.
     public var dataCount: WireGuardDataCount? {
         return defaults?.wireGuardDataCount
     }
@@ -115,7 +114,6 @@ extension WireGuard.ProviderConfiguration {
 }
 
 extension WireGuard.ProviderConfiguration {
-
     public func _appexSetDataCount(_ newValue: WireGuardDataCount?) {
         defaults?.wireGuardDataCount = newValue
     }

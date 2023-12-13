@@ -107,7 +107,7 @@ class CryptoCBCTests: XCTestCase {
         return packetId.withUnsafeBufferPointer { iv in
             ad.withUnsafeBufferPointer { ad in
                 CryptoFlags(iv: iv.baseAddress,
-                            ivLength: packetId.count,
+                            ivLength: iv.count,
                             ad: ad.baseAddress,
                             adLength: ad.count,
                             forTesting: true)

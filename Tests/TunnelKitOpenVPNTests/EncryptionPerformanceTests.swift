@@ -85,7 +85,7 @@ class EncryptionPerformanceTests: XCTestCase {
             CryptoFlags(iv: nil,
                         ivLength: 0,
                         ad: $0.baseAddress,
-                        adLength: ad.count,
+                        adLength: $0.count,
                         forTesting: true)
         }
         measure {

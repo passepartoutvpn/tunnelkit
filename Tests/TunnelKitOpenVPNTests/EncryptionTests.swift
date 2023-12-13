@@ -85,7 +85,7 @@ class EncryptionTests: XCTestCase {
         var flags = packetId.withUnsafeBufferPointer { iv in
             ad.withUnsafeBufferPointer { ad in
                 CryptoFlags(iv: iv.baseAddress,
-                            ivLength: packetId.count,
+                            ivLength: iv.count,
                             ad: ad.baseAddress,
                             adLength: ad.count,
                             forTesting: true)
@@ -106,7 +106,7 @@ class EncryptionTests: XCTestCase {
             CryptoFlags(iv: nil,
                         ivLength: 0,
                         ad: $0.baseAddress,
-                        adLength: ad.count,
+                        adLength: $0.count,
                         forTesting: true)
         }
 

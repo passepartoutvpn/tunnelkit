@@ -36,32 +36,11 @@ class CryptoCTRTests: XCTestCase {
 
     private let plainData = Data(hex: "00112233ffddaa")
 
-    func test_givenData_whenEncrypt_thenDecrypts() {
-        let encryptedData: Data
-        var flags = cryptoFlags
+    private var packetId: [UInt8] = [0x56, 0x34, 0x12, 0x00]
 
-        let sut1 = CryptoCTR(cipherName: "aes-128-ctr", digestName: "sha256")
-        sut1.configureEncryption(withCipherKey: cipherKey, hmacKey: hmacKey)
-        do {
-            encryptedData = try sut1.encryptData(plainData, flags: &flags)
-        } catch {
-            XCTFail("Cannot encrypt: \(error)")
-            return
-        }
+    private var ad: [UInt8] = [0x00, 0x12, 0x34, 0x56]
 
-        let sut2 = CryptoCTR(cipherName: "aes-128-ctr", digestName: "sha256")
-        sut2.configureDecryption(withCipherKey: cipherKey, hmacKey: hmacKey)
-        do {
-            let returnedData = try sut2.decryptData(encryptedData, flags: &flags)
-            XCTAssertEqual(returnedData, plainData)
-        } catch {
-            XCTFail("Cannot decrypt: \(error)")
-        }
-    }
-
-    private var cryptoFlags: CryptoFlags {
-        let packetId: [UInt8] = [0x56, 0x34, 0x12, 0x00]
-        let ad: [UInt8] = [0x00, 0x12, 0x34, 0x56]
+    private lazy var flags: CryptoFlags = {
         return packetId.withUnsafeBufferPointer { iv in
             ad.withUnsafeBufferPointer { ad in
                 CryptoFlags(iv: iv.baseAddress,
@@ -70,6 +49,26 @@ class CryptoCTRTests: XCTestCase {
                             adLength: ad.count,
                             forTesting: true)
             }
+        }
+    }()
+
+    func test_givenData_whenEncrypt_thenDecrypts() {
+        let sut = CryptoCTR(cipherName: "aes-128-ctr", digestName: "sha256")
+        sut.configureEncryption(withCipherKey: cipherKey, hmacKey: hmacKey)
+        sut.configureDecryption(withCipherKey: cipherKey, hmacKey: hmacKey)
+        let encryptedData: Data
+
+        do {
+            encryptedData = try sut.encryptData(plainData, flags: &flags)
+        } catch {
+            XCTFail("Cannot encrypt: \(error)")
+            return
+        }
+        do {
+            let returnedData = try sut.decryptData(encryptedData, flags: &flags)
+            XCTAssertEqual(returnedData, plainData)
+        } catch {
+            XCTFail("Cannot decrypt: \(error)")
         }
     }
 }

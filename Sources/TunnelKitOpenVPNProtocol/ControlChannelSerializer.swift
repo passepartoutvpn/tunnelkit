@@ -282,7 +282,7 @@ extension OpenVPN.ControlChannel {
             var decryptedCount = 0
             try packet.withUnsafeBytes {
                 let src = $0.bytePointer
-                var flags = CryptoFlags(iv: nil, ivLength: 0, ad: src, adLength: adLength)
+                var flags = CryptoFlags(iv: nil, ivLength: 0, ad: src, adLength: adLength, forTesting: false)
                 try decryptedPacket.withUnsafeMutableBytes {
                     let dest = $0.bytePointer
                     try decrypter.decryptBytes(src + flags.adLength, length: encryptedCount, dest: dest + headerLength, destLength: &decryptedCount, flags: &flags)

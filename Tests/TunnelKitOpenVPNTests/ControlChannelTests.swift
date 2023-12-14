@@ -60,7 +60,6 @@ class ControlChannelTests: XCTestCase {
         let hmac = Data(hex: "e67c9137933a412a711c0d0514aca6db6476d17d")
         let subject = Data(hex: "000000015b96c94738858fe14742fdae400000000000")
         let data = hmac + subject
-        print(data.toHex())
 
         XCTAssertNoThrow(try server.decrypter().verifyData(data, flags: nil))
     }
@@ -98,8 +97,6 @@ class ControlChannelTests: XCTestCase {
             XCTAssertNil(error)
             return
         }
-        print("raw: \(raw.toHex())")
-        print("org: \(original.toHex())")
         XCTAssertEqual(raw, original)
     }
 
@@ -130,8 +127,6 @@ class ControlChannelTests: XCTestCase {
             XCTAssertNil(error)
             return
         }
-        print("raw: \(raw.toHex())")
-        print("org: \(original.toHex())")
         XCTAssertEqual(raw, original)
     }
 }

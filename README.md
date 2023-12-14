@@ -11,7 +11,7 @@ This library provides a generic framework for VPN development on Apple platforms
 
 ## OpenVPN
 
-TunnelKit comes with a simplified Swift/Obj-C implementation of the [OpenVPN®][dep-openvpn] protocol, whose crypto layer is built on top of [OpenSSL 1.1.1][dep-openssl].
+TunnelKit comes with a simplified Swift/Obj-C implementation of the [OpenVPN®][dep-openvpn] protocol, whose crypto layer is built on top of [OpenSSL 3.2.0][dep-openssl].
 
 The client is known to work with OpenVPN® 2.3+ servers.
 

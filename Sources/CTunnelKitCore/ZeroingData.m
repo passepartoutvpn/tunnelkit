@@ -55,6 +55,7 @@
     if ((self = [super init])) {
         _count = count;
         _bytes = allocate_safely(count);
+        bzero(_bytes, _count);
     }
     return self;
 }

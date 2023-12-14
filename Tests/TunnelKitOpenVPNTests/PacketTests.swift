@@ -48,8 +48,6 @@ class PacketTests: XCTestCase {
 
         let serialized = ControlPacket(code: code, key: key, sessionId: sessionId, packetId: id, payload: payload).serialized()
         let expected = Data(hex: "2311223344556677880000001456932748238742397591704891")
-        print("Serialized: \(serialized.toHex())")
-        print("Expected  : \(expected.toHex())")
 
         XCTAssertEqual(serialized, expected)
     }
@@ -62,8 +60,6 @@ class PacketTests: XCTestCase {
 
         let serialized = ControlPacket(key: key, sessionId: sessionId, ackIds: acks as [NSNumber], ackRemoteSessionId: remoteSessionId).serialized()
         let expected = Data(hex: "2b112233445566778805000000aa000000bb000000cc000000dd000000eea639328cbf03490e")
-        print("Serialized: \(serialized.toHex())")
-        print("Expected  : \(expected.toHex())")
 
         XCTAssertEqual(serialized, expected)
     }

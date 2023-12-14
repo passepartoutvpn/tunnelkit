@@ -35,7 +35,6 @@
 //
 
 #import <openssl/evp.h>
-#import <openssl/hmac.h>
 #import <openssl/rand.h>
 
 #import "CryptoCBC.h"
@@ -56,10 +55,12 @@ const NSInteger CryptoCBCMaxHMACLength = 100;
 @property (nonatomic, assign) int hmacKeyLength;
 @property (nonatomic, assign) int digestLength;
 
+@property (nonatomic, unsafe_unretained) EVP_MAC *mac;
+@property (nonatomic, unsafe_unretained) OSSL_PARAM *macParams;
 @property (nonatomic, unsafe_unretained) EVP_CIPHER_CTX *cipherCtxEnc;
 @property (nonatomic, unsafe_unretained) EVP_CIPHER_CTX *cipherCtxDec;
-@property (nonatomic, unsafe_unretained) HMAC_CTX *hmacCtxEnc;
-@property (nonatomic, unsafe_unretained) HMAC_CTX *hmacCtxDec;
+@property (nonatomic, strong) ZeroingData *hmacKeyEnc;
+@property (nonatomic, strong) ZeroingData *hmacKeyDec;
 @property (nonatomic, unsafe_unretained) uint8_t *bufferDecHMAC;
 
 @end
@@ -92,8 +93,13 @@ const NSInteger CryptoCBCMaxHMACLength = 100;
             self.cipherCtxEnc = EVP_CIPHER_CTX_new();
             self.cipherCtxDec = EVP_CIPHER_CTX_new();
         }
-        self.hmacCtxEnc = HMAC_CTX_new();
-        self.hmacCtxDec = HMAC_CTX_new();
+
+        self.mac = EVP_MAC_fetch(NULL, "HMAC", NULL);
+        OSSL_PARAM *macParams = calloc(2, sizeof(OSSL_PARAM));
+        macParams[0] = OSSL_PARAM_construct_utf8_string("digest", (char *)[digestName cStringUsingEncoding:NSASCIIStringEncoding], 0);
+        macParams[1] = OSSL_PARAM_construct_end();
+        self.macParams = macParams;
+
         self.bufferDecHMAC = allocate_safely(CryptoCBCMaxHMACLength);
     }
     return self;
@@ -105,8 +111,8 @@ const NSInteger CryptoCBCMaxHMACLength = 100;
         EVP_CIPHER_CTX_free(self.cipherCtxEnc);
         EVP_CIPHER_CTX_free(self.cipherCtxDec);
     }
-    HMAC_CTX_free(self.hmacCtxEnc);
-    HMAC_CTX_free(self.hmacCtxDec);
+    EVP_MAC_free(self.mac);
+    free(self.macParams);
     bzero(self.bufferDecHMAC, CryptoCBCMaxHMACLength);
     free(self.bufferDecHMAC);
     
@@ -138,8 +144,7 @@ const NSInteger CryptoCBCMaxHMACLength = 100;
         EVP_CipherInit(self.cipherCtxEnc, self.cipher, cipherKey.bytes, NULL, 1);
     }
 
-    HMAC_CTX_reset(self.hmacCtxEnc);
-    HMAC_Init_ex(self.hmacCtxEnc, hmacKey.bytes, self.hmacKeyLength, self.digest, NULL);
+    self.hmacKeyEnc = [[ZeroingData alloc] initWithBytes:hmacKey.bytes count:self.hmacKeyLength];
 }
 
 - (BOOL)encryptBytes:(const uint8_t *)bytes length:(NSInteger)length dest:(uint8_t *)dest destLength:(NSInteger *)destLength flags:(const CryptoFlags * _Nullable)flags error:(NSError * _Nullable __autoreleasing * _Nullable)error
@@ -147,17 +152,19 @@ const NSInteger CryptoCBCMaxHMACLength = 100;
     uint8_t *outIV = dest + self.digestLength;
     uint8_t *outEncrypted = dest + self.digestLength + self.cipherIVLength;
     int l1 = 0, l2 = 0;
-    unsigned int l3 = 0;
+    size_t l3 = 0;
     int code = 1;
 
     if (self.cipher) {
-        if (RAND_bytes(outIV, self.cipherIVLength) != 1) {
-            if (error) {
-                *error = OpenVPNErrorWithCode(OpenVPNErrorCodeCryptoRandomGenerator);
+        if (!flags || !flags->forTesting) {
+            if (RAND_bytes(outIV, self.cipherIVLength) != 1) {
+                if (error) {
+                    *error = OpenVPNErrorWithCode(OpenVPNErrorCodeCryptoRandomGenerator);
+                }
+                return NO;
             }
-            return NO;
         }
-        
+
         TUNNEL_CRYPTO_TRACK_STATUS(code) EVP_CipherInit(self.cipherCtxEnc, NULL, NULL, outIV, -1);
         TUNNEL_CRYPTO_TRACK_STATUS(code) EVP_CipherUpdate(self.cipherCtxEnc, outEncrypted, &l1, bytes, (int)length);
         TUNNEL_CRYPTO_TRACK_STATUS(code) EVP_CipherFinal_ex(self.cipherCtxEnc, outEncrypted + l1, &l2);
@@ -169,10 +176,12 @@ const NSInteger CryptoCBCMaxHMACLength = 100;
         l1 = (int)length;
     }
     
-    TUNNEL_CRYPTO_TRACK_STATUS(code) HMAC_Init_ex(self.hmacCtxEnc, NULL, 0, NULL, NULL);
-    TUNNEL_CRYPTO_TRACK_STATUS(code) HMAC_Update(self.hmacCtxEnc, outIV, l1 + l2 + self.cipherIVLength);
-    TUNNEL_CRYPTO_TRACK_STATUS(code) HMAC_Final(self.hmacCtxEnc, dest, &l3);
-    
+    EVP_MAC_CTX *ctx = EVP_MAC_CTX_new(self.mac);
+    TUNNEL_CRYPTO_TRACK_STATUS(code) EVP_MAC_init(ctx, self.hmacKeyEnc.bytes, self.hmacKeyEnc.count, self.macParams);
+    TUNNEL_CRYPTO_TRACK_STATUS(code) EVP_MAC_update(ctx, outIV, l1 + l2 + self.cipherIVLength);
+    TUNNEL_CRYPTO_TRACK_STATUS(code) EVP_MAC_final(ctx, dest, &l3, self.digestLength);
+    EVP_MAC_CTX_free(ctx);
+
     *destLength = l1 + l2 + self.cipherIVLength + self.digestLength;
     
     TUNNEL_CRYPTO_RETURN_STATUS(code)
@@ -197,23 +206,22 @@ const NSInteger CryptoCBCMaxHMACLength = 100;
         EVP_CipherInit(self.cipherCtxDec, self.cipher, cipherKey.bytes, NULL, 0);
     }
     
-    HMAC_CTX_reset(self.hmacCtxDec);
-    HMAC_Init_ex(self.hmacCtxDec, hmacKey.bytes, self.hmacKeyLength, self.digest, NULL);
+    self.hmacKeyDec = [[ZeroingData alloc] initWithBytes:hmacKey.bytes count:self.hmacKeyLength];
 }
 
 - (BOOL)decryptBytes:(const uint8_t *)bytes length:(NSInteger)length dest:(uint8_t *)dest destLength:(NSInteger *)destLength flags:(const CryptoFlags * _Nullable)flags error:(NSError * _Nullable __autoreleasing * _Nullable)error
 {
-    NSAssert(self.cipher, @"No cipher provided");
-
     const uint8_t *iv = bytes + self.digestLength;
     const uint8_t *encrypted = bytes + self.digestLength + self.cipherIVLength;
-    int l1 = 0, l2 = 0;
+    size_t l1 = 0, l2 = 0;
     int code = 1;
     
-    TUNNEL_CRYPTO_TRACK_STATUS(code) HMAC_Init_ex(self.hmacCtxDec, NULL, 0, NULL, NULL);
-    TUNNEL_CRYPTO_TRACK_STATUS(code) HMAC_Update(self.hmacCtxDec, bytes + self.digestLength, length - self.digestLength);
-    TUNNEL_CRYPTO_TRACK_STATUS(code) HMAC_Final(self.hmacCtxDec, self.bufferDecHMAC, (unsigned *)&l1);
-    
+    EVP_MAC_CTX *ctx = EVP_MAC_CTX_new(self.mac);
+    TUNNEL_CRYPTO_TRACK_STATUS(code) EVP_MAC_init(ctx, self.hmacKeyDec.bytes, self.hmacKeyDec.count, self.macParams);
+    TUNNEL_CRYPTO_TRACK_STATUS(code) EVP_MAC_update(ctx, bytes + self.digestLength, length - self.digestLength);
+    TUNNEL_CRYPTO_TRACK_STATUS(code) EVP_MAC_final(ctx, self.bufferDecHMAC, &l1, self.digestLength);
+    EVP_MAC_CTX_free(ctx);
+
     if (TUNNEL_CRYPTO_SUCCESS(code) && CRYPTO_memcmp(self.bufferDecHMAC, bytes, self.digestLength) != 0) {
         if (error) {
             *error = OpenVPNErrorWithCode(OpenVPNErrorCodeCryptoHMAC);
@@ -221,24 +229,33 @@ const NSInteger CryptoCBCMaxHMACLength = 100;
         return NO;
     }
     
-    TUNNEL_CRYPTO_TRACK_STATUS(code) EVP_CipherInit(self.cipherCtxDec, NULL, NULL, iv, -1);
-    TUNNEL_CRYPTO_TRACK_STATUS(code) EVP_CipherUpdate(self.cipherCtxDec, dest, &l1, encrypted, (int)length - self.digestLength - self.cipherIVLength);
-    TUNNEL_CRYPTO_TRACK_STATUS(code) EVP_CipherFinal_ex(self.cipherCtxDec, dest + l1, &l2);
+    if (self.cipher) {
+        TUNNEL_CRYPTO_TRACK_STATUS(code) EVP_CipherInit(self.cipherCtxDec, NULL, NULL, iv, -1);
+        TUNNEL_CRYPTO_TRACK_STATUS(code) EVP_CipherUpdate(self.cipherCtxDec, dest, (int *)&l1, encrypted, (int)length - self.digestLength - self.cipherIVLength);
+        TUNNEL_CRYPTO_TRACK_STATUS(code) EVP_CipherFinal_ex(self.cipherCtxDec, dest + l1, (int *)&l2);
 
-    *destLength = l1 + l2;
+        *destLength = l1 + l2;
+    } else {
+        l2 = (int)length - l1;
+        memcpy(dest, bytes + l1, l2);
+
+        *destLength = l2;
+    }
 
     TUNNEL_CRYPTO_RETURN_STATUS(code)
 }
 
 - (BOOL)verifyBytes:(const uint8_t *)bytes length:(NSInteger)length flags:(const CryptoFlags * _Nullable)flags error:(NSError * _Nullable __autoreleasing * _Nullable)error
 {
-    int l1 = 0;
+    size_t l1 = 0;
     int code = 1;
     
-    TUNNEL_CRYPTO_TRACK_STATUS(code) HMAC_Init_ex(self.hmacCtxDec, NULL, 0, NULL, NULL);
-    TUNNEL_CRYPTO_TRACK_STATUS(code) HMAC_Update(self.hmacCtxDec, bytes + self.digestLength, length - self.digestLength);
-    TUNNEL_CRYPTO_TRACK_STATUS(code) HMAC_Final(self.hmacCtxDec, self.bufferDecHMAC, (unsigned *)&l1);
-    
+    EVP_MAC_CTX *ctx = EVP_MAC_CTX_new(self.mac);
+    TUNNEL_CRYPTO_TRACK_STATUS(code) EVP_MAC_init(ctx, self.hmacKeyDec.bytes, self.hmacKeyDec.count, self.macParams);
+    TUNNEL_CRYPTO_TRACK_STATUS(code) EVP_MAC_update(ctx, bytes + self.digestLength, length - self.digestLength);
+    TUNNEL_CRYPTO_TRACK_STATUS(code) EVP_MAC_final(ctx, self.bufferDecHMAC, &l1, self.digestLength);
+    EVP_MAC_CTX_free(ctx);
+
     if (TUNNEL_CRYPTO_SUCCESS(code) && CRYPTO_memcmp(self.bufferDecHMAC, bytes, self.digestLength) != 0) {
         if (error) {
             *error = OpenVPNErrorWithCode(OpenVPNErrorCodeCryptoHMAC);

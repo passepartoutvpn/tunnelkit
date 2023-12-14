@@ -1,8 +1,14 @@
 name: Release
 
 on:
-  milestone:
-    types: closed
+  workflow_dispatch:
+    inputs:
+      version_number:
+        description: "Version number"
+        required: true
+
+env:
+  VERSION: ${{ github.event.inputs.version_number }}
 
 jobs:
   run_tests:
@@ -33,8 +39,6 @@ jobs:
           git_tag_gpgsign: true
           git_push_gpgsign: false
       - name: Tag release
-        env:
-          VERSION: ${{ github.event.milestone.title }}
         run: |
           DATE=`date "+%Y-%m-%d"`
           COMMIT_MESSAGE="[ci skip] Set release date"
@@ -45,3 +49,8 @@ jobs:
           git commit -m "$COMMIT_MESSAGE"
           git tag "v$VERSION" -m "$TAG_MESSAGE"
           git push && git push --tags
+      - name: Publish release
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: "v${{ env.VERSION }}"
+          generate_release_notes: true

@@ -38,7 +38,6 @@ class RoutingTests: XCTestCase {
 
     func testEntryMatch4() {
         let entry24 = RoutingTableEntry(iPv4Network: "192.168.1.0/24", gateway: nil, networkInterface: "en0")
-        print(entry24.networkMask()!)
         for i in 0x0...0xff {
             XCTAssertTrue(entry24.matchesDestination("192.168.1.\(i)"))
         }
@@ -47,7 +46,6 @@ class RoutingTests: XCTestCase {
         }
 
         let entry28 = RoutingTableEntry(iPv4Network: "192.168.1.0/28", gateway: nil, networkInterface: "en0")
-        print(entry28.networkMask()!)
         for i in 0x0...0xf {
             XCTAssertTrue(entry28.matchesDestination("192.168.1.\(i)"))
         }
@@ -70,13 +68,10 @@ class RoutingTests: XCTestCase {
         let table = RoutingTable()
 
         for entry in table.ipv4() {
-            print(entry)
         }
 
         if let defaultGateway = table.defaultGateway4()?.gateway() {
-            print("Default gateway: \(defaultGateway)")
             if let lan = table.broadestRoute4(matchingDestination: defaultGateway) {
-                print("Gateway LAN: \(lan.network())/\(lan.prefix())")
             }
         }
     }
@@ -85,13 +80,10 @@ class RoutingTests: XCTestCase {
         let table = RoutingTable()
 
         for entry in table.ipv6() {
-            print(entry)
         }
 
         if let defaultGateway = table.defaultGateway6()?.gateway() {
-            print("Default gateway: \(defaultGateway)")
             if let lan = table.broadestRoute6(matchingDestination: defaultGateway) {
-                print("Gateway LAN: \(lan.network())/\(lan.prefix())")
             }
         }
     }

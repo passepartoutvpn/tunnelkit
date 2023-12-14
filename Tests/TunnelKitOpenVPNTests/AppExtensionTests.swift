@@ -88,7 +88,6 @@ class AppExtensionTests: XCTestCase {
         guard let pc = proto.providerConfiguration else {
             return
         }
-        print("\(pc)")
 
         let ovpn = pc["configuration"] as? [String: Any]
         XCTAssertEqual(pc["appGroup"] as? String, appGroup)
@@ -107,11 +106,11 @@ class AppExtensionTests: XCTestCase {
                 exp.fulfill()
             }
             switch $0 {
-            case .success(let records):
-                print("\(records)")
+            case .success:
+                break
 
             case .failure:
-                print("Can't resolve")
+                break
             }
         }
         waitForExpectations(timeout: 5.0, handler: nil)
@@ -159,7 +158,6 @@ class AppExtensionTests: XCTestCase {
             guard let remote = strategy.currentRemote else {
                 break
             }
-            print("\(i): \(remote)")
             XCTAssertEqual(remote.originalEndpoint.description, expected[i])
             i += 1
             guard strategy.tryNextEndpoint() else {
@@ -190,7 +188,6 @@ class AppExtensionTests: XCTestCase {
 //        var i = 0
 //        while strategy.hasEndpoint() {
 //            let endpoint = strategy.currentEndpoint()
-//            print("\(endpoint)")
 //            XCTAssertEqual(endpoint.description, expected[i])
 //            i += 1
 //            strategy.tryNextEndpoint()
@@ -219,7 +216,6 @@ class AppExtensionTests: XCTestCase {
 //        var i = 0
 //        while strategy.hasEndpoint() {
 //            let endpoint = strategy.currentEndpoint()
-//            print("\(endpoint)")
 //            XCTAssertEqual(endpoint.description, expected[i])
 //            i += 1
 //            strategy.tryNextEndpoint()

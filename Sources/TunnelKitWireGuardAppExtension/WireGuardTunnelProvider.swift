@@ -64,7 +64,7 @@ open class WireGuardTunnelProvider: NEPacketTunnelProvider {
                 let interfaceName = self.adapter.interfaceName ?? "unknown"
 
                 wg_log(.info, message: "Tunnel interface is \(interfaceName)")
-                tunnelQueue.async {
+                self.tunnelQueue.async {
                     self.tunnelIsStarted = true
                     self.refreshDataCount()
                 }
@@ -113,7 +113,7 @@ open class WireGuardTunnelProvider: NEPacketTunnelProvider {
                 completionHandler()
                 return
             }
-            tunnelQueue.async {
+            self.tunnelQueue.async {
                 self.cfg._appexSetLastError(nil)
                 self.tunnelIsStarted = false
                 if let error = error {

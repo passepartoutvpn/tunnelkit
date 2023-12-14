@@ -1,5 +1,5 @@
 //
-//  WireGuardDataCount.swift
+//  DataCount+WireGuard.swift
 //  Passepartout
 //
 //  Created by Yevgeny Yezub on 11/17/23.
@@ -24,23 +24,10 @@
 //
 
 import Foundation
-/// A pair of received/sent bytes count.
-public struct WireGuardDataCount: Equatable {
+import TunnelKitCore
 
-    /// Received bytes count.
-    public let bytesReceived: UInt
-
-    /// Sent bytes count.
-    public let bytesSent: UInt
-
-    public init(_ received: UInt, _ sent: UInt) {
-        self.bytesReceived = received
-        self.bytesSent = sent
-    }
-}
-
-extension WireGuardDataCount {
-    public init?(from string: String) {
+extension DataCount {
+    public static func from(wireGuardString string: String) -> DataCount? {
         var bytesReceived: UInt?
         var bytesSent: UInt?
 
@@ -50,7 +37,6 @@ extension WireGuardDataCount {
             } else if bytesSent == nil, let value = line.getPrefix("tx_bytes=") {
                 bytesSent = value
             }
-
             if bytesReceived != nil, bytesSent != nil {
                 stop = true
             }
@@ -60,18 +46,15 @@ extension WireGuardDataCount {
             return nil
         }
 
-        self.init(bytesReceived, bytesSent)
+        return DataCount(bytesReceived, bytesSent)
     }
 }
 
 private extension String {
     func getPrefix(_ prefixKey: String) -> UInt? {
-        guard self.hasPrefix(prefixKey) else {
+        guard hasPrefix(prefixKey) else {
             return nil
         }
-
-        let value = self.dropFirst(prefixKey.count)
-
-        return UInt(value)
+        return UInt(dropFirst(prefixKey.count))
     }
 }

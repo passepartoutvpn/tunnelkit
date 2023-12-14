@@ -1,3 +1,4 @@
+import TunnelKitCore
 import TunnelKitWireGuardCore
 import TunnelKitWireGuardManager
 import WireGuardKit
@@ -29,7 +30,9 @@ open class WireGuardTunnelProvider: NEPacketTunnelProvider {
     }()
 
     open override func startTunnel(options: [String: NSObject]?, completionHandler: @escaping (Error?) -> Void) {
+
         // BEGIN: TunnelKit
+
         guard let tunnelProviderProtocol = protocolConfiguration as? NETunnelProviderProtocol else {
             fatalError("Not a NETunnelProviderProtocol")
         }
@@ -47,6 +50,7 @@ open class WireGuardTunnelProvider: NEPacketTunnelProvider {
         }
 
         configureLogging()
+
         // END: TunnelKit
 
         // Start the tunnel
@@ -170,8 +174,12 @@ open class WireGuardTunnelProvider: NEPacketTunnelProvider {
     }
 }
 
-extension WireGuardTunnelProvider {
-    private func configureLogging() {
+private extension WireGuardTunnelProvider {
+    enum StatsError: Error {
+         case parseFailure
+    }
+
+    func configureLogging() {
         let logLevel: SwiftyBeaver.Level = (cfg.shouldDebug ? .debug : .info)
         let logFormat = cfg.debugLogFormat ?? "$Dyyyy-MM-dd HH:mm:ss.SSS$d $L $N.$F:$l - $M"
 
@@ -193,26 +201,15 @@ extension WireGuardTunnelProvider {
         cfg._appexSetDebugLogPath()
     }
 
-    func fetchDataCount(completiondHandler: @escaping (Result<WireGuardDataCount, Error>) -> Void) {
+    func fetchDataCount(completiondHandler: @escaping (Result<DataCount, Error>) -> Void) {
         adapter.getRuntimeConfiguration { configurationString in
             if let configurationString = configurationString,
-                let wireGuardDataCount = WireGuardDataCount(from: configurationString) {
+               let wireGuardDataCount = DataCount.from(wireGuardString: configurationString) {
                 completiondHandler(.success(wireGuardDataCount))
             } else {
                 completiondHandler(.failure(StatsError.parseFailure))
             }
          }
-    }
-
-   private enum StatsError: Error {
-        case parseFailure
-
-        var errorDescription: String? {
-            switch self {
-            case .parseFailure:
-                return "Couldn't parse the stats."
-            }
-        }
     }
 }
 

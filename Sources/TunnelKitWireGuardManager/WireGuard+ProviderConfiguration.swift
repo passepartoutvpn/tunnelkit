@@ -25,6 +25,7 @@
 
 import Foundation
 import NetworkExtension
+import TunnelKitCore
 import TunnelKitManager
 import TunnelKitWireGuardCore
 import WireGuardKit
@@ -95,7 +96,7 @@ extension WireGuard.ProviderConfiguration: NetworkExtensionConfiguration {
 extension WireGuard.ProviderConfiguration {
 
     /// The most recent (received, sent) count in bytes.
-    public var dataCount: WireGuardDataCount? {
+    public var dataCount: DataCount? {
         return defaults?.wireGuardDataCount
     }
 
@@ -114,7 +115,7 @@ extension WireGuard.ProviderConfiguration {
 }
 
 extension WireGuard.ProviderConfiguration {
-    public func _appexSetDataCount(_ newValue: WireGuardDataCount?) {
+    public func _appexSetDataCount(_ newValue: DataCount?) {
         defaults?.wireGuardDataCount = newValue
     }
 
@@ -160,7 +161,7 @@ extension UserDefaults {
         }
     }
 
-    public fileprivate(set) var wireGuardDataCount: WireGuardDataCount? {
+    public fileprivate(set) var wireGuardDataCount: DataCount? {
         get {
             guard let rawValue = wireGuardDataCountArray else {
                 return nil
@@ -168,14 +169,14 @@ extension UserDefaults {
             guard rawValue.count == 2 else {
                 return nil
             }
-            return WireGuardDataCount(rawValue[0], rawValue[1])
+            return DataCount(rawValue[0], rawValue[1])
         }
         set {
             guard let newValue = newValue else {
                 wireGuardRemoveDataCountArray()
                 return
             }
-            wireGuardDataCountArray = [newValue.bytesReceived, newValue.bytesSent]
+            wireGuardDataCountArray = [newValue.received, newValue.sent]
         }
     }
 

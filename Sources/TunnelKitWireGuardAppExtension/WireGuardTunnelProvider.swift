@@ -64,8 +64,10 @@ open class WireGuardTunnelProvider: NEPacketTunnelProvider {
                 let interfaceName = self.adapter.interfaceName ?? "unknown"
 
                 wg_log(.info, message: "Tunnel interface is \(interfaceName)")
-                self.tunnelIsStarted = true
-                self.refreshDataCount()
+                tunnelQueue.async {
+                    self.tunnelIsStarted = true
+                    self.refreshDataCount()
+                }
                 completionHandler(nil)
                 return
             }
@@ -111,16 +113,16 @@ open class WireGuardTunnelProvider: NEPacketTunnelProvider {
                 completionHandler()
                 return
             }
-            self.cfg._appexSetLastError(nil)
-            self.tunnelIsStarted = false
-            self.refreshDataCount()
+            tunnelQueue.async {
+                self.cfg._appexSetLastError(nil)
+                self.tunnelIsStarted = false
+                if let error = error {
+                    wg_log(.error, message: "Failed to stop WireGuard adapter: \(error.localizedDescription)")
+                }
+                completionHandler()
+            }
 
             // END: TunnelKit
-
-            if let error = error {
-                wg_log(.error, message: "Failed to stop WireGuard adapter: \(error.localizedDescription)")
-            }
-            completionHandler()
 
             #if os(macOS)
             // HACK: This is a filthy hack to work around Apple bug 32073323 (dup'd by us as 47526107).
@@ -151,6 +153,12 @@ open class WireGuardTunnelProvider: NEPacketTunnelProvider {
 
     // MARK: Data counter (tunnel queue)
 
+    // XXX: thread-safety here is poor, but we know that:
+    //
+    // - dataCountInterval is virtually constant, set on tunnel creation
+    // - cfg only modifies UserDefaults, which is thread-safe
+    // - adapter, used in fetchDataCount, is thread-safe
+    //
     private func refreshDataCount() {
         guard dataCountInterval > 0 else {
             return

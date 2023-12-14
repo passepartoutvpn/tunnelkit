@@ -14,7 +14,7 @@ import os
 
 open class WireGuardTunnelProvider: NEPacketTunnelProvider {
     private var cfg: WireGuard.ProviderConfiguration!
-    
+
     /// The number of milliseconds between data count updates. Set to 0 to disable updates (default).
     public var dataCountInterval = 0
 
@@ -104,7 +104,9 @@ open class WireGuardTunnelProvider: NEPacketTunnelProvider {
         wg_log(.info, staticMessage: "Stopping tunnel")
 
         adapter.stop { [weak self] error in
+
             // BEGIN: TunnelKit
+
             guard let self else {
                 completionHandler()
                 return
@@ -112,6 +114,7 @@ open class WireGuardTunnelProvider: NEPacketTunnelProvider {
             self.cfg._appexSetLastError(nil)
             self.tunnelIsStarted = false
             self.refreshDataCount()
+
             // END: TunnelKit
 
             if let error = error {
@@ -152,10 +155,11 @@ open class WireGuardTunnelProvider: NEPacketTunnelProvider {
         guard dataCountInterval > 0 else {
             return
         }
+
         tunnelQueue.schedule(after: DispatchTimeInterval.milliseconds(dataCountInterval)) { [weak self] in
             self?.refreshDataCount()
         }
-        
+
         guard tunnelIsStarted else {
             cfg._appexSetDataCount(nil)
             return

@@ -140,6 +140,10 @@ public class NetworkExtensionVPN: VPN {
         )
         let managers = try await lookupAll()
 
+        extra?.userData?.forEach {
+            proto.providerConfiguration?[$0.key] = $0.value
+        }
+
         // install (new or existing) then callback
         let targetManager = managers.first {
             $0.isTunnel(withIdentifier: tunnelBundleIdentifier)

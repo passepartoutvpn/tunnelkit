@@ -41,6 +41,9 @@ public struct NetworkExtensionExtra {
     /// Enables best-effort kill switch.
     public var killSwitch = false
 
+    /// Extra user configuration data.
+    public var userData: [String: Any]?
+
     public init() {
     }
 }

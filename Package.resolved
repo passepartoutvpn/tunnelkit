@@ -6,8 +6,8 @@
         "repositoryURL": "https://github.com/passepartoutvpn/openssl-apple",
         "state": {
           "branch": null,
-          "revision": "c15562540646602300df94540765fbe27b6d5474",
-          "version": "3.2.0"
+          "revision": "026702febcaebcbf9ea68f2fa66b017eba998cdf",
+          "version": "3.2.105"
         }
       },
       {
@@ -24,7 +24,7 @@
         "repositoryURL": "https://github.com/passepartoutvpn/wireguard-apple",
         "state": {
           "branch": null,
-          "revision": "57f9babde0fb7567f31a75e943538022f8725f8f",
+          "revision": "73d9152fa0cb661db0348a1ac11dbbf998422a50",
           "version": "1.0.17"
         }
       }

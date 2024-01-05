@@ -38,8 +38,8 @@ static const NSInteger CryptoCTRTagLength = 32;
 
 @property (nonatomic, unsafe_unretained) const EVP_CIPHER *cipher;
 @property (nonatomic, unsafe_unretained) const EVP_MD *digest;
-@property (nonatomic, unsafe_unretained) const char *cCipherName;
-@property (nonatomic, unsafe_unretained) const char *cDigestName;
+@property (nonatomic, unsafe_unretained) const char *utfCipherName;
+@property (nonatomic, unsafe_unretained) const char *utfDigestName;
 @property (nonatomic, assign) int cipherKeyLength;
 @property (nonatomic, assign) int cipherIVLength;
 @property (nonatomic, assign) int hmacKeyLength;
@@ -63,14 +63,14 @@ static const NSInteger CryptoCTRTagLength = 32;
     
     self = [super init];
     if (self) {
-        self.cCipherName = calloc([cipherName length] + 1, sizeof(char));
-        strncpy(self.cCipherName, [cipherName cStringUsingEncoding:NSASCIIStringEncoding], [cipherName length]);
-        self.cipher = EVP_get_cipherbyname(self.cCipherName);
+        self.utfCipherName = calloc([cipherName length] + 1, sizeof(char));
+        strncpy(self.utfCipherName, [cipherName UTF8String], [cipherName length]);
+        self.cipher = EVP_get_cipherbyname(self.utfCipherName);
         NSAssert(self.cipher, @"Unknown cipher '%@'", cipherName);
 
-        self.cDigestName = calloc([digestName length] + 1, sizeof(char));
-        strncpy(self.cDigestName, [digestName cStringUsingEncoding:NSASCIIStringEncoding], [digestName length]);
-        self.digest = EVP_get_digestbyname(self.cDigestName);
+        self.utfDigestName = calloc([digestName length] + 1, sizeof(char));
+        strncpy(self.utfDigestName, [digestName UTF8String], [digestName length]);
+        self.digest = EVP_get_digestbyname(self.utfDigestName);
         NSAssert(self.digest, @"Unknown digest '%@'", digestName);
         
         self.cipherKeyLength = EVP_CIPHER_key_length(self.cipher);
@@ -84,7 +84,7 @@ static const NSInteger CryptoCTRTagLength = 32;
 
         self.mac = EVP_MAC_fetch(NULL, "HMAC", NULL);
         OSSL_PARAM *macParams = calloc(2, sizeof(OSSL_PARAM));
-        macParams[0] = OSSL_PARAM_construct_utf8_string("digest", (char *)[digestName cStringUsingEncoding:NSASCIIStringEncoding], 0);
+        macParams[0] = OSSL_PARAM_construct_utf8_string("digest", self.utfDigestName, 0);
         macParams[1] = OSSL_PARAM_construct_end();
         self.macParams = macParams;
 
@@ -102,8 +102,8 @@ static const NSInteger CryptoCTRTagLength = 32;
     bzero(self.bufferDecHMAC, CryptoCTRTagLength);
     free(self.bufferDecHMAC);
 
-    free(self.cCipherName);
-    free(self.cDigestName);
+    free(self.utfCipherName);
+    free(self.utfDigestName);
 
     self.cipher = NULL;
     self.digest = NULL;

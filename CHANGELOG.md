@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 - OpenVPN: HMAC breaking due to dangling OSSL_PARAM. [#405](https://github.com/passepartoutvpn/tunnelkit/pull/405)
+- OpenVPN: Bad error mapping. [#404](https://github.com/passepartoutvpn/tunnelkit/pull/404)
 
 ## 6.3.1 (2024-01-05)
 

@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 - OpenVPN: Bad error mapping. [#404](https://github.com/passepartoutvpn/tunnelkit/pull/404)
+- OpenVPN: Restore default security level. [#406](https://github.com/passepartoutvpn/tunnelkit/pull/406)
 
 ## 6.3.1 (2024-01-05)
 

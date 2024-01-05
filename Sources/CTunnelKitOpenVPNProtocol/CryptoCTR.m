@@ -38,6 +38,8 @@ static const NSInteger CryptoCTRTagLength = 32;
 
 @property (nonatomic, unsafe_unretained) const EVP_CIPHER *cipher;
 @property (nonatomic, unsafe_unretained) const EVP_MD *digest;
+@property (nonatomic, unsafe_unretained) const char *cCipherName;
+@property (nonatomic, unsafe_unretained) const char *cDigestName;
 @property (nonatomic, assign) int cipherKeyLength;
 @property (nonatomic, assign) int cipherIVLength;
 @property (nonatomic, assign) int hmacKeyLength;
@@ -61,9 +63,14 @@ static const NSInteger CryptoCTRTagLength = 32;
     
     self = [super init];
     if (self) {
-        self.cipher = EVP_get_cipherbyname([cipherName cStringUsingEncoding:NSASCIIStringEncoding]);
+        self.cCipherName = calloc([cipherName length] + 1, sizeof(char));
+        strncpy(self.cCipherName, [cipherName cStringUsingEncoding:NSASCIIStringEncoding], [cipherName length]);
+        self.cipher = EVP_get_cipherbyname(self.cCipherName);
         NSAssert(self.cipher, @"Unknown cipher '%@'", cipherName);
-        self.digest = EVP_get_digestbyname([digestName cStringUsingEncoding:NSASCIIStringEncoding]);
+
+        self.cDigestName = calloc([digestName length] + 1, sizeof(char));
+        strncpy(self.cDigestName, [digestName cStringUsingEncoding:NSASCIIStringEncoding], [digestName length]);
+        self.digest = EVP_get_digestbyname(self.cDigestName);
         NSAssert(self.digest, @"Unknown digest '%@'", digestName);
         
         self.cipherKeyLength = EVP_CIPHER_key_length(self.cipher);
@@ -94,7 +101,10 @@ static const NSInteger CryptoCTRTagLength = 32;
     free(self.macParams);
     bzero(self.bufferDecHMAC, CryptoCTRTagLength);
     free(self.bufferDecHMAC);
-    
+
+    free(self.cCipherName);
+    free(self.cDigestName);
+
     self.cipher = NULL;
     self.digest = NULL;
 }

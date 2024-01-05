@@ -9,7 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
-- Bad mapping of OpenVPN errors. [#404](https://github.com/passepartoutvpn/tunnelkit/pull/404)
+- OpenVPN: Bad error mapping. [#404](https://github.com/passepartoutvpn/tunnelkit/pull/404)
 
 ## 6.3.1 (2024-01-05)
 

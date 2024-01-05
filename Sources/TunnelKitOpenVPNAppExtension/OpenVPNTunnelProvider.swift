@@ -684,8 +684,8 @@ private extension OpenVPNTunnelProvider {
     }
 
     func openVPNError(from error: Error) -> TunnelKitOpenVPNError? {
-        if let specificError = error as? OpenVPNError {
-            switch specificError.asNativeOpenVPNError ?? specificError {
+        if let specificError = error.asNativeOpenVPNError ?? error as? OpenVPNError {
+            switch specificError {
             case .negotiationTimeout, .pingTimeout, .staleSession:
                 return .timeout
 

@@ -141,12 +141,6 @@ extension TunnelConfiguration {
             let dnsString = dnsLine.joined(separator: ", ")
             output.append("DNS = \(dnsString)\n")
         }
-        if let dnsHTTPSURL = interface.dnsHTTPSURL {
-            output.append("DNSOverHTTPSURL = \(dnsHTTPSURL)\n")
-        }
-        if let dnsTLSServerName = interface.dnsTLSServerName {
-            output.append("DNSOverTLSServerName = \(dnsTLSServerName)\n")
-        }
         if let mtu = interface.mtu {
             output.append("MTU = \(mtu)\n")
         }
@@ -208,12 +202,6 @@ extension TunnelConfiguration {
             }
             interface.dns = dnsServers
             interface.dnsSearch = dnsSearch
-        }
-        if let dnsHTTPSURL = attributes["dnsoverhttpsurl"] {
-            interface.dnsHTTPSURL = URL(string: dnsHTTPSURL)
-        }
-        if let dnsTLSServerName = attributes["dnsovertlsservername"] {
-            interface.dnsTLSServerName = dnsTLSServerName
         }
         if let mtuString = attributes["mtu"] {
             guard let mtu = UInt16(mtuString) else {

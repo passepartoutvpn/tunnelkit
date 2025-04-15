@@ -8,6 +8,8 @@
 
 # TunnelKit
 
+__TunnelKit is discontinued. Check out [Partout](https://github.com/passepartoutvpn/partout) for a modern replacement.__
+
 This library provides a generic framework for VPN development on Apple platforms.
 
 ## OpenVPN
